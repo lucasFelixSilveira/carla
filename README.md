@@ -4,7 +4,6 @@
   <p>Carla is a programming language project with a different approach than others.</p>
   <a href="#carla-fundamentals">See more about the differences and fundamentals!</a>
 </div>
-
 <br>
 <br>
 <br>
@@ -38,7 +37,7 @@ Imagine a world where the easiest thing makes sense! Where who knows, you can cr
 <br>
 Carla documentation
 
-# [📚 Documentation](blob/main/docs/carla.md) 
+# [📚 Documentation](./docs/carla.md) 
 </div>
 
 
