@@ -15,7 +15,7 @@ Carla is a pattern created by a young programmer, who felt tired of languages â€
 ### Fundamentals  
 - Practicality
 - Modernity 
-- Fundamentalism.
+- Fundamentalism
 - Mathematical ease
 
 # And what is Carla's objective?
