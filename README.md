@@ -1,9 +1,9 @@
-<center>
-  <img width="200%" src="./assets/carla.png">
+<div align="center">
+  <img width="200%" src="./assets/small.png">
   <h1>What is "Carla"?</h1>
   <p>Carla is a programming language project with a different approach than others.</p>
-  <a>See more about the differences and fundamentals!</a>
-</center>
+  <a href="#carla-fundamentals">See more about the differences and fundamentals!</a>
+</div>
 
 <br>
 <br>
@@ -26,11 +26,11 @@ Carla's true objective is to draw attention to the "Carla protocol". Therefore, 
 
 Have you ever entered a Discord, Telegram or Whatsapp chat and seen a lot of people struggling with JavaScript, Python, Ruby? This is exactly what served as the snap.
 
-Imagine a world where the easiest thing makes sense! Where who knows, you can create a 512-bit Integer without having to use [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt)s? addressing and allocation of memory accessible, but not mandatory...
+Imagine a world where the easiest thing makes sense! Where who knows, you can create a `1024-bit (Example)` Integer without having to use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt" target="_blank">BigInt</a>s? addressing and allocation of memory accessible, but not mandatory...
 
 #
 
-<center>
+<div align="center">
 
 ### Carla will not just be a language. It is a new concept of languages.
 
@@ -38,7 +38,7 @@ Imagine a world where the easiest thing makes sense! Where who knows, you can cr
 <br>
 Carla documentation
 
-# [📚 Documentation](#) 
-</center>
+# [📚 Documentation](blob/main/docs/carla.md) 
+</div>
 
 
