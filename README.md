@@ -65,7 +65,6 @@ Imagine a world where the easiest thing makes sense! Where who knows, you can cr
       </a>
     </td>
   </tr>
-  <tr></tr>
 </table>
 See what a language needs to fit into the carla protocol
 </div>
