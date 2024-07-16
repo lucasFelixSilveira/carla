@@ -34,10 +34,38 @@ Imagine a world where the easiest thing makes sense! Where who knows, you can cr
 ### Carla will not just be a language. It is a new concept of languages.
 
 #
-<br>
-Carla documentation
 
-# [📚 Documentation](./docs/carla.md) 
+<table>
+  <tr><img width="170px" src="./assets/small.png"></tr>
+  <tr>
+    <!-- Documentation -->
+    <td>Documentation</td>
+    <td> 
+      <a href="./docs/carla.md">
+        <img src='https://img.shields.io/badge/docs-v1-blue.svg'/>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <!-- License -->
+    <td>License</td>
+    <td> 
+      <a href="./LICENSE">
+        <img src='https://img.shields.io/badge/License-MIT-yellow.svg'/>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <!-- Carla protocol -->
+    <td>Carla protocol</td>
+    <td> 
+      <a href="./LICENSE">
+      <a href="./protcol">
+        <img src='https://img.shields.io/badge/view-carla_protocol-purple'/>
+      </a>
+    </td>
+  </tr>
+  <tr></tr>
+</table>
+See what a language needs to fit into the carla protocol
 </div>
-
-
