@@ -2,6 +2,7 @@
   "files.associations": {
     "lexer.h": "c",
     "vector.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "xlocale": "c"
   }
 }

@@ -10,6 +10,6 @@ typedef struct {
 } Vector;
 
 Vector vector_init(size_t unitySize);
-void vector_push(Vector *pVector, void *item, size_t itemSize);
+void vector_push(Vector *pVector, void *item);
 
 #endif

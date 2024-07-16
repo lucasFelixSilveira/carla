@@ -11,7 +11,9 @@ typedef enum {
   Walrus,
   Sign,
   Collon,
-  Semi
+  Semi,
+  Unknown,
+  EndOfFile
 } TokenType;
 
 typedef struct {

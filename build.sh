@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Compiling.."
 
 recursive() {
@@ -7,12 +9,16 @@ recursive() {
     if [ -d "$file" ]; then
       recursive "$file"
     elif [ "${file##*.}" == "c" ]; then
-      gcc -c "$file" -o "${file%.c}.o"
+      gcc -c -ggdb "$file" -o "${file%.c}.o"
     fi
   done
 }
 
 recursive "./src"
-gcc ./src/*.o -o ./carla.exe
+
+object_files=$(find ./src -name '*.o')
+
+gcc $object_files -ggdb -o ./carla.exe
+
 echo "Compiled!"
 echo
