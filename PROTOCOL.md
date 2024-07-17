@@ -25,7 +25,6 @@ Magic implementations refer to coding practices that condense complex operations
 const std = @import("std");
 
 fn main() !void {
-  const std = @import("std");
   const stdout = std.io.getStdOut().writer();
   try stdout.print("Hello, world\n", .{});
 }
