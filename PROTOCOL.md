@@ -25,21 +25,50 @@ Magic implementations refer to coding practices that condense complex operations
 const std = @import("std");
 
 fn main() !void {
-  const stdout = std.io.getStdOut().writer();
-  try stdout.print("Hello, world\n", .{});
-}
+  const fs = std.fs;
+  const allocator = std.heap.page_allocator;
 
+  const file = try fs.cwd().openFile("exemple.txt", .{ .read = true, .write = false });
+  defer file.close();
+
+  var lineCount: u32 = 0;
+  var buffer = try allocator.alloc(u8, 4096);
+  defer allocator.free(buffer);
+
+  while (try file.read(buffer, 4096)) |buffer, bytesRead| {
+    for (buffer[0 .. bytesRead]) |byte| {
+      if (byte == '\n') {
+        lineCount += 1;
+      }
+    }
+  }
+
+  std.debug.print("
+Number of lines in the file: {}\n", .{lineCount});
+}
 ```
 ## ✅ Normal
 ```c
 #include <stdio.h>
- 
-int
-main() 
-{
-  fprintf(stdout, "Hello, world\n");
+
+int main() {
+  FILE *file = fopen("exemple.txt", "r");
+  if (file == NULL) {
+    perror("Error opening the file");
+    return 1;
+  }
+
+  int lineCount = 0;
+  char buffer[4096];
+  while (fgets(buffer, sizeof(buffer), file) != NULL) {
+    lineCount++;
+  }
+
+  fclose(file);
+  printf("Number of lines in the file: %d\n", lineCount);
+
   return 0;
-} 
+}
 ```
 
 ##
