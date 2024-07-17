@@ -25,7 +25,10 @@ Carla's true objective is to draw attention to the "Carla protocol". Therefore, 
 
 Have you ever entered a Discord, Telegram or Whatsapp chat and seen a lot of people struggling with JavaScript, Python, Ruby? This is exactly what served as the snap.
 
-Imagine a world where the easiest thing makes sense! Where who knows, you can create a `1024-bit (Example)` Integer without having to use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt" target="_blank">BigInt</a>s? addressing and allocation of memory accessible, but not mandatory...
+### After all, what is the purpose?
+If you are tired of using programming every day, for example, if you want your code not to break, put an `try` in the code, and it will not give a **Segmentation fault**.
+
+In other words, don't surrender to the current schedule. Opt for the rational programming choice, Carla Protocol. It doesn't make sense to program without knowing how much memory is used to allocate a pointer, and things like that.
 
 #
 
@@ -60,7 +63,7 @@ Imagine a world where the easiest thing makes sense! Where who knows, you can cr
     <td>Carla protocol</td>
     <td> 
       <a href="./LICENSE">
-      <a href="./protcol">
+      <a href="./PROTOCOL.md">
         <img src='https://img.shields.io/badge/view-carla_protocol-purple'/>
       </a>
     </td>
