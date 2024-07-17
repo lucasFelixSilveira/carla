@@ -45,7 +45,7 @@ In other words, don't surrender to the current schedule. Opt for the rational pr
     <td>Documentation</td>
     <td> 
       <a href="./docs/carla.md">
-        <img src='https://img.shields.io/badge/docs-v1-blue.svg'/>
+        <img src='https://img.shields.io/badge/Docs-v1-blue.svg'/>
       </a>
     </td>
   </tr>
@@ -64,7 +64,7 @@ In other words, don't surrender to the current schedule. Opt for the rational pr
     <td> 
       <a href="./LICENSE">
       <a href="./PROTOCOL.md">
-        <img src='https://img.shields.io/badge/view-carla_protocol-purple'/>
+        <img src='https://img.shields.io/badge/Carla_Protocol-view-purple'/>
       </a>
     </td>
   </tr>
