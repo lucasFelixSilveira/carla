@@ -1,6 +1,4 @@
-func Main(args: []string) int {}
+@public
+let main: ([]string) int = (args) {
 
-let x: int = 2;
-let y: Stdout = try io.Writer().Unwrap();
-let y: Stdout = io.Writer().Unwrap() catch unrachable;
-
+}
