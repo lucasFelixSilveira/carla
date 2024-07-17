@@ -7,8 +7,21 @@ typedef enum {
   Identifier,
   Keyword,
   Operator,
-  BinaryOperator,
+  RightShift,
+  LeftShift,
   Walrus,
+  Inc,
+  Dec,
+  Mul,
+  Div,
+  Imul,
+  Idiv,
+  Sub,
+  Add,
+  Eq,
+  Ne,
+  Le,
+  Ge,
   Sign,
   Collon,
   Semi,
@@ -21,6 +34,6 @@ typedef struct {
   char *buffer;
 } Token;
 
-Token *tokenize (FILE *file, Vector *tks);
+void tokenize (FILE *file, Vector *tks);
 
 #endif

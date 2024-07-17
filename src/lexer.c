@@ -11,7 +11,7 @@ size_t len = 0;
 #define LARGE_CONSTANT 100000
 #define KEYWORDS_LENGTH 2
 char *keywords[KEYWORDS_LENGTH]
-    = { "extern", "func" };
+    = { "let" };
 
 char
 isKeyword ()
@@ -58,32 +58,32 @@ char
 ismatch (char c1, char c2)
 {
   if( c1 == '=' && c2 == '=' ) 
-    /*->*/ return 1;
+    /*->*/ return Eq;
   else if( c1 == ':' && c2 == '=' ) 
     /*->*/ return Walrus;
   else if( c1 == '+' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Add;
   else if( c1 == '-' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Sub;
   else if( c1 == '*' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Imul;
   else if( c1 == '/' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Idiv;
   else if( c1 == '!' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Ne;
   else if( c1 == '>' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Ge;
   else if( c1 == '<' && c2 == '=' ) 
-    /*->*/ return Operator;
+    /*->*/ return Le;
   else if( c1 == '>' && c2 == '>' ) 
-    /*->*/ return BinaryOperator;
+    /*->*/ return RightShift;
   else if( c1 == '<' && c2 == '<' ) 
-    /*->*/ return BinaryOperator;
+    /*->*/ return LeftShift;
   
   return 0;
 }
 
-Token *
+void 
 tokenize (FILE *file, Vector *tks)
 {
   while(1)
@@ -96,7 +96,7 @@ tokenize (FILE *file, Vector *tks)
       if(! isalnum (c) ) {
         if( len > 0 ) {
           vector_push (tks, (void*)(&(Token) {
-            .buffer = (char*) strdup (buffer), 
+            .buffer = strdup (buffer), 
             .type = valid_buffer ()
           }));
           len = 0;

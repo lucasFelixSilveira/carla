@@ -1,1 +1,5 @@
 bootstrapping/tests/test.cl
+debug/
+tests/
+debug.sh
+test_as.sh
