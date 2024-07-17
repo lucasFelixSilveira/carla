@@ -1,4 +1,4 @@
-@public
-let main: ([]string) int = (args) {
-
+@root main
+let main: () int = () {
+  return 2;
 }

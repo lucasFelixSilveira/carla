@@ -9,19 +9,30 @@ char buffer[2048];
 size_t len = 0;
 
 #define LARGE_CONSTANT 100000
-#define KEYWORDS_LENGTH 2
-char *keywords[KEYWORDS_LENGTH]
-    = { "let" };
-
+#define KEYWORDS_LENGTH 3
+typedef struct { char len; char *val; } Key;
+const Key keywords[KEYWORDS_LENGTH]
+    = { 
+      { .len = 6, .val = "return" },
+      { .len = 4, .val = "root" },
+      { .len = 3, .val = "let" }
+    };
+    
 char
 isKeyword ()
 {
+  size_t length = strlen (buffer);
   for(
     int i = 0;
     i < KEYWORDS_LENGTH;
     i++
   ) {
-      if( strcmp (buffer, keywords[i]) == 0 )
+      Key key = keywords[i];
+
+      if( key.len != length ) 
+        /*->*/ continue;
+
+      if( strcmp (buffer, key.val) == 0 )
         /*->*/ return 1;
     }
   return 0;
@@ -58,29 +69,29 @@ char
 ismatch (char c1, char c2)
 {
   if( c1 == '=' && c2 == '=' ) 
-    /*->*/ return Eq;
+    return Eq;
   else if( c1 == ':' && c2 == '=' ) 
-    /*->*/ return Walrus;
+    return Walrus;
   else if( c1 == '+' && c2 == '=' ) 
-    /*->*/ return Add;
+    return Add;
   else if( c1 == '-' && c2 == '=' ) 
-    /*->*/ return Sub;
+    return Sub;
   else if( c1 == '*' && c2 == '=' ) 
-    /*->*/ return Imul;
+    return Imul;
   else if( c1 == '/' && c2 == '=' ) 
-    /*->*/ return Idiv;
+    return Idiv;
   else if( c1 == '!' && c2 == '=' ) 
-    /*->*/ return Ne;
+    return Ne;
   else if( c1 == '>' && c2 == '=' ) 
-    /*->*/ return Ge;
+    return Ge;
   else if( c1 == '<' && c2 == '=' ) 
-    /*->*/ return Le;
+    return Le;
   else if( c1 == '>' && c2 == '>' ) 
-    /*->*/ return RightShift;
+    return RightShift;
   else if( c1 == '<' && c2 == '<' ) 
-    /*->*/ return LeftShift;
-  
-  return 0;
+    return LeftShift;
+  else
+    return 0;
 }
 
 void 
