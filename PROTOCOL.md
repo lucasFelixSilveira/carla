@@ -43,8 +43,7 @@ fn main() !void {
     }
   }
 
-  std.debug.print("
-Number of lines in the file: {}\n", .{lineCount});
+  std.debug.print("Number of lines in the file: {}\n", .{lineCount});
 }
 ```
 ## ✅ Normal
