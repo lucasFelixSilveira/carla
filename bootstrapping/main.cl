@@ -1,3 +1,3 @@
-int @our(main) = () {
-  
+int main = () {
+  return 0;
 }

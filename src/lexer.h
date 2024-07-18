@@ -2,11 +2,16 @@
 #ifndef LEXER_H
 # include "vector.h"
 # define LEXER_H
+# define OP_CONSTANT 69
   typedef enum {
+    Unknown,
+    Semi,
+    Collon,
+    EndOfFile,
     Identifier,
     Keyword,
     Operator,
-    RightShift,
+    RightShift = OP_CONSTANT,
     LeftShift,
     Walrus,
     Inc,
@@ -21,11 +26,7 @@
     Ne,
     Le,
     Ge,
-    Sign,
-    Collon,
-    Semi,
-    Unknown,
-    EndOfFile
+    Sign
   } TokenType;
 
   typedef TokenType ArithmeticOperator;

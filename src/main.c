@@ -27,7 +27,23 @@ main()
       }
   #endif
 
-  generate (&tokens);
+  Vector root = vector_init(sizeof (PNode));
+  generate (&root, &tokens);
+  
+  #if DEBUG 
+    
+    printf ("\n\n----- Tree print: -----\n");
+    
+    for(
+      int i = 0;
+      i < root.length; 
+      i++
+    ) {
+        PNode branch = ((PNode*)root.items)[i];
+        printf("Branch<%d> {\n\ttype: %d\n},\n", i, branch.type);
+      }
+  #endif
+
   fclose (main);
   return 2;
 }
