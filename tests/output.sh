@@ -1,3 +1,0 @@
-./test.exe
-echo $?
-/
