@@ -1,15 +1,11 @@
 #ifndef VECTOR_H
-#define VECTOR_H
-
-#include <stddef.h>
-
-typedef struct {
+# define VECTOR_H
+  typedef struct {
     size_t unity;
     size_t length;
     void *items;
-} Vector;
+  } Vector;
 
-Vector vector_init(size_t unitySize);
-void vector_push(Vector *pVector, void *item);
-
+  Vector vector_init(size_t unitySize);
+  void vector_push(Vector *pVector, void *item);
 #endif

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "lexer.h"
 #include "vector.h"
+#include "parser.h"
 
 #define DEBUG 1
 
@@ -25,6 +26,16 @@ main()
         printf("Token<%d> {\n\tbuffer: \"%s\",\n\ttype: %d\n},\n", i, tk.buffer, tk.type);
       }
   #endif
+
+  SyntaxRoot root = {
+    .root = NULL,
+    .top = NULL
+  };
+
+  genAST (&root, &tokens);
+  /* TODO!
+  printTree (&root);
+  */ 
 
   fclose (main);
   return 2;
