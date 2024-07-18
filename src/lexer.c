@@ -9,8 +9,6 @@
 char buffer[2048];
 size_t len = 0;
 
-#define LARGE_CONSTANT 100000
-
 TokenType 
 valid_buffer () 
 {
@@ -71,16 +69,15 @@ tokenize (FILE *file, Vector *tks)
           /*->*/ continue;
 
         char c2 = getc (file);
-        char t = 0;
+        char t = 1;
         int id = ismatch (c, c2); 
         if( id == 0 ) {
           ungetc (c2, file);
           buffer[0] = c;
-          t = 1;
         } else {
           buffer[0] = c;
           buffer[1] = c2;
-          t = 2;
+          t++;
         } 
 
         buffer[t] = 0;

@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include "lexer.h"
+#include "debug.h"
 #include "vector.h"
 #include "parser.h"
 
-#define DEBUG 1
-
 const char *bootstrapping = "./bootstrapping/main.cl";
 const char *tests = "./bootstrapping/tests/test.cl";
+int i = 0;
 
 int
 main() 
@@ -15,33 +15,18 @@ main()
 
   Vector tokens = vector_init (sizeof (Token));
   tokenize (main, &tokens);
+  Vector sym_table = vector_init (1);
 
-  #if DEBUG 
-    for(
-      int i = 0;
-      i < tokens.length; 
-      i++
-    ) {
-        Token tk = ((Token*)tokens.items)[i];
-        printf("Token<%d> {\n\tbuffer: \"%s\",\n\ttype: %d\n},\n", i, tk.buffer, tk.type);
-      }
+  #if DBG_LEXER 
+    pHeader (&i, "----- Tokens print: -----");
+    pTokens (&tokens);
   #endif
 
   Vector root = vector_init(sizeof (PNode));
   generate (&root, &tokens);
-  
-  #if DEBUG 
-    
-    printf ("\n\n----- Tree print: -----\n");
-    
-    for(
-      int i = 0;
-      i < root.length; 
-      i++
-    ) {
-        PNode branch = ((PNode*)root.items)[i];
-        printf("Branch<%d> {\n\ttype: %d\n},\n", i, branch.type);
-      }
+  #if DBG_PARSER
+    pHeader (&i, "----- Tree print: -----");
+    pRoot (&root);
   #endif
 
   fclose (main);

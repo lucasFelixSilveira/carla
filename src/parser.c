@@ -41,25 +41,29 @@ generate (Vector *root, Vector *tks)
         && isIdentifier (TKGET(POS(i, 1)).buffer) 
         /* Checks if the next token is a value assignment operator or a semi */
         && ( 
-          EQ( TKGET(POS(i, 2)).buffer, "=") 
+          EQ(TKGET(POS(i, 2)).buffer, "=") 
           + EQ(TKGET(POS(i, 2)).buffer, ";") 
         ) > 0
       ) {   
           Token type = TKGET(i++);
           Token id = TKGET(i++);
-          i++;
 
           vector_push (root, (void*)(&(PNode) {
             .scope = current,
             .type = Definition,
             .saves = (Cache) {
               .definition = (DMemory) {
-                .id = clone(id), .type = clone(type)
+                .hopeful = EQ(TKGET(i++).buffer, "="),
+                .id = clone (id), .type = clone (type)
               }
             }
           }));
 
           i += 3;
+        }
+      else
+        {
+          
         }
 
       i = i == old ? (i + 1) : i;

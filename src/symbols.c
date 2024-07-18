@@ -6,7 +6,8 @@
 const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
   = { 
     { .len = 6, .val = "return" },
-    { .len = 3, .val = "our" },
+    { .len = 2, .val = "if" },
+    { .len = 4, .val = "else" },
     /* types */
     { .len = 3, .val = "int" },
     { .len = 4, .val = "char" },

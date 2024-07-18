@@ -1,7 +1,8 @@
-#include "vector.h"
-#include "lexer.h"
 #ifndef PARSER_H
 # define PARSER_H
+# define DBG_PARSER 1
+# include "vector.h"
+# include "lexer.h"
 
   typedef enum { 
     Global, 
@@ -9,16 +10,19 @@
   } Scope;
 
   typedef enum {
-    Definition
+    Definition,
+    IFStatement
   } NType;
 
   typedef struct {
+    char hopeful;
     char *type;
     char *id;
   } DMemory;
 
   typedef union {
-    DMemory definition;  
+    DMemory definition;
+    // IFMemory ifstatement;  
   } Cache;
 
   typedef struct {

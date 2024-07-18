@@ -9,4 +9,6 @@
 
   Vector vector_init(size_t unitySize);
   void vector_push(Vector *pVector, void *item);
+  void vector_remove(Vector *pVector, int index);
+  void vector_free(Vector *pVector);
 #endif

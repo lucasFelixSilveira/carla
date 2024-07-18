@@ -1,6 +1,6 @@
 #ifndef SYMBOLS_H
 # define SYMBOLS_H
-# define KEYWORDS_LENGTH 2
+# define KEYWORDS_LENGTH 3
 # define TYPES_LENGTH 8
 
 typedef struct { char len; char *val; } Key;
