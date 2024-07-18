@@ -3,6 +3,7 @@
     "lexer.h": "c",
     "vector.h": "c",
     "stdio.h": "c",
-    "xlocale": "c"
+    "xlocale": "c",
+    "stdlib.h": "c"
   }
 }

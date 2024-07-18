@@ -4,64 +4,18 @@
 #include <stdlib.h>
 #include "lexer.h"
 #include "vector.h"
+#include "symbols.h"
 
 char buffer[2048];
 size_t len = 0;
 
 #define LARGE_CONSTANT 100000
-#define KEYWORDS_LENGTH 3
-typedef struct { char len; char *val; } Key;
-const Key keywords[KEYWORDS_LENGTH]
-    = { 
-      { .len = 6, .val = "return" },
-      { .len = 4, .val = "root" },
-      { .len = 3, .val = "let" }
-    };
-    
-char
-isKeyword ()
-{
-  size_t length = strlen (buffer);
-  for(
-    int i = 0;
-    i < KEYWORDS_LENGTH;
-    i++
-  ) {
-      Key key = keywords[i];
-
-      if( key.len != length ) 
-        /*->*/ continue;
-
-      if( strcmp (buffer, key.val) == 0 )
-        /*->*/ return 1;
-    }
-  return 0;
-}
-
-char
-isIdentifier ()
-{
-  char first = buffer[0];
-  if( first != '@' && !isalpha(first) ) 
-    /*->*/ return 0;
-  
-  for(
-    int i = 0;
-    i < (strlen(buffer) - 1);
-    i++
-  ) {
-      if(! isalnum(buffer[i]) )
-        /*->*/ return 0;
-    }
-
-  return 1;
-}
 
 TokenType 
 valid_buffer () 
 {
-  if( isKeyword () ) return Keyword;
-  else if( isIdentifier () ) return Identifier;
+  if( isKeyword (buffer) ) return Keyword;
+  else if( isIdentifier (buffer) ) return Identifier;
   return Unknown;
 }
 

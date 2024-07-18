@@ -27,16 +27,7 @@ main()
       }
   #endif
 
-  SyntaxRoot root = {
-    .root = NULL,
-    .top = NULL
-  };
-
-  genAST (&root, &tokens);
-  /* TODO!
-  printTree (&root);
-  */ 
-
+  generate (&tokens);
   fclose (main);
   return 2;
 }
