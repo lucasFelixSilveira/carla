@@ -1,3 +1,2 @@
-int main = () {
-  return 0;
-}
+int penis;
+return code

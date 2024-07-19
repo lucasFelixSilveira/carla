@@ -4,7 +4,6 @@
 #include "vector.h"
 #include "parser.h"
 
-
 int
 main() 
 {
@@ -13,7 +12,6 @@ main()
   tokenize (main, &tokens);
   
   int i = 0;
-
   #if DBG_LEXER 
     pHeader (&i, "----- Tokens print: -----");
     pTokens (&tokens);

@@ -3,9 +3,10 @@
 #include "parser.h"
 #include "debug.h"
 
-#define TYPES_LENGTH 1
+#define TYPES_LENGTH 2
 const char *types[TYPES_LENGTH] = {
-  "Definition"
+  "Definition",
+  "Magic"
 };
 
 void
@@ -24,7 +25,12 @@ pRoot (Vector *root)
           printf("\t%s: %s\n", "hopeful", branch.saves.definition.hopeful ? "true" : "false");
           printf("\t%s: %s\n", "expect", branch.saves.definition.type);
           printf("\t%s: %s\n", "identifier", branch.saves.definition.id);
-        } break;
+          break;
+        }
+        case Magic: {
+          printf("\t%s: %s\n", "keyword", branch.saves.magic);
+          break;
+        } 
       }
       
       printf("},\n");

@@ -10,6 +10,7 @@
 #define ISOP(n) n > OP_CONSTANT
 #define POS(x, y) x + y
 #define EQ(var, constant) strcmp(var, constant) == 0
+#define CH(tk) tk.buffer[0]
 
 typedef enum { false = 0, true = 1 } bool;
 
@@ -27,6 +28,12 @@ generate (Vector *root, Vector *tks)
   int i = 0;
   while( i < tks->length ) 
     {
+      if( CH(TKGET(i)) == 0xffffffff ) 
+        {
+          i++;
+          continue;
+        }
+
       int old = i;
       /*
         Identifier:
@@ -58,14 +65,23 @@ generate (Vector *root, Vector *tks)
               }
             }
           }));
-
-          i += 3;
         }
       else
+      if( TKGET(i).type == Keyword ) 
         {
-          
+          printf("Received keyword: %s\n", TKGET(i).buffer);
+          vector_push (root, (void*)(&(PNode) {
+            .scope = current,
+            .type = Magic,
+            .saves = (Cache) {
+              .magic = clone (TKGET(i++))
+            }
+          }));
         }
-
-      i = i == old ? (i + 1) : i;
+      else 
+        {
+          printf("Received invalid token: %s[0x%x]\n", TKGET(i).buffer, CH(TKGET(i)));
+          i++;
+        }
     }
 }

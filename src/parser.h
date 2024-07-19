@@ -11,7 +11,7 @@
 
   typedef enum {
     Definition,
-    IFStatement
+    Magic
   } NType;
 
   typedef struct {
@@ -22,7 +22,7 @@
 
   typedef union {
     DMemory definition;
-    // IFMemory ifstatement;  
+    char *magic;
   } Cache;
 
   typedef struct {
