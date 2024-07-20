@@ -11,7 +11,10 @@
 
   typedef enum {
     Definition,
-    Magic
+    Lambda,
+    Begin,
+    Magic,
+    End
   } NType;
 
   typedef struct {
@@ -22,6 +25,7 @@
 
   typedef union {
     DMemory definition;
+    char nothing;
     char *magic;
   } Cache;
 
@@ -31,6 +35,6 @@
     Cache saves;
   } PNode;
 
-  void generate (Vector *root, Vector *tks);
+  void pGenerate (Vector *root, Vector *tks);
 
 #endif

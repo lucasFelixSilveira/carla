@@ -21,7 +21,7 @@ clone(Token tk)
 }
 
 void 
-generate (Vector *root, Vector *tks) 
+pGenerate (Vector *root, Vector *tks) 
 {
   Scope current = Global; 
 
@@ -66,10 +66,10 @@ generate (Vector *root, Vector *tks)
             }
           }));
         }
+      
       else
       if( TKGET(i).type == Keyword ) 
         {
-          printf("Received keyword: %s\n", TKGET(i).buffer);
           vector_push (root, (void*)(&(PNode) {
             .scope = current,
             .type = Magic,
@@ -78,10 +78,50 @@ generate (Vector *root, Vector *tks)
             }
           }));
         }
-      else 
+      else
+      if( EQ(TKGET(i).buffer, "(") ) 
         {
-          printf("Received invalid token: %s[0x%x]\n", TKGET(i).buffer, CH(TKGET(i)));
+          int x = 1;
+          while( EQ(TKGET(POS(i, x)).buffer, ")") == 0 ) 
+            { x++; }
+          
+          if( EQ(TKGET(POS(i, POS(x, 1))).buffer, "{") )
+            {
+              vector_push (root, (void*)(&(PNode) {
+                .scope = current,
+                .type = Lambda,
+                .saves = (Cache) { .nothing = 0 }
+              }));
+            }
+          
           i++;
         }
+      else
+      if( EQ(TKGET(i).buffer, "{") || EQ(TKGET(i).buffer, "}") ) 
+        {
+          vector_push (root, (void*)(&(PNode) {
+            .scope = current,
+            .type = EQ(TKGET(i).buffer, "{") ? Begin : End,
+            .saves = (Cache) { .nothing = 0 }
+          }));
+          
+          i++;
+        }  
+      else { i++; };
+
+      /*
+        Expressions
+      */
+      // else
+      // if( TKGET(i).type == Identifier ) 
+      //   {
+      //     int start, end = i;
+      //     for(
+      //       ; end < tks->length;
+      //       end++
+      //     ) {
+
+      //       }
+      //   }
     }
 }

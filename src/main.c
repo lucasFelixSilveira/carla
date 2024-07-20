@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "lexer.h"
 #include "debug.h"
 #include "vector.h"
 #include "parser.h"
+#include "llvm.h"
 
 int
 main() 
@@ -18,12 +20,21 @@ main()
   #endif
 
   Vector root = vector_init (sizeof (PNode));
-  generate (&root, &tokens);
+  pGenerate (&root, &tokens);
   #if DBG_PARSER
     pHeader (&i, "----- Tree print: -----");
     pRoot (&root);
   #endif
 
+  FILE *output = fopen ("./bootstrapping/output.ll", "w+");
+  llGenerate (output, &root);
+
+  for( int i = 0; i < tokens.length; i++ )
+    /*->*/ free (((Token*) tokens.items)[i].buffer);
+  vector_free (&tokens);
+  vector_free (&root);
+
+  fclose (output);
   fclose (main);
   return 2;
 }

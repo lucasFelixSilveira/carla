@@ -3,10 +3,13 @@
 #include "parser.h"
 #include "debug.h"
 
-#define TYPES_LENGTH 2
+#define TYPES_LENGTH 5
 const char *types[TYPES_LENGTH] = {
   "Definition",
-  "Magic"
+  "Lambda",
+  "Begin",
+  "Magic",
+  "End"
 };
 
 void
@@ -54,6 +57,6 @@ void
 pHeader (int *count, char *header) 
 {
   if( *count > 0 ) printf("\n\n");
-  printf("%s - [%d]\n\n", header, *count);
+  printf("\n%s - [%d]\n\n", header, *count);
   count += 1;
 }

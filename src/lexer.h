@@ -15,13 +15,21 @@
     Identifier,
     Keyword,
     Operator,
+
+    /* BITs */
     RightShift = OP_CONSTANT,
     LeftShift,
-    Walrus,
+
+    /* Arithmetic */
     Inc, Dec,
     Mul, Div, Sub, Add, 
     Imul, Idiv,
-    Eq, Ne, Le, Ge
+
+    /* Comparation */
+    Eq, Ne, Le, Ge,
+
+    /* Iterators */
+    Walrus, Quad, Acess
   } TokenType;
 
   typedef TokenType ArithmeticOperator;

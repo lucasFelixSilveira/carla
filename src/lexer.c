@@ -24,6 +24,10 @@ ismatch (char c1, char c2)
     return Eq;
   else if( c1 == ':' && c2 == '=' ) 
     return Walrus;
+  else if( c1 == ':' && c2 == ':' ) 
+    return Quad;
+  else if( c1 == '-' && c2 == '>' ) 
+    return Acess;
   else if( c1 == '+' && c2 == '=' ) 
     return Add;
   else if( c1 == '-' && c2 == '=' ) 

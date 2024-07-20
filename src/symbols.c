@@ -9,13 +9,16 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 2, .val = "if" },
     { .len = 4, .val = "else" },
     /* types */
-    { .len = 3, .val = "int" },
-    { .len = 4, .val = "char" },
-    { .len = 5, .val = "short" },
-    { .len = 4, .val = "long" },
-    { .len = 4, .val = "half" },
-    { .len = 5, .val = "float" },
-    { .len = 6, .val = "double" },
+    { .len = 2, .val = "i8" },
+    { .len = 2, .val = "u8" },
+    { .len = 3, .val = "i16" },
+    { .len = 3, .val = "u16" },
+    { .len = 3, .val = "i32" },
+    { .len = 3, .val = "u32" },
+    { .len = 3, .val = "i64" },
+    { .len = 3, .val = "u64" },
+    { .len = 3, .val = "f32" },
+    { .len = 3, .val = "f64" },
     { .len = 4, .val = "void" }
   };
 

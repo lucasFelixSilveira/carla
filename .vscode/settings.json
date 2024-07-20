@@ -5,6 +5,8 @@
     "stdio.h": "c",
     "xlocale": "c",
     "stdlib.h": "c",
-    "parser.h": "c"
+    "parser.h": "c",
+    "llvm.h": "c",
+    "xstring": "c"
   }
 }

@@ -1,2 +1,3 @@
-int penis;
-return code
+i32 main = () {
+  return 0;
+}
