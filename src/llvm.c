@@ -23,11 +23,26 @@ llGenerate (FILE *output, Vector *pTree)
             char *type = branch.saves.definition.type;
             char *id = branch.saves.definition.id;
             
-            fprintf(output, "\ndefine %s @%s", 
+            fprintf(output, "\ndefine %s @%s(", 
                     branch.saves.definition.type, 
                     branch.saves.definition.id
             );
+
+            for(
+              int j = i + 2;
+              j < pTree->length;
+              j++ 
+            ) {
+                PNode branch = ((PNode*)pTree->items)[j];
+                if( branch.type == Begin )
+                  /*->*/ break;
+              }
+            
+            fprintf (output, ") {\n");
           }
         }
+      else
+      if( branch.type == End )
+        { fprintf (output, "\n}"); }
     }
 }

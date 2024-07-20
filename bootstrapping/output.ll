@@ -1,2 +1,4 @@
 
-define i32 @main
+define i32 @main() {
+
+}
