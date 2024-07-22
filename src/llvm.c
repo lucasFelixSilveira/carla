@@ -3,6 +3,7 @@
 #include <string.h>
 #include "vector.h"
 #include "parser.h"
+#include "symbols.h"
 
 typedef struct {
   DMemory def;
@@ -15,6 +16,10 @@ unsigned short varspos  = 0;
 char *stacktype[1024];
 Variable variables[2048];
 int scope = 0;
+
+char *opcodes[4] = {
+  "sub", "add", "imul", "idiv"
+};
 
 int
 llvm_sizeof (char *type)
@@ -29,6 +34,7 @@ llvm_sizeof (char *type)
     return 8;
   if( strcmp (type, "i128") == 0 || strcmp (type, "u128") == 0 )
     return 16;
+  return 0;
 }
 
 void 
@@ -184,29 +190,75 @@ llGenerate (FILE *output, Vector *pTree)
         branch.type == Normal 
         && branch.saves.token.type == Identifier 
         && ((PNode*)pTree->items)[i + 1].type == Normal
-        && strcmp (((PNode*)pTree->items)[i + 1].saves.token.buffer, "=") == 0
+        && (
+          strcmp (((PNode*)pTree->items)[i + 1].saves.token.buffer, "=") == 0
+          || (
+            ((PNode*)pTree->items)[i + 1].saves.token.type >= OP_CONSTANT
+            && ((PNode*)pTree->items)[i + 2].saves.token.type == Integer
+          )
+        )
       ) {
           i++;
 
-          expr_t expr_type = ENone;
-          int x = (i + 1);
-          for(
-            ;1;
-            x++
-          ) {
-              PNode value = ((PNode*)pTree->items)[x];
+          if( strcmp (((PNode*)pTree->items)[i].saves.token.buffer, "=") == 0 )
+            {
+              expr_t expr_type = ENone;
+              int x = (i + 1);
+              for(
+                ;1;
+                x++
+              ) {
+                  PNode value = ((PNode*)pTree->items)[x];
 
-              if( value.type == Normal && expr_type == ENone ) 
-                {
-                  expr_type = ELit;
-                  continue;
+                  if( value.type == Normal && expr_type == ENone ) 
+                    {
+                      expr_type = ELit;
+                      continue;
+                    }
+                  else 
+                    { break; }
+
                 }
-              else 
-                { break; }
+              
+              for(
+                    int y = 0;
+                    y < varspos;
+                    y++
+                  ) {
+                      if( variables[y].level > scope )
+                        /*->*/ break;
 
+                      if( strcmp (variables[y].def.id, branch.saves.token.buffer) != 0 )
+                        /*->*/ continue; 
+                        
+                      switch(expr_type)
+                        {
+                          case ELit: 
+                            {
+                              fprintf (output, "store %s %s, ptr %c%d, align %d\n", 
+                                      variables[y].def.type,
+                                      ((PNode*)pTree->items)[++i].saves.token.buffer, '%',
+                                      variables[y].llvm,
+                                      llvm_sizeof (variables[y].def.type)
+                              );
+
+                              break;
+                            }
+                          default:
+                            {
+                              printf ("Ocorred a problem");
+                              exit (0);
+                              break;
+                            }
+                        }
+                  }
             }
-          
-          for(
+          else
+            {
+              PNode operator = ((PNode*)pTree->items)[i];
+              char *operation = opcodes[operator.type - Sub];
+
+              for(
                 int y = 0;
                 y < varspos;
                 y++
@@ -216,28 +268,53 @@ llGenerate (FILE *output, Vector *pTree)
 
                   if( strcmp (variables[y].def.id, branch.saves.token.buffer) != 0 )
                     /*->*/ continue; 
-                    
-                  switch(expr_type)
-                    {
-                      case ELit: 
-                        {
-                          fprintf (output, "store %s %s, ptr %c%d, align %d\n", 
-                                  variables[y].def.type,
-                                  ((PNode*)pTree->items)[++i].saves.token.buffer, '%',
-                                  variables[y].llvm,
-                                  llvm_sizeof (variables[y].def.type)
-                          );
 
-                          break;
-                        }
-                      default:
-                        {
-                          printf ("Ocorred a problem");
-                          exit (0);
-                          break;
-                        }
+                  char changed = 0;
+                  if( llvm_sizeof (variables[y].def.type) < 4 ) 
+                    {
+                      changed++;
+
+                      fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                              var++, 
+                              variables[y].def.type, '%',
+                              variables[y].llvm,
+                              llvm_sizeof (variables[y].def.type)
+                      );
+
+                      fprintf (output, "%c%d = sext %s %c%d to i32\n", '%',
+                              var,
+                              variables[y].def.type, '%',
+                              (var - 1)
+                      );
                     }
-              }
+
+                  fprintf (output, "%c%d = %s nsw i32 %c%d, %s\n", '%', 
+                          (var + changed),
+                          opcodes[operator.saves.token.type - Sub], '%',
+                          // variables[y].def.type, '%',
+                          (var + changed) - 1,
+                          ((PNode*)pTree->items)[++i].saves.token.buffer
+                  ); 
+
+                  if( changed ) 
+                    {
+                      fprintf (output, "%c%d = trunc i32 %c%d to %s\n", '%',
+                              (var + 2), '%', 
+                              (var + changed),
+                              variables[y].def.type
+                      );
+                    }
+
+                  fprintf (output, "store %s %c%d, ptr %c%d, align %d\n", 
+                          variables[y].def.type, '%',
+                          (var + changed + 1), '%',
+                          variables[y].llvm,
+                          llvm_sizeof (variables[y].def.type)
+                  );
+
+                  var += 2 + changed;
+                }
+            }
         }
       else
       if( branch.type == End )

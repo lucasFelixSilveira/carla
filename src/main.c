@@ -36,11 +36,11 @@ main()
 
   fclose (output);
   fclose (main);
-  
+
 # ifdef _WIN32 
-  system("cd bootstrapping & clang output.ll -o output.exe & cd ..");
+  system ("cd bootstrapping & clang output.ll -o output.exe & cd ..");
 # else
-  system("cd bootstrapping & clang output.ll -o output & cd ..");
+  system ("cd bootstrapping & clang output.ll -o output & cd ..");
 # endif
 
   return 0;
