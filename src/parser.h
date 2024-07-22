@@ -11,11 +11,30 @@
 
   typedef enum {
     Definition,
+    Expression,
     Lambda,
+    Normal,
     Begin,
     Magic,
     End
   } NType;
+
+  typedef enum {
+    Comparation,
+    Arithmetic,
+    Operation,
+    Binary
+  } expr_t;
+
+  typedef struct {
+    expr_t type;
+    char endded;
+    /* before -> operator -> after -> (...)? */
+    Token *before;
+    char  *operator;
+    Token *after;
+    char incomplete;
+  } _Expression; 
 
   typedef struct {
     char hopeful;
@@ -24,8 +43,10 @@
   } DMemory;
 
   typedef union {
+    _Expression expression;
     DMemory definition;
     char nothing;
+    Token token;
     char *magic;
   } Cache;
 

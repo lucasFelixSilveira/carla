@@ -3,10 +3,12 @@
 #include "parser.h"
 #include "debug.h"
 
-#define TYPES_LENGTH 5
+#define TYPES_LENGTH 7
 const char *types[TYPES_LENGTH] = {
   "Definition",
+  "Expression",
   "Lambda",
+  "Normal",
   "Begin",
   "Magic",
   "End"
@@ -34,6 +36,7 @@ pRoot (Vector *root)
           printf("\t%s: %s\n", "keyword", branch.saves.magic);
           break;
         } 
+        default: break;
       }
       
       printf("},\n");

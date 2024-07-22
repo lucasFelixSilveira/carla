@@ -64,6 +64,24 @@ isIdentifier (char buffer[])
   return 1;
 }
 
+/* Checks if the:
+  [0-9]+
+REGEX is match */
+char
+isNumeric (char buffer[])
+{
+  for(
+    int i = 0;
+    i < (strlen (buffer) - 1);
+    i++
+  ) {
+      if(! isdigit (buffer[i]) )
+        /*->*/ return 0;
+    }
+
+  return 1;
+}
+
 char
 isKeyword (char buffer[])
 { return inStaticSymbols (buffer, 0, KEYWORDS_LENGTH); }

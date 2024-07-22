@@ -107,7 +107,17 @@ pGenerate (Vector *root, Vector *tks)
           
           i++;
         }  
-      else { i++; };
+      else 
+      if( EQ(TKGET(i).buffer, ";") ) 
+        { i++; }
+      else 
+        { 
+          vector_push (root, (void*)(&(PNode) {
+            .scope = current,
+            .type = Normal,
+            .saves = (Cache) { .token = TKGET(i++) }
+          }));
+        };
 
       /*
         Expressions

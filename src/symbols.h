@@ -11,6 +11,7 @@ char inStaticSymbols (char buffer[], int x, int y);
 /* REGEX matches */
 char isIdentifier (char buffer[]);
 char isKeyword (char buffer[]);
+char isNumeric (char buffer[]);
 char isType (char buffer[]);
 
 #endif

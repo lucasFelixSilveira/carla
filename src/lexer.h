@@ -8,6 +8,7 @@
 
   typedef enum {
     Unknown,
+    Integer,
     Literal,
     Semi,
     Collon,
