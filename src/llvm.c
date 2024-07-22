@@ -34,7 +34,7 @@ llvm_sizeof (char *type)
 void 
 llGenerate (FILE *output, Vector *pTree) 
 {
-  int var = 0;
+  int var = 1;
 
   for(
     int i = 0;
@@ -85,6 +85,19 @@ llGenerate (FILE *output, Vector *pTree)
                 .llvm = var++
               };
 
+              PNode next = ((PNode*)pTree->items)[i + 1];
+              if( 
+                next.type == Normal 
+                && next.saves.token.type == Integer 
+              ) {
+                  fprintf (output, "store %s %s, ptr %c%d, align %d\n", 
+                          branch.saves.definition.type,
+                          next.saves.token.buffer, '%',
+                          (var - 1),
+                          llvm_sizeof (branch.saves.definition.type)        
+                  );
+                }
+              i++;
             }
         }
       else
@@ -97,7 +110,7 @@ llGenerate (FILE *output, Vector *pTree)
 
           if( next.type == Normal && next.saves.token.type == Integer ) 
             {
-              fprintf (output, "ret %s %s", 
+              fprintf (output, "ret %s %s\n", 
                       stacktype[--stackpos], 
                       next.saves.token.buffer
               );
@@ -111,7 +124,7 @@ llGenerate (FILE *output, Vector *pTree)
                 i++
               ) {
                   if( variables[i].level > scope )
-                    /*->*/ continue;
+                    /*->*/ break;
 
                   if( strcmp (variables[i].def.id, next.saves.token.buffer) != 0 )
                     /*->*/ continue; 
@@ -120,9 +133,16 @@ llGenerate (FILE *output, Vector *pTree)
                   int size_last = llvm_sizeof (stacktype[--stackpos]);
 
                   if( size_var == size_last ) {
+                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                            var, 
+                            stacktype[stackpos], '%',
+                            variables[i].llvm,
+                            size_last
+                    );
+
                     fprintf (output, "ret %s %c%d\n", 
-                            stacktype[stackpos], 
-                            '%', variables[i].llvm
+                            stacktype[stackpos], '%', 
+                            var++
                     );
                   } else if( size_var < size_last ) {
                     fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
@@ -157,9 +177,72 @@ llGenerate (FILE *output, Vector *pTree)
           stacktype[stackpos] = NULL;
         }
       else
+      /*
+        identifier operator(=) value
+      */
+      if( 
+        branch.type == Normal 
+        && branch.saves.token.type == Identifier 
+        && ((PNode*)pTree->items)[i + 1].type == Normal
+        && strcmp (((PNode*)pTree->items)[i + 1].saves.token.buffer, "=") == 0
+      ) {
+          i++;
+
+          expr_t expr_type = ENone;
+          int x = (i + 1);
+          for(
+            ;1;
+            x++
+          ) {
+              PNode value = ((PNode*)pTree->items)[x];
+
+              if( value.type == Normal && expr_type == ENone ) 
+                {
+                  expr_type = ELit;
+                  continue;
+                }
+              else 
+                { break; }
+
+            }
+          
+          for(
+                int y = 0;
+                y < varspos;
+                y++
+              ) {
+                  if( variables[y].level > scope )
+                    /*->*/ break;
+
+                  if( strcmp (variables[y].def.id, branch.saves.token.buffer) != 0 )
+                    /*->*/ continue; 
+                    
+                  switch(expr_type)
+                    {
+                      case ELit: 
+                        {
+                          fprintf (output, "store %s %s, ptr %c%d, align %d\n", 
+                                  variables[y].def.type,
+                                  ((PNode*)pTree->items)[++i].saves.token.buffer, '%',
+                                  variables[y].llvm,
+                                  llvm_sizeof (variables[y].def.type)
+                          );
+
+                          break;
+                        }
+                      default:
+                        {
+                          printf ("Ocorred a problem");
+                          exit (0);
+                          break;
+                        }
+                    }
+              }
+        }
+      else
       if( branch.type == End )
         { 
-          fprintf (output, "}");
+          fprintf (output, "}\n");
           scope--;
 
           for(

@@ -7,4 +7,6 @@ clear
 
 echo
 echo
-read -p "---- Status code: $?"
+read -p "Compiler: ---- Status code: [$?] ---- Press any key to test the LLVM binary"
+./bootstrapping/output.exe
+read -p "LLVM: ---- Status code: $?"

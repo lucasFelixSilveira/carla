@@ -1,6 +1,8 @@
 define i32 @main() {
-%0 = alloca i8, align 1
-%1 = load i8, ptr %0, align 1
-%2 = sext i8 %1 to i32
-ret i32 %2
+%1 = alloca i16, align 2
+store i16 4, ptr %1, align 2
+store i16 2, ptr %1, align 2
+%2 = load i16, ptr %1, align 2
+%3 = sext i16 %2 to i32
+ret i32 %3
 }

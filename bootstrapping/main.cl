@@ -1,4 +1,5 @@
 i32 main = () {
-  i8 status = 1;
+  i16 status = 4;
+  status = 2;
   return status;
 }
