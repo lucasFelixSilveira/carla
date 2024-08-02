@@ -227,6 +227,26 @@ llGenerate (FILE *output, Vector *pTree)
                             var + 1
                     );
                     var += 2;
+                  } else if( size_var > size_last ) {
+                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                            var, 
+                            variables[i].def.type, '%', 
+                            variables[i].llvm, 
+                            size_var
+                    );
+
+                    fprintf (output, "%c%d = trunc %s %c%d to %s\n", '%',
+                            var + 1, 
+                            variables[i].def.type, '%',
+                            var, 
+                            stacktype[stackpos]
+                    );
+
+                    fprintf (output, "ret %s %c%d\n", 
+                            stacktype[stackpos], '%',
+                            var + 1
+                    );
+                    var += 2;
                   } else {
                     fprintf (output, "ret %s\n", 
                             stacktype[stackpos]
@@ -345,6 +365,17 @@ llGenerate (FILE *output, Vector *pTree)
                               (var - 1)
                       );
                     }
+                  if( llvm_sizeof (variables[y].def.type) > 4 ) 
+                    {
+                      changed++;
+
+
+                      fprintf (output, "%c%d = trunc %s %c%d to i32\n", '%',
+                              var,
+                              variables[y].def.type, '%',
+                              (var - 1)
+                      );
+                    }
 
                   fprintf (output, "%c%d = %s nsw i32 %c%d, %s\n", '%', 
                           (var + changed),
@@ -356,8 +387,9 @@ llGenerate (FILE *output, Vector *pTree)
 
                   if( changed ) 
                     {
-                      fprintf (output, "%c%d = trunc i32 %c%d to %s\n", '%',
-                              (var + 2), '%', 
+                      fprintf (output, "%c%d = %s i32 %c%d to %s\n", '%',
+                              (var + 2), 
+                              (llvm_sizeof (variables[y].def.type) > 4 ? "sext" : "trunc"), '%', 
                               (var + changed),
                               variables[y].def.type
                       );
