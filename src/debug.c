@@ -23,23 +23,23 @@ pRoot (Vector *root)
     i++
   ) {
       PNode branch = ((PNode*)root->items)[i];
-      printf("Branch<%d> {\n\ttype: %s[%d]\n", i, types[branch.type], branch.type);
+      printf ("Branch<%d> {\n\ttype: %s[%d]\n", i, types[branch.type], branch.type);
       
       switch(branch.type) {
         case Definition: {
-          printf("\t%s: %s\n", "hopeful", branch.saves.definition.hopeful ? "true" : "false");
-          printf("\t%s: %s\n", "expect", branch.saves.definition.type);
-          printf("\t%s: %s\n", "identifier", branch.saves.definition.id);
+          printf ("\t%s: %s\n", "hopeful", branch.saves.definition.hopeful ? "true" : "false");
+          printf ("\t%s: %s\n", "expect", branch.saves.definition.type);
+          printf ("\t%s: %s\n", "identifier", branch.saves.definition.id);
           break;
         }
         case Magic: {
-          printf("\t%s: %s\n", "keyword", branch.saves.magic);
+          printf ("\t%s: %s\n", "keyword", branch.saves.magic);
           break;
         } 
         default: break;
       }
       
-      printf("},\n");
+      printf ("},\n");
     }
 }
 
@@ -52,14 +52,14 @@ pTokens (Vector *tks)
     i++
   ) {
       Token tk = ((Token*)tks->items)[i];
-      printf("Token<%d> {\n\ttype: %d\n\tbuffer: %s\n},\n", i, tk.type, tk.buffer);
+      printf ("Token<%d> {\n\ttype: %d\n\tbuffer: %s\n},\n", i, tk.type, tk.buffer);
     }
 }
 
 void 
 pHeader (int *count, char *header) 
 {
-  if( *count > 0 ) printf("\n\n");
-  printf("\n%s - [%d]\n\n", header, *count);
+  if( *count > 0 ) printf ("\n\n");
+  printf ("\n%s - [%d]\n\n", header, *count);
   count += 1;
 }

@@ -18,7 +18,7 @@ Variable variables[2048];
 int scope = 0;
 
 char *opcodes[4] = {
-  "sub", "add", "imul", "idiv"
+  "sub", "add", "mul", "div"
 };
 
 int
@@ -103,6 +103,63 @@ llGenerate (FILE *output, Vector *pTree)
                           llvm_sizeof (branch.saves.definition.type)        
                   );
                 }
+              else
+              if( 
+                next.type == Normal 
+                && next.saves.token.type == Identifier 
+              ) {
+                for(
+                  int i = 0;
+                  i < varspos;
+                  i++
+                ) {
+                    if( variables[i].level > scope )
+                      /*->*/ break;
+
+                    if( strcmp (variables[i].def.id, next.saves.token.buffer) != 0 )
+                      /*->*/ continue; 
+
+                    int size_var = llvm_sizeof (variables[i].def.type);
+                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                            var,
+                            variables[i].def.type, '%',
+                            variables[i].llvm,
+                            size_var    
+                    );
+
+                    int cast = 0;
+                    if( size_var > llvm_sizeof (branch.saves.definition.type) ) 
+                      {
+                        cast = 1;
+                        fprintf (output, "%c%d = trunc %s %c%d to %s\n", '%',
+                                var + 1,
+                                variables[i].def.type, '%',
+                                var,
+                                branch.saves.definition.type    
+                        );
+                      }
+                    else 
+                    if( size_var < llvm_sizeof (branch.saves.definition.type) ) 
+                      {
+                        cast = 1;
+                        fprintf (output, "%c%d = sext %s %c%d to %s\n", '%',
+                                var + 1,
+                                variables[i].def.type, '%',
+                                var,
+                                branch.saves.definition.type    
+                        );
+                      }
+
+                      fprintf (output, "store %s %c%d, ptr %c%d, align %d\n", 
+                              branch.saves.definition.type, '%',
+                              var + cast, '%',
+                              var - 1,
+                              llvm_sizeof (branch.saves.definition.type)        
+                      );
+
+                    var = var + 1 + cast;
+                  }
+                }
               i++;
             }
         }
@@ -182,10 +239,10 @@ llGenerate (FILE *output, Vector *pTree)
           i++;
           stacktype[stackpos] = NULL;
         }
-      else
       /*
-        identifier operator(=) value
+        identifier operator(=) number
       */
+      else
       if( 
         branch.type == Normal 
         && branch.saves.token.type == Identifier 
@@ -269,17 +326,18 @@ llGenerate (FILE *output, Vector *pTree)
                   if( strcmp (variables[y].def.id, branch.saves.token.buffer) != 0 )
                     /*->*/ continue; 
 
+                  fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                          var++, 
+                          variables[y].def.type, '%',
+                          variables[y].llvm,
+                          llvm_sizeof (variables[y].def.type)
+                  );
+
                   char changed = 0;
                   if( llvm_sizeof (variables[y].def.type) < 4 ) 
                     {
                       changed++;
 
-                      fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
-                              var++, 
-                              variables[y].def.type, '%',
-                              variables[y].llvm,
-                              llvm_sizeof (variables[y].def.type)
-                      );
 
                       fprintf (output, "%c%d = sext %s %c%d to i32\n", '%',
                               var,
@@ -307,7 +365,7 @@ llGenerate (FILE *output, Vector *pTree)
 
                   fprintf (output, "store %s %c%d, ptr %c%d, align %d\n", 
                           variables[y].def.type, '%',
-                          (var + changed + 1), '%',
+                          (var + changed + 1 + (changed ? 0 : -1)), '%',
                           variables[y].llvm,
                           llvm_sizeof (variables[y].def.type)
                   );
