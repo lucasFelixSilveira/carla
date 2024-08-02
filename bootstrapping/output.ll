@@ -12,15 +12,21 @@ store i8 %5, ptr %1, align 1
 %8 = sub nsw i32 %7, 7
 %9 = trunc i32 %8 to i8
 store i8 %9, ptr %1, align 1
-%10 = alloca i8, align 1
+%10 = alloca i16, align 2
 %11 = load i8, ptr %1, align 1
-store i8 %11, ptr %10, align 1
-%12 = load i8, ptr %10, align 1
-%13 = sext i8 %12 to i32
-%14 = sub nsw i32 %13, 1
-%15 = trunc i32 %14 to i8
-store i8 %15, ptr %10, align 1
-%16 = load i8, ptr %10, align 1
-%17 = sext i8 %16 to i32
-ret i32 %17
+%12 = sext i8 %11 to i16
+store i16 %12, ptr %10, align 2
+%13 = load i16, ptr %10, align 2
+%14 = sext i16 %13 to i32
+%15 = add nsw i32 %14, 3
+%16 = trunc i32 %15 to i16
+store i16 %16, ptr %10, align 2
+%17 = load i16, ptr %10, align 2
+%18 = sext i16 %17 to i32
+%19 = sub nsw i32 %18, 1
+%20 = trunc i32 %19 to i16
+store i16 %20, ptr %10, align 2
+%21 = load i16, ptr %10, align 2
+%22 = sext i16 %21 to i32
+ret i32 %22
 }

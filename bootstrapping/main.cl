@@ -3,7 +3,8 @@ i32 main = () {
   tosub = 2;
   tosub *= 4;
   tosub -= 7;
-  i8 status = tosub;
+  i16 status = tosub;
+  status += 3;
   status -= 1;
   return status;
 }
