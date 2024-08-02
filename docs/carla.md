@@ -23,7 +23,7 @@
 ```carla
 i32 main = () {}
 ```
-- Return type -> Name -> Operator(sign) -> (arguments) { ...code.. }?
+- Return type -> Name -> Operator(sign) -> (arguments) { ...code.. }
 
 ### Variables
 ```carla
