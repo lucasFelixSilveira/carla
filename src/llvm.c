@@ -207,50 +207,27 @@ llGenerate (FILE *output, Vector *pTree)
                             stacktype[stackpos], '%', 
                             var++
                     );
-                  } else if( size_var < size_last ) {
-                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
-                            var, 
-                            variables[i].def.type, '%', 
-                            variables[i].llvm, 
-                            size_var
-                    );
-
-                    fprintf (output, "%c%d = sext %s %c%d to %s\n", '%',
-                            var + 1, 
-                            variables[i].def.type, '%',
-                            var, 
-                            stacktype[stackpos]
-                    );
-
-                    fprintf (output, "ret %s %c%d\n", 
-                            stacktype[stackpos], '%',
-                            var + 1
-                    );
-                    var += 2;
-                  } else if( size_var > size_last ) {
-                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
-                            var, 
-                            variables[i].def.type, '%', 
-                            variables[i].llvm, 
-                            size_var
-                    );
-
-                    fprintf (output, "%c%d = trunc %s %c%d to %s\n", '%',
-                            var + 1, 
-                            variables[i].def.type, '%',
-                            var, 
-                            stacktype[stackpos]
-                    );
-
-                    fprintf (output, "ret %s %c%d\n", 
-                            stacktype[stackpos], '%',
-                            var + 1
-                    );
-                    var += 2;
                   } else {
-                    fprintf (output, "ret %s\n", 
+                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                            var, 
+                            variables[i].def.type, '%', 
+                            variables[i].llvm, 
+                            size_var
+                    );
+
+                    fprintf (output, "%c%d = %s %s %c%d to %s\n", '%',
+                            var + 1, 
+                            ( size_var > size_last ? "trunc" : "sext"),
+                            variables[i].def.type, '%',
+                            var, 
                             stacktype[stackpos]
                     );
+
+                    fprintf (output, "ret %s %c%d\n", 
+                            stacktype[stackpos], '%',
+                            var + 1
+                    );
+                    var += 2;
                   }
                   i++;
                 }
