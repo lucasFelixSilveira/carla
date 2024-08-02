@@ -16,3 +16,17 @@
     <td>Exeption[T, E]</td>
   </tr>
 </table>
+
+# Language structure
+
+### Functions
+```carla
+i32 main = () {}
+```
+- Return type -> Name -> Operator(sign) -> (arguments) { ...code.. }?
+
+### Variables
+```carla
+i32 status = 0;
+```
+- Type -> Identifier -> Operator(sign) -> Value
