@@ -64,16 +64,40 @@ llGenerate (FILE *output, Vector *pTree)
                       branch.saves.definition.id
               );
 
+              char *prefix = "";
+              int j;
               for(
-                int j = i + 2;
+                j = i + 2;
                 j < pTree->length;
                 j++ 
               ) {
                   PNode branch = ((PNode*)pTree->items)[j];
                   if( branch.type == Begin )
                     /*->*/ break;
+
+                  if( branch.type == Definition ) 
+                    {
+                      fprintf (output, "%s%s %c%d",
+                              prefix,
+                              branch.saves.definition.type, '%', 
+                              var
+                      );
+
+                      variables[varspos++] = (Variable) {
+                        .level = scope, 
+                        .def = branch.saves.definition,
+                        .llvm = var++
+                      };
+
+                      if( strlen (prefix) == 0 )
+                        {
+                          prefix = (char*)malloc (3);
+                          sprintf(prefix, ", ");
+                        }
+                    }
                 }
 
+              i = j;
               scope++;
               fprintf (output, ") {\n");
             }

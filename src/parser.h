@@ -29,6 +29,7 @@
     char hopeful;
     char *type;
     char *id;
+    char arg;
   } DMemory;
 
   typedef union {

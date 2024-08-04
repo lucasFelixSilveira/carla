@@ -50,6 +50,7 @@ pGenerate (Vector *root, Vector *tks)
         && ( 
           EQ(TKGET(POS(i, 2)).buffer, "=") 
           + EQ(TKGET(POS(i, 2)).buffer, ";") 
+          + EQ(TKGET(POS(i, 2)).buffer, ",") 
         ) > 0
       ) {   
           Token type = TKGET(i++);
@@ -60,11 +61,13 @@ pGenerate (Vector *root, Vector *tks)
             .type = Definition,
             .saves = (Cache) {
               .definition = (DMemory) {
-                .hopeful = EQ(TKGET(i++).buffer, "="),
-                .id = clone (id), .type = clone (type)
+                .hopeful = EQ(TKGET(i).buffer, "="),
+                .id = clone (id), .type = clone (type),
+                .arg = EQ(TKGET(i).buffer, ",") || EQ(TKGET(i).buffer, ")") 
               }
             }
           }));
+          i++;
         }
       
       else
