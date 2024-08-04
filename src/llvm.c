@@ -30,7 +30,7 @@ llvm_sizeof (char *type)
     return 2;
   if( strcmp (type, "i32") == 0 || strcmp (type, "u32") == 0 )
     return 4;
-  if( strcmp (type, "i64") == 0 || strcmp (type, "u64") == 0 )
+  if( strcmp (type, "i64") == 0 || strcmp (type, "u64") == 0 || strcmp (type, "ptr") == 0 )
     return 8;
   if( strcmp (type, "i128") == 0 || strcmp (type, "u128") == 0 )
     return 16;
@@ -66,28 +66,55 @@ llGenerate (FILE *output, Vector *pTree)
 
               char *prefix = "";
               int j;
+              int old = var;
+              i += 2;
               for(
-                j = i + 2;
+                j = i;
                 j < pTree->length;
                 j++ 
               ) {
                   PNode branch = ((PNode*)pTree->items)[j];
                   if( branch.type == Begin )
-                    /*->*/ break;
-
-                  if( branch.type == Definition ) 
                     {
-                      fprintf (output, "%s%s %c%d",
+                      fprintf (output, ") {\n");
+                      int x = i;
+                      if( x < j ) { var++; } 
+                      for(
+                        ;x < j;
+                        x++
+                      ) {
+                          PNode branch = ((PNode*)pTree->items)[x];
+
+                          fprintf (output, "%c%d = alloca %s, align %d\n", '%', 
+                                  var, 
+                                  branch.saves.definition.type,
+                                  llvm_sizeof (branch.saves.definition.type)
+                          );
+
+                          fprintf (output, "store %s %c%d, ptr %c%d, align %d\n",
+                                  branch.saves.definition.type, '%',
+                                  old + (x - i), '%',
+                                  var,
+                                  llvm_sizeof (branch.saves.definition.type)
+                          );
+
+                          variables[varspos++] = (Variable) {
+                            .level = scope, 
+                            .def = branch.saves.definition,
+                            .llvm = var++
+                          };
+                        }
+                      break;
+                    }
+
+                  if( branch.type == Definition && branch.saves.definition.arg ) 
+                    {
+                      fprintf (output, "%s%s noundef %c%d",
                               prefix,
                               branch.saves.definition.type, '%', 
-                              var
+                              var++
                       );
-
-                      variables[varspos++] = (Variable) {
-                        .level = scope, 
-                        .def = branch.saves.definition,
-                        .llvm = var++
-                      };
+                      
 
                       if( strlen (prefix) == 0 )
                         {
@@ -99,7 +126,6 @@ llGenerate (FILE *output, Vector *pTree)
 
               i = j;
               scope++;
-              fprintf (output, ") {\n");
             }
           else
             {
