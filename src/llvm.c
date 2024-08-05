@@ -11,11 +11,30 @@ typedef struct {
   int llvm;
 } Variable;
 
-unsigned short stackpos = 0;
-unsigned short varspos  = 0;
+typedef enum {
+  TArray
+} TType;
+
+typedef struct {
+  char *id;
+  char *respective;
+  char *util;
+  TType strict;
+} Type;
+
+typedef struct {
+  char *type;
+  char *length;
+} Vectorize;
+
+
+int stackpos = 0;
+int varspos  = 0;
+int types_len  = 0;
 char *stacktype[1024];
 Variable variables[2048];
-int scope = 0;
+Type types[4096];
+int scope = 1;
 
 char *opcodes[4] = {
   "sub", "add", "mul", "div"
@@ -38,7 +57,7 @@ llvm_sizeof (char *type)
 }
 
 void 
-llGenerate (FILE *output, Vector *pTree) 
+llGenerate (FILE *output, char *directory, Vector *pTree) 
 {
   int var = 1;
 
@@ -51,6 +70,34 @@ llGenerate (FILE *output, Vector *pTree)
       if( 
         branch.type == Definition
       ) {
+          if( branch.saves.definition.key_type )
+            {
+              PNode type = ((PNode*)pTree->items)[i + 3];
+              if( type.type == ArrayType )
+                {
+                  char *op1 = (char*)malloc (64);
+                  char *op2 = (char*)malloc (64);
+
+                  sprintf (op1, "%s*", type.saves.definition.array.type);
+                  sprintf (op2, "[%s x %s]", type.saves.definition.array.size, type.saves.definition.array.type);
+
+                  types[types_len++] = (Type) {
+                    .id = ((PNode*)pTree->items)[i + 1].saves.token.buffer,
+                    .util = type.saves.definition.array.size,
+                    .strict = TArray,
+                    .respective = strcmp (type.saves.definition.array.size, "undefined") == 0 ? op1 : op2
+                  };
+
+                  if( strcmp (type.saves.definition.array.size, "undefined") == 0 )
+                    { free (op2); }
+                  else 
+                    { free (op1); }
+                  i += 3;
+                }
+
+              continue;
+            }
+
           if( 
             branch.saves.definition.hopeful 
             && ((PNode*)pTree->items)[i + 1].type == Lambda 
@@ -109,9 +156,36 @@ llGenerate (FILE *output, Vector *pTree)
 
                   if( branch.type == Definition && branch.saves.definition.arg ) 
                     {
+                      char *type = branch.saves.definition.type;
+                      if( strcmp (branch.saves.definition.type, "ptr") == 0  )
+                        {
+                          int len = 0;
+                          Vectorize *internals;
+jmpp1: {}
+                          if( isType (branch.saves.definition.array.type) )
+                            {
+                              
+                              free(type);
+                              type = (char*)malloc (strlen (branch.saves.definition.array.type) + 2);
+                              sprintf(type, "%s*", branch.saves.definition.array.type);
+
+                              goto jmpp2;
+                            }             
+                          
+                          for(
+                            int k = 0;
+                            k < types_len;
+                            k++
+                          ) {
+                              
+                            }
+
+                        }
+jmpp2: {}
+
                       fprintf (output, "%s%s noundef %c%d",
                               prefix,
-                              branch.saves.definition.type, '%', 
+                              type, '%', 
                               var++
                       );
                       

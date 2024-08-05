@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include "parser.h"
 #include "symbols.h"
 
 const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
   = { 
     { .len = 6, .val = "return" },
-    { .len = 2, .val = "if" },
+    { .len = 4, .val = "type" },
     { .len = 4, .val = "else" },
+    { .len = 2, .val = "if" },
     /* types */
     { .len = 2, .val = "i8" },
     { .len = 2, .val = "u8" },
@@ -89,3 +91,22 @@ isKeyword (char buffer[])
 char
 isType (char buffer[])
 { return inStaticSymbols (buffer, KEYWORDS_LENGTH - 1, KEYWORDS_LENGTH + TYPES_LENGTH); }
+
+char
+isTypeStack (char buffer[], StackType stack)
+{
+  if( isType (buffer) )
+    /*->*/ return 1;
+
+  for(
+    int i = 0;
+    i < stack.length;
+    i++
+  ) {
+      char *type = stack.types[i];
+      if( strcmp (type, buffer) == 0 )
+        return 1;
+    }
+  
+  return 0;
+}

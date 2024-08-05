@@ -13,6 +13,8 @@
 #define CH(tk) tk.buffer[0]
 
 typedef enum { false = 0, true = 1 } bool;
+int type_len = 0;
+char *types[4096];
 
 char *
 clone(Token tk) 
@@ -43,7 +45,13 @@ pGenerate (Vector *root, Vector *tks)
       */
 
       if( 
-        TKGET(i).type == Identifier && isType (TKGET(i).buffer) && (tks->length >= (i + 2))
+        ( 
+          (
+            TKGET(i).type == Identifier 
+            && isTypeStack (TKGET(i).buffer, (StackType) { .types = types, .length = type_len }) 
+            && (tks->length >= (i + 2))
+          ) || EQ(TKGET(i).buffer, "type")
+        )
         /* Checks whether the next token is a valid identifier for a definition */
         && isIdentifier (TKGET(POS(i, 1)).buffer) 
         /* Checks if the next token is a value assignment operator or a semi */
@@ -56,6 +64,11 @@ pGenerate (Vector *root, Vector *tks)
           Token type = TKGET(i++);
           Token id = TKGET(i++);
 
+          if( EQ(TKGET(i - 2).buffer, "type") ) 
+            {
+              types[type_len++] = strdup (id.buffer);
+            }
+
           vector_push (root, (void*)(&(PNode) {
             .scope = current,
             .type = Definition,
@@ -63,7 +76,9 @@ pGenerate (Vector *root, Vector *tks)
               .definition = (DMemory) {
                 .hopeful = EQ(TKGET(i).buffer, "="),
                 .id = clone (id), .type = clone (type),
-                .arg = EQ(TKGET(i).buffer, ",") || EQ(TKGET(i).buffer, ")") 
+                .key_type = EQ(TKGET(i - 2).buffer, "type"),
+                .arg = EQ(TKGET(i).buffer, ",") || EQ(TKGET(i).buffer, ")"),
+                .array = NULL
               }
             }
           }));
@@ -84,11 +99,65 @@ pGenerate (Vector *root, Vector *tks)
       else
       if( EQ(TKGET(i).buffer, "(") ) 
         {
+
+          if( 
+            (
+              TKGET(POS(i,1)).type == Integer
+              || EQ(TKGET(POS(i,1)).buffer, "_")
+            ) 
+            && EQ(TKGET(POS(i,2)).buffer, ":")
+            && TKGET(POS(i,3)).type == Identifier
+            && EQ(TKGET(POS(i,4)).buffer, ")")
+          ) {
+              if( TKGET(POS(i,5)).type == Identifier )
+                {
+                  vector_push (root, (void*)(&(PNode) {
+                    .scope = current,
+                    .type = Definition,
+                    .saves = (Cache) {
+                      .definition = (DMemory) {
+                        .hopeful = EQ(TKGET(i).buffer, "="),
+                        .id = clone (TKGET(POS(i,5))), .type = "ptr", .key_type = 0,
+                        .arg = EQ(TKGET(POS(i,6)).buffer, ",") || EQ(TKGET(POS(i,6)).buffer, ")"),
+                        .array = (AMemory) {
+                          .size = TKGET(POS(i,1)).type == Integer ? TKGET(POS(i,1)).buffer : "undefined",
+                          .type = TKGET(POS(i,3)).buffer
+                        }
+                      }
+                    }
+                  }));
+
+                  i += EQ(TKGET(POS(i,6)).buffer, ",") || EQ(TKGET(POS(i,6)).buffer, ")") ? 2 : 1;
+                }
+              else
+                {
+                  vector_push (root, (void*)(&(PNode) {
+                    .scope = current,
+                    .type = ArrayType,
+                    .saves = (Cache) { 
+                      .array = (AMemory) {
+                        .size = TKGET(POS(i,1)).type == Integer ? TKGET(POS(i,1)).buffer : "undefined",
+                        .type = TKGET(POS(i,3)).buffer
+                      }
+                    }
+                  }));
+                }
+
+              i += 5;
+              continue;
+            }
+
           int x = 1;
-          while( EQ(TKGET(POS(i, x)).buffer, ")") == 0 ) 
-            { x++; }
+          goto jump_steps;
+next_parenthesis: {}
+x++;
+jump_steps: {}
+
+          while( 
+            EQ(TKGET(POS(i, x)).buffer, ")") == 0 
+          ) { x++; }
           
-          if( EQ(TKGET(POS(i, POS(x, 1))).buffer, "{") )
+          if( EQ(TKGET(POS(i, POS(x,1))).buffer, "{") )
             {
               vector_push (root, (void*)(&(PNode) {
                 .scope = current,
@@ -96,8 +165,9 @@ pGenerate (Vector *root, Vector *tks)
                 .saves = (Cache) { .nothing = 0 }
               }));
             }
-          
-          i++;
+          else 
+            /*->*/ goto next_parenthesis;
+          i += 1;
         }
       else
       if( EQ(TKGET(i).buffer, "{") || EQ(TKGET(i).buffer, "}") ) 

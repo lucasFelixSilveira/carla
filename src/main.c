@@ -27,7 +27,7 @@ main()
   #endif
 
   FILE *output = fopen ("./bootstrapping/output.ll", "w+");
-  llGenerate (output, &root);
+  llGenerate (output, "./bootstrapping/output.ll", &root);
 
   for( int i = 0; i < tokens.length; i++ )
     /*->*/ free (((Token*) tokens.items)[i].buffer);

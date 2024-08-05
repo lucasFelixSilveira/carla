@@ -1,12 +1,14 @@
 #include <stdio.h>
+#include <string.h>
 #include "vector.h"
 #include "parser.h"
 #include "debug.h"
 
-#define TYPES_LENGTH 7
+#define TYPES_LENGTH 8
 const char *types[TYPES_LENGTH] = {
   "Definition",
   "Expression",
+  "ArrayType",
   "Lambda",
   "Normal",
   "Begin",
@@ -30,8 +32,22 @@ pRoot (Vector *root)
           printf ("\t%s: %s\n", "hopeful", branch.saves.definition.hopeful ? "true" : "false");
           printf ("\t%s: %s\n", "expect", branch.saves.definition.type);
           printf ("\t%s: %s\n", "identifier", branch.saves.definition.id);
+          printf ("\t%s: %s\n", "type", branch.saves.definition.key_type ? "true" : "false");
+          printf ("\t%s: %s\n", "argument", branch.saves.definition.arg ? "true" : "false");
+
+          if( strcmp (branch.saves.definition.type, "ptr") == 0 ) 
+            {
+              printf ("\t%s: {\n", "array");
+              printf ("\t\t%s: %s\n", "length", branch.saves.definition.array.size);
+              printf ("\t\t%s: %s\n", "type", branch.saves.definition.array.type);
+              printf ("\t}\n");
+            }
           break;
         }
+        case Normal: {
+          printf ("\t%s: %s\n", "buffer", branch.saves.token.buffer);
+          break;
+        } 
         case Magic: {
           printf ("\t%s: %s\n", "keyword", branch.saves.magic);
           break;

@@ -4,6 +4,11 @@
 # include "vector.h"
 # include "lexer.h"
 
+  typedef struct {
+    char **types;
+    int length;
+  } StackType;
+
   typedef enum { 
     Global, 
     Internal
@@ -12,6 +17,7 @@
   typedef enum {
     Definition,
     Expression,
+    ArrayType,
     Lambda,
     Normal,
     Begin,
@@ -26,14 +32,22 @@
   } expr_t;
 
   typedef struct {
+    char *size;
+    char *type;
+  } AMemory;
+
+  typedef struct {
+    AMemory array;
     char hopeful;
     char *type;
     char *id;
     char arg;
+    char key_type;
   } DMemory;
 
   typedef union {
     DMemory definition;
+    AMemory array;
     char nothing;
     Token token;
     char *magic;
