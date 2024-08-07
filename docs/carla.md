@@ -21,9 +21,15 @@
 
 ### Functions
 ```carla
-i32 main = () {}
+i32 main = (void) {}
 ```
 - Return type -> Name -> Operator(sign) -> (arguments) { ...code... }
+
+#### Arguments struct
+```carla
+type string = (_:i8);
+i32 main = (i32 argv, (_:string) args) {}
+```
 
 ### Variables
 ```carla
