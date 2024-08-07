@@ -18,6 +18,7 @@ typedef enum {
 typedef struct {
   char *id;
   char *respective;
+  char *natural;
   char *util;
   TType strict;
 } Type;
@@ -30,7 +31,7 @@ typedef struct {
 
 int stackpos = 0;
 int varspos  = 0;
-int types_len  = 0;
+int types_len = 0;
 char *stacktype[1024];
 Variable variables[2048];
 Type types[4096];
@@ -72,28 +73,28 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
       ) {
           if( branch.saves.definition.key_type )
             {
-              PNode type = ((PNode*)pTree->items)[i + 3];
-              if( type.type == ArrayType )
+              PNode t = ((PNode*)pTree->items)[i+1];
+              if( t.type == ArrayType )
                 {
                   char *op1 = (char*)malloc (64);
                   char *op2 = (char*)malloc (64);
 
-                  sprintf (op1, "%s*", type.saves.definition.array.type);
-                  sprintf (op2, "[%s x %s]", type.saves.definition.array.size, type.saves.definition.array.type);
+                  sprintf (op1, "%s*", t.saves.definition.array.type);
+                  sprintf (op2, "[%s x %s]", t.saves.definition.array.size, t.saves.definition.array.type);
 
-                  types[types_len++] = (Type) {
-                    .id = ((PNode*)pTree->items)[i + 1].saves.token.buffer,
-                    .util = type.saves.definition.array.size,
-                    .strict = TArray,
-                    .respective = strcmp (type.saves.definition.array.size, "undefined") == 0 ? op1 : op2
-                  };
+                  fprintf(output, "%c%s = type %s\n", '%',
+                          branch.saves.definition.id,
+                          strcmp (t.saves.definition.array.size, "undefined") == 0 ? op1 : op2
+                  );
 
-                  if( strcmp (type.saves.definition.array.size, "undefined") == 0 )
+                  if( strcmp (t.saves.definition.array.size, "undefined") == 0 )
                     { free (op2); }
                   else 
                     { free (op1); }
-                  i += 3;
                 }
+              else {
+                fprintf (output, "\n\ndo nothing\n\n");
+              }
 
               continue;
             }
@@ -156,45 +157,59 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                   if( branch.type == Definition && branch.saves.definition.arg ) 
                     {
-                      char *type = branch.saves.definition.type;
-                      if( strcmp (branch.saves.definition.type, "ptr") == 0  )
-                        {
-                          int len = 0;
-                          Vectorize *internals;
-jmpp1: {}
-                          if( isType (branch.saves.definition.array.type) )
-                            {
-                              
-                              free(type);
-                              type = (char*)malloc (strlen (branch.saves.definition.array.type) + 2);
-                              sprintf(type, "%s*", branch.saves.definition.array.type);
-
-                              goto jmpp2;
-                            }             
-                          
-                          for(
-                            int k = 0;
-                            k < types_len;
-                            k++
-                          ) {
-                              
-                            }
-
-                        }
-jmpp2: {}
-
-                      fprintf (output, "%s%s noundef %c%d",
-                              prefix,
-                              type, '%', 
-                              var++
-                      );
-                      
-
-                      if( strlen (prefix) == 0 )
+                      if( strlen (prefix) == 1 )
                         {
                           prefix = (char*)malloc (3);
                           sprintf(prefix, ", ");
                         }
+
+                      if( isType (branch.saves.definition.type) )
+                        {
+
+                          fprintf (output, "%s%s noundef %c%d",
+                                  prefix,
+                                  branch.saves.definition.type, '%', 
+                                  var++
+                          );
+
+                        }     
+                      else 
+                      if( strcmp (branch.saves.definition.type, "ptr") == 0 )
+                        {
+
+                          if( strcmp (branch.saves.definition.array.size, "undefined") == 0 )
+                            {
+                              fprintf (output, "%s%c%s* noundef %c%d",
+                                      prefix, '%',
+                                      branch.saves.definition.array.type, '%', 
+                                      var++
+                              );
+                            }
+                          else
+                            {
+                              fprintf (output, "%s[%s x %c%s] noundef %c%d",
+                                      prefix, 
+                                      branch.saves.array.size, '%',
+                                      branch.saves.definition.array.type, '%', 
+                                      var++
+                              );
+                            }
+
+                        }        
+                      else
+                        {
+
+                          fprintf (output, "%s%c%s noundef %c%d",
+                                  prefix, '%',
+                                  type, '%', 
+                                  var++
+                          );
+
+                        }
+
+                      if( strlen (prefix) == 0 )
+                        /*->*/ prefix = ".";
+
                     }
                 }
 

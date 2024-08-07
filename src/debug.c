@@ -5,7 +5,7 @@
 #include "debug.h"
 
 #define TYPES_LENGTH 8
-const char *types[TYPES_LENGTH] = {
+const char *__Types[TYPES_LENGTH] = {
   "Definition",
   "Expression",
   "ArrayType",
@@ -25,7 +25,7 @@ pRoot (Vector *root)
     i++
   ) {
       PNode branch = ((PNode*)root->items)[i];
-      printf ("Branch<%d> {\n\ttype: %s[%d]\n", i, types[branch.type], branch.type);
+      printf ("Branch<%d> {\n\ttype: %s[%d]\n", i, __Types[branch.type], branch.type);
       
       switch(branch.type) {
         case Definition: {
@@ -42,6 +42,13 @@ pRoot (Vector *root)
               printf ("\t\t%s: %s\n", "type", branch.saves.definition.array.type);
               printf ("\t}\n");
             }
+          break;
+        }
+        case ArrayType: {
+          printf ("\t%s: {\n", "array");
+          printf ("\t\t%s: %s\n", "length", branch.saves.definition.array.size);
+          printf ("\t\t%s: %s\n", "type", branch.saves.definition.array.type);
+          printf ("\t}\n");
           break;
         }
         case Normal: {
