@@ -1,4 +1,4 @@
-./output.exe teste cuzin ok
+./output.exe teste teste kokok 
 echo status code: $?
 
 read

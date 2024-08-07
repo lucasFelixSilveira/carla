@@ -100,6 +100,9 @@ pGenerate (Vector *root, Vector *tks)
       if( EQ(TKGET(i).buffer, "(") ) 
         {
 
+          if( EQ(TKGET(POS(i,1)).buffer, "void") && EQ(TKGET(POS(i,2)).buffer, ")") && EQ(TKGET(POS(i,3)).buffer, "{") ) 
+            /*->*/ goto only_add;
+
           if( 
             (
               TKGET(POS(i,1)).type == Integer
@@ -159,6 +162,7 @@ jump_steps: {}
           
           if( EQ(TKGET(POS(i, POS(x,1))).buffer, "{") )
             {
+only_add: {}
               vector_push (root, (void*)(&(PNode) {
                 .scope = current,
                 .type = Lambda,

@@ -44,6 +44,7 @@ char *opcodes[4] = {
 int
 llvm_sizeof (char *type)
 {
+  printf("recebido: %s", type);
   if( strcmp (type, "i8") == 0 || strcmp (type, "u8") == 0 )
     return 1;
   if( strcmp (type, "i16") == 0 || strcmp (type, "u16") == 0 )
@@ -132,6 +133,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                         x++
                       ) {
                           PNode branch = ((PNode*)pTree->items)[x];
+                          if( branch.type != Definition ) 
+                            /*->*/ break;
 
                           fprintf (output, "%c%d = alloca %s, align %d\n", '%', 
                                   var, 
