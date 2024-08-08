@@ -1,4 +1,4 @@
-./output.exe teste teste kokok 
+./output.exe teste testando
 echo status code: $?
 
 read

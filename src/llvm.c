@@ -37,7 +37,7 @@ Variable variables[2048];
 Type types[4096];
 int scope = 1;
 
-char *opcodes[4] = {
+char opcodes[4][3] = {
   "sub", "add", "mul", "div"
 };
 

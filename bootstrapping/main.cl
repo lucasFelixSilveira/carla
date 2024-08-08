@@ -1,5 +1,5 @@
-type string = (128:i8);
+type string = (_:i8);
 
-i32 main = (i32 argv, (4:string) args) {
+i32 main = (i64 argv, (23:string) args) {
   return argv;
 }

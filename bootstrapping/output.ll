@@ -1,9 +1,10 @@
-%string = type [128 x i8]
-define i32 @main(i32 noundef %1, [4 x %string] noundef %2) {
-%4 = alloca i32, align 4
-store i32 %1, ptr %4, align 4
+%string = type i8*
+define i32 @main(i64 noundef %1, [23 x %string] noundef %2) {
+%4 = alloca i64, align 8
+store i64 %1, ptr %4, align 8
 %5 = alloca ptr, align 8
 store ptr %2, ptr %5, align 8
-%6 = load i32, ptr %4, align 4
-ret i32 %6
+%6 = load i64, ptr %4, align 8
+%7 = trunc i64 %6 to i32
+ret i32 %7
 }
