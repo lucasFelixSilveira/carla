@@ -4,8 +4,9 @@
 #include "parser.h"
 #include "debug.h"
 
-#define TYPES_LENGTH 8
+#define TYPES_LENGTH 9
 const char *__Types[TYPES_LENGTH] = {
+  "LiteralType",
   "Definition",
   "Expression",
   "ArrayType",
@@ -49,6 +50,10 @@ pRoot (Vector *root)
           printf ("\t\t%s: %s\n", "length", branch.saves.definition.array.size);
           printf ("\t\t%s: %s\n", "type", branch.saves.definition.array.type);
           printf ("\t}\n");
+          break;
+        }
+        case LiteralType: {
+          printf ("\t%s: %s\n", "type", branch.saves.lit);
           break;
         }
         case Normal: {

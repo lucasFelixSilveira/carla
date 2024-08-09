@@ -84,7 +84,19 @@ pGenerate (Vector *root, Vector *tks)
           }));
           i++;
         }
-      
+      else
+      if(
+        TKGET(i).type == Identifier 
+        && isTypeStack (TKGET(i).buffer, (StackType) { .types = types, .length = type_len })
+      ) {
+          vector_push (root, (void*)(&(PNode) {
+            .scope = current,
+            .type = LiteralType,
+            .saves = (Cache) {
+              .lit = clone (TKGET(i++))
+            }
+          }));
+        }
       else
       if( TKGET(i).type == Keyword ) 
         {
@@ -160,7 +172,7 @@ jump_steps: {}
             EQ(TKGET(POS(i, x)).buffer, ")") == 0 
           ) { x++; }
           
-          if( EQ(TKGET(POS(i, POS(x,1))).buffer, "{") )
+          if( EQ(TKGET(POS(i, POS(x,1))).buffer, "{") || EQ(TKGET(POS(i, POS(x,1))).buffer, "cut") )
             {
 only_add: {}
               vector_push (root, (void*)(&(PNode) {

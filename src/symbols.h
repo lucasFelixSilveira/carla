@@ -1,6 +1,6 @@
 #ifndef SYMBOLS_H
 # define SYMBOLS_H
-# define KEYWORDS_LENGTH 4
+# define KEYWORDS_LENGTH 6
 # define TYPES_LENGTH 11
 # include "parser.h"
 

@@ -15,6 +15,7 @@
   } Scope;
 
   typedef enum {
+    LiteralType,
     Definition,
     Expression,
     ArrayType,
@@ -51,6 +52,7 @@
     char nothing;
     Token token;
     char *magic;
+    char *lit;
   } Cache;
 
   typedef struct {

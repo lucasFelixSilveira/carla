@@ -44,7 +44,6 @@ char opcodes[4][3] = {
 int
 llvm_sizeof (char *type)
 {
-  printf("recebido: %s", type);
   if( strcmp (type, "i8") == 0 || strcmp (type, "u8") == 0 )
     return 1;
   if( strcmp (type, "i16") == 0 || strcmp (type, "u16") == 0 )
@@ -83,7 +82,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                   sprintf (op1, "%s*", t.saves.definition.array.type);
                   sprintf (op2, "[%s x %s]", t.saves.definition.array.size, t.saves.definition.array.type);
 
-                  fprintf(output, "%c%s = type %s\n", '%',
+                  fprintf (output, "%c%s = type %s\n", '%',
                           branch.saves.definition.id,
                           strcmp (t.saves.definition.array.size, "undefined") == 0 ? op1 : op2
                   );
@@ -107,8 +106,13 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               char *type = branch.saves.definition.type;
               char *id = branch.saves.definition.id;
               
+              char *keyOfDef = i == 0 ? "define" 
+                             : ((PNode*)pTree->items)[i - 1].type == Magic ? strcmp (((PNode*)pTree->items)[i - 1].saves.magic, "extern") == 0 ? "declare" 
+                                                                           : "define"                                                          : "define";
+
               stacktype[stackpos++] = strdup (type);
-              fprintf (output, "define %s @%s(", 
+              fprintf (output, "%s %s @%s(", 
+                      keyOfDef,
                       branch.saves.definition.type, 
                       branch.saves.definition.id
               );
@@ -123,8 +127,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 j++ 
               ) {
                   PNode branch = ((PNode*)pTree->items)[j];
-                  if( branch.type == Begin )
-                    {
+                  if( 
+                    branch.type == Begin
+                    && strcmp (keyOfDef, "define") == 0 
+                  ) {
                       fprintf (output, ") {\n");
                       int x = i;
                       if( x < j ) { var++; } 
@@ -158,8 +164,74 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       break;
                     }
 
-                  if( branch.type == Definition && branch.saves.definition.arg ) 
-                    {
+                  if( 
+                    (branch.type != LiteralType && branch.type != ArrayType)
+                    && strcmp (keyOfDef, "declare") == 0 
+                  ) {
+                      fprintf(output, ") nounwind\n");
+                      break;
+                    }
+
+                  if( 
+                    (branch.type == LiteralType || branch.type == ArrayType)
+                    && strcmp (keyOfDef, "declare") == 0 
+                  ) {
+                      if( strlen (prefix) == 1 )
+                        {
+                          prefix = (char*)malloc (3);
+                          sprintf(prefix, ", ");
+                        }
+
+                      if( branch.type == LiteralType && isType (branch.saves.lit) )
+                        {
+
+                          fprintf (output, "%s%s nocapture",
+                                  prefix,
+                                  branch.saves.lit
+                          );
+
+                        }     
+                      else 
+                      if( branch.type == ArrayType )
+                        {
+
+                          if( strcmp (branch.saves.array.size, "undefined") == 0 )
+                            {
+                              fprintf (output, "%s%c%s* nocapture",
+                                      prefix, '%',
+                                      branch.saves.array.type
+                              );
+                            }
+                          else
+                            {
+                              fprintf (output, "%s[%s x %c%s] nocapture",
+                                      prefix, 
+                                      branch.saves.array.size, '%',
+                                      branch.saves.array.type
+                              );
+                            }
+
+                        }        
+                      else
+                        {
+
+                          fprintf (output, "%s%c%s nocapture",
+                                  prefix, '%',
+                                  branch.saves.lit
+                          );
+
+                        }
+
+                      if( strlen (prefix) == 0 )
+                        /*->*/ prefix = ".";
+
+                    }
+
+                  if( 
+                    branch.type == Definition 
+                    && branch.saves.definition.arg 
+                    && strcmp (keyOfDef, "define") == 0 
+                  ) {
                       if( strlen (prefix) == 1 )
                         {
                           prefix = (char*)malloc (3);
@@ -204,7 +276,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                           fprintf (output, "%s%c%s noundef %c%d",
                                   prefix, '%',
-                                  type, '%', 
+                                  branch.saves.definition.type, '%', 
                                   var++
                           );
 
