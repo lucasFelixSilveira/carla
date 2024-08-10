@@ -49,7 +49,8 @@ i32 main = (i32 argv, (_:string) args) {
   string arg = (1:args);
   puts arg;
   return 0;
-}```
+}
+```
 - And run the executable using:
 ```sh-session
 ./executable "Hello, world!"
