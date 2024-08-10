@@ -1,9 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "vector.h"
 #include "parser.h"
 #include "symbols.h"
+
+typedef enum {
+  List,
+  Num,
+  String,
+  Char
+} Basic;
 
 typedef struct {
   DMemory def;
@@ -11,35 +19,79 @@ typedef struct {
   int llvm;
 } Variable;
 
-typedef enum {
-  TArray
-} TType;
 
-typedef struct {
-  char *id;
-  char *respective;
-  char *natural;
-  char *util;
-  TType strict;
-} Type;
-
-typedef struct {
-  char *type;
-  char *length;
-} Vectorize;
-
-
-int stackpos = 0;
-int varspos  = 0;
+int stackpos  = 0;
+int varspos   = 0;
 int types_len = 0;
+int fun_len   = 0;
 char *stacktype[1024];
 Variable variables[2048];
-Type types[4096];
+char **types[1024];
+char *functions[4096];
 int scope = 1;
 
 char opcodes[4][3] = {
   "sub", "add", "mul", "div"
 };
+
+char** 
+str_split(char* a_str, const char a_delim)
+{
+  char** result    = 0;
+  size_t count     = 0;
+  char* tmp        = a_str;
+  char* last_comma = 0;
+  char delim[2];
+  delim[0] = a_delim;
+  delim[1] = 0;
+
+  while (*tmp)
+    {
+      if (a_delim == *tmp)
+        {
+          count++;
+          last_comma = tmp;
+        }
+      tmp++;
+    }
+
+  count += last_comma < (a_str + strlen (a_str) - 1);
+  count++;
+
+  result = malloc (sizeof(char*) * count);
+
+  if (result)
+    {
+      size_t idx  = 0;
+      char* token = strtok (a_str, delim);
+
+      while (token)
+        {
+          assert (idx < count);
+          *(result + idx++) = strdup (token);
+          token = strtok (0, delim);
+        }
+      assert (idx == count - 1);
+      *(result + idx) = 0;
+    }
+
+  return result;
+}
+
+int
+isFunction (char *f_) 
+{
+  for(
+    int i = 0;
+    i < fun_len;
+    i++
+  ) {
+      if( strcmp (functions[i], f_) == 0 )
+        /*->*/ return 1;
+    }
+  
+  return 0;
+}
 
 int
 llvm_sizeof (char *type)
@@ -54,7 +106,70 @@ llvm_sizeof (char *type)
     return 8;
   if( strcmp (type, "i128") == 0 || strcmp (type, "u128") == 0 )
     return 16;
+  
+  for(
+    int i = 0; 
+    i < types_len;
+    i++
+  ) {
+      char **__type = types[i]; 
+      
+      if( strcmp (__type[0], type) == 0 && '*' == __type[1][strlen (__type[1]) - 1] )
+        return 8;
+
+      free (__type);
+    }
   return 0;
+}
+
+char * 
+concat(const char* str1, const char* str2) 
+{
+  size_t len1 = strlen (str1);
+  size_t len2 = strlen (str2);
+  size_t len = len1 + len2 + 1; 
+
+  char* result = (char*)malloc (len * sizeof(char));
+
+  strcpy (result, str1);
+  strcat (result, str2);
+
+  return result;
+}
+
+
+char *
+substr(int pos, int len, int total, char string[])
+{
+
+    char *substring = (char*)malloc (total);
+
+    int i = 0;
+    while (i < len) {
+        substring[i] = string[pos + i - 1];
+        i++;
+    }
+
+    substring[i] = '\0';
+
+    return substring;
+}
+
+char *
+back_pointer (char *type)
+{
+  for(
+    int i = 0; 
+    i < types_len;
+    i++
+  ) {
+      char **__type = types[i]; 
+      
+      if( strcmp (__type[0], type) == 0 && '*' == __type[1][strlen (__type[1]) - 1] )
+        return substr (1, strlen (__type[1]) - 1, strlen (__type[1]), __type[1]);
+
+      free (__type);
+    }
 }
 
 void 
@@ -87,6 +202,9 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                           strcmp (t.saves.definition.array.size, "undefined") == 0 ? op1 : op2
                   );
 
+                  types[types_len][0] = branch.saves.definition.id;
+                  types[types_len++][1] = strcmp (t.saves.definition.array.size, "undefined") == 0 ? op1 : op2;
+
                   if( strcmp (t.saves.definition.array.size, "undefined") == 0 )
                     { free (op2); }
                   else 
@@ -117,6 +235,13 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       branch.saves.definition.id
               );
 
+              functions[fun_len++] = branch.saves.definition.id;
+              variables[varspos++] = (Variable) {
+                .level = scope, 
+                .def = branch.saves.definition,
+                .llvm = 0
+              };
+
               char *prefix = "";
               int j;
               int old = var;
@@ -142,14 +267,19 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                           if( branch.type != Definition ) 
                             /*->*/ break;
 
+                          char *t = strcmp (branch.saves.definition.type, "ptr") == 0 ? ( strcmp (branch.saves.definition.array.size, "undefined") == 0 ? concat(isType (branch.saves.definition.array.type) ? branch.saves.definition.array.type : concat("%", branch.saves.definition.array.type), "*")
+                                                                                                                                                        : concat("[", concat(branch.saves.definition.array.size, concat(" x ", isType(branch.saves.definition.array.type) ? concat(branch.saves.definition.array.type, "]") : concat("%", concat(branch.saves.definition.array.type, "]"))))) )
+                                                                                      : isType(branch.saves.definition.type) ? branch.saves.definition.type 
+                                                                                                                             : concat("%", branch.saves.definition.type);
+
                           fprintf (output, "%c%d = alloca %s, align %d\n", '%', 
                                   var, 
-                                  branch.saves.definition.type,
+                                  t,
                                   llvm_sizeof (branch.saves.definition.type)
                           );
 
                           fprintf (output, "store %s %c%d, ptr %c%d, align %d\n",
-                                  branch.saves.definition.type, '%',
+                                  t, '%',
                                   old + (x - i), '%',
                                   var,
                                   llvm_sizeof (branch.saves.definition.type)
@@ -185,7 +315,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       if( branch.type == LiteralType && isType (branch.saves.lit) )
                         {
 
-                          fprintf (output, "%s%s nocapture",
+                          fprintf (output, "%s%s",
                                   prefix,
                                   branch.saves.lit
                           );
@@ -197,14 +327,14 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                           if( strcmp (branch.saves.array.size, "undefined") == 0 )
                             {
-                              fprintf (output, "%s%c%s* nocapture",
+                              fprintf (output, "%s%c%s*",
                                       prefix, '%',
                                       branch.saves.array.type
                               );
                             }
                           else
                             {
-                              fprintf (output, "%s[%s x %c%s] nocapture",
+                              fprintf (output, "%s[%s x %c%s]",
                                       prefix, 
                                       branch.saves.array.size, '%',
                                       branch.saves.array.type
@@ -215,7 +345,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       else
                         {
 
-                          fprintf (output, "%s%c%s nocapture",
+                          fprintf (output, "%s%c%s",
                                   prefix, '%',
                                   branch.saves.lit
                           );
@@ -293,11 +423,23 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
             }
           else
             {
-              fprintf (output, "%c%d = alloca %s, align %d\n", '%', 
-                      var, 
-                      branch.saves.definition.type,
-                      llvm_sizeof (branch.saves.definition.type)
-              );
+
+              if( isType (branch.saves.definition.type) )
+                {
+                  fprintf (output, "%c%d = alloca %s, align %d\n", '%', 
+                          var,
+                          branch.saves.definition.type,
+                          llvm_sizeof (branch.saves.definition.type)
+                  );
+                }
+              else 
+                {
+                  fprintf (output, "%c%d = alloca %c%s, align %d\n", '%', 
+                          var, '%',
+                          branch.saves.definition.type,
+                          llvm_sizeof (branch.saves.definition.type)
+                  );
+                }
               
               variables[varspos++] = (Variable) {
                 .level = scope, 
@@ -306,6 +448,76 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               };
 
               PNode next = ((PNode*)pTree->items)[i + 1];
+              if( 
+                next.type == ArrayType &&
+                strcmp (next.saves.array.size, "undefined") != 0
+              ) {
+                  char *array = next.saves.array.type;
+                  char *index = next.saves.array.size;
+                  
+                  for(
+                    int i = 0;
+                    i < varspos;
+                    i++
+                  ) {
+                      if( variables[i].level > scope )
+                        /*->*/ break;
+
+                      if( strcmp (variables[i].def.id, array) != 0 )
+                        /*->*/ continue; 
+                    
+                      char *prefix;
+                      prefix[0] = '\0';
+                      if(! isType (variables[i].def.array.type) )
+                        /*->*/ prefix = "%";
+
+                      char *op1 = (char*)malloc (64);
+                      char *op2 = (char*)malloc (64);
+                      char *op3 = (char*)malloc (64);
+
+                      sprintf (op1, "%s%s", prefix, variables[i].def.array.type);
+                      sprintf (op2, "%s%s*", prefix, variables[i].def.array.type);
+                      sprintf (op3, "[%s x %s%s]", variables[i].def.array.size, prefix, variables[i].def.array.type);
+
+                      fprintf (output, "%c%d = load %s, ptr %c%d, align 8\n", '%',
+                              var,
+                              strcmp (variables[i].def.array.size, "undefined") == 0 ? strdup (op2) : strdup (op3), '%',
+                              variables[i].llvm
+                      );
+
+                      fprintf (output, "%c%d = getelementptr inbounds %s, %s %c%d, i64 %s\n", '%',
+                              var+1,
+                              op1, 
+                              strcmp (variables[i].def.array.size, "undefined") == 0 ? strdup (op2) : strdup (op3), '%',
+                              var,
+                              index
+                      );
+
+                      fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                              var + 2,
+                              isType (variables[i].def.array.type) ? variables[i].def.array.type : concat("%", variables[i].def.array.type), '%',
+                              var + 1,
+                              llvm_sizeof (variables[i].def.array.type)
+                      );
+
+                      free (op1);
+                      free (op2);
+                      free (op3);
+
+                      fprintf (output, "store %s%s %c%d, ptr %c%d, align %d\n", 
+                              prefix,
+                              variables[i].def.array.type, '%',
+                              var + 2, '%',
+                              (var - 1),
+                              llvm_sizeof (branch.saves.definition.type)        
+                      );
+
+                      var+=3;
+                    }
+
+                  free (array);
+                  free (index);
+                }
               if( 
                 next.type == Normal 
                 && next.saves.token.type == Integer 
@@ -453,6 +665,124 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
       /*
         identifier operator(=) number
       */
+      else
+        if( 
+          branch.type == Normal 
+          && branch.saves.token.type == Identifier 
+          && isFunction (branch.saves.token.buffer)
+        ) {
+             for(
+                int x = 0;
+                x < varspos;
+                x++
+              ) {
+                  if( variables[x].level > scope )
+                    /*->*/ break;
+
+                  if( strcmp (variables[x].def.id, branch.saves.token.buffer) != 0 )
+                    /*->*/ continue; 
+
+                  int *variables_id = (int*)malloc (sizeof (int) * 128);
+
+                  for(
+                    int j = 1;
+                    1;
+                    j++
+                  ) {
+                      if(
+                        ((PNode*)pTree->items)[i + j].type == Magic
+                        && ((PNode*)pTree->items)[i + j].saves.token.type != Identifier  
+                      ) /*->*/ break; 
+
+                      for(
+                        int v = 0;
+                        v < varspos;
+                        v++
+                      ) {
+                          if( variables[v].level > scope )
+                            /*->*/ break;
+
+                          if( strcmp (variables[v].def.id, ((PNode*)pTree->items)[i + j].saves.token.buffer) != 0 )
+                            /*->*/ continue;
+
+                          fprintf (output, "%c%d = load ", '%',
+                                  var);
+
+                          if( isType (variables[v].def.type) )
+                            {
+                              fprintf (output, "%s, ptr", variables[v].def.type);
+                            }
+                          else if( strcmp (variables[v].def.type, "ptr") != 0 )
+                            {
+                              fprintf (output, "%c%s, ptr", '%', variables[v].def.type);
+                            }
+
+                          fprintf (output, " %c%d, align %d\n", '%', 
+                                  variables[v].llvm, 
+                                  llvm_sizeof (variables[v].def.type)
+                          );
+
+                          variables_id[j-1] = var++; 
+                        }
+                    }
+                  
+                  fprintf (output, "call %s @%s(",
+                          variables[x].def.type,
+                          variables[x].def.id
+                  );
+
+                  int tosum = 0;
+
+                  for(
+                    int j = 1;
+                    1;
+                    j++
+                  ) {
+                      if(
+                        ((PNode*)pTree->items)[i + j].type == Magic
+                        && ((PNode*)pTree->items)[i + j].saves.token.type != Identifier  
+                      ) /*->*/ break; 
+
+                      for(
+                        int v = 0;
+                        v < varspos;
+                        v++
+                      ) {
+                          if( variables[v].level > scope )
+                            /*->*/ break;
+
+                          if( strcmp (variables[v].def.id, ((PNode*)pTree->items)[i + j].saves.token.buffer) != 0 )
+                            /*->*/ continue;
+
+                          if( j != 1 ) {
+                            fprintf (output, ", ");
+                          }
+
+                          if( isType (variables[v].def.type) )
+                            {
+                              fprintf (output, "%s", variables[v].def.type);
+                            }
+                          else if( strcmp (variables[v].def.type, "ptr") != 0 )
+                            {
+                              fprintf (output, "%c%s", '%', variables[v].def.type);
+                            }
+
+                          fprintf (output, " %c%d", '%',
+                                  variables_id[j-1]
+                          );
+
+                          tosum++;
+
+                        }
+                          
+                    }
+
+                  free (variables_id);
+                  i += tosum;
+
+                  fprintf (output, ")\n");
+                }
+          }
       else
       if( 
         branch.type == Normal 
