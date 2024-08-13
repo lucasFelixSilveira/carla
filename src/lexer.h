@@ -1,6 +1,6 @@
 #ifndef LEXER_H
 # define LEXER_H
-# define DBG_LEXER 1
+# define DBG_LEXER 0
 # include <stdio.h>
 # include "vector.h"
 # define OP_CONSTANT 69

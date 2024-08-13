@@ -8,6 +8,7 @@
     "parser.h": "c",
     "llvm.h": "c",
     "xstring": "c",
-    "symbols.h": "c"
+    "symbols.h": "c",
+    "debug.h": "c"
   }
 }

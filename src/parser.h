@@ -1,6 +1,6 @@
 #ifndef PARSER_H
 # define PARSER_H
-# define DBG_PARSER 1
+# define DBG_PARSER 0
 # include "vector.h"
 # include "lexer.h"
 

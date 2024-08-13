@@ -12,5 +12,5 @@ store %string* %2, ptr %5, align 8
 store %string %9, ptr %6, align 8
 %10 = load %string, ptr %6, align 8
 call i32 @puts(%string %10)
-ret i32 0
+ret i32 1
 }
