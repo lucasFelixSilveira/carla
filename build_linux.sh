@@ -18,7 +18,7 @@ recursive "./src"
 
 object_files=$(find ./src -name '*.o')
 
-gcc $object_files -ggdb -o ./carla
+gcc $object_files -ggdb -o ./carla || exit 1
 
 echo "Compiled!"
 echo
