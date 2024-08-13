@@ -6,6 +6,11 @@
 #include "vector.h"
 #include "symbols.h"
 
+#ifndef _WIN32
+# include <wctype.h>
+#endif
+
+
 char buffer[2048];
 size_t len = 0;
 
