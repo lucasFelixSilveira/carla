@@ -827,13 +827,12 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                           if( variables[v].level > scope )
                             /*->*/ break;
 
-                          printf ("TokenID:%d - %s\n", i + j, ((PNode*)pTree->items)[i + j].saves.token.buffer);
-
                           if( strcmp (variables[v].def.id, ((PNode*)pTree->items)[i + j].saves.token.buffer) != 0 )
                             /*->*/ continue;
 
                           fprintf (output, "%c%d = load ", '%',
-                                  var);
+                                  var
+                          );
 
                           if( isType (variables[v].def.type) )
                             {
@@ -865,10 +864,11 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     1;
                     j++
                   ) {
+
                       if(
                         ((PNode*)pTree->items)[i + j].type == Magic
                         && ((PNode*)pTree->items)[i + j].saves.token.type != Identifier  
-                      ) /*->*/ break; 
+                      ) /*->*/ break;
 
                       for(
                         int v = 0;
@@ -1058,7 +1058,6 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
       if( branch.type == End )
         { 
           Scopes scope_info = scopes[(scopes_position--) - 1];
-          printf ("%d", scope_info.type);
           if( scope_info.type == Scope_if ) 
             {
               PNode next = ((PNode*)pTree->items)[++i];
@@ -1074,11 +1073,13 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                   };
 
                   var++;
+                  i++;
                 }
               else {
                 fprintf (output, "br label %cE%d\n", '%',
                         scope_info.label
                 );
+                scope--;
               }
 
               fprintf (output, "E%d:\n",
@@ -1093,13 +1094,14 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 scope_info.label,
                 scope_info.label
               );
+
+              scope--;
             }
           else 
           if( scope_info.type == Scope_fun ) 
             {
               fprintf (output, "}\n");
             }
-          scope--;
 
           for(
             int i = varspos;
@@ -1113,7 +1115,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 }
 
               if( variables[i].level < scope )
-                /*->*/ break;
+                /*->*/ continue;
             }
         }
     }
