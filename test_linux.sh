@@ -1,4 +1,4 @@
-./build_linux.sh
+./build_linux.sh || exit 1
 mv ./carla.exe ./bin
 
 read -p "Press any key to run file"

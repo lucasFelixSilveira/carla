@@ -2,23 +2,15 @@
 
 echo "Compiling.."
 
-recursive() {
-  local directory="$1"
-
-  for file in "$directory"/*; do
-    if [ -d "$file" ]; then
-      recursive "$file"
-    elif [ "${file##*.}" == "c" ]; then
-      gcc -c -ggdb "$file" -o "${file%.c}.o"
-    fi
-  done
-}
-
-recursive "./src"
+cfiles=$(find src/ -name '*.c')
+for file in $cfiles; do
+	echo $file
+	gcc -c -ggdb $file -o ${file%.c}.o
+done
 
 object_files=$(find ./src -name '*.o')
 
-gcc $object_files -ggdb -o ./carla
+gcc $object_files -ggdb -o ./carla || exit 1
 
 echo "Compiled!"
 echo
