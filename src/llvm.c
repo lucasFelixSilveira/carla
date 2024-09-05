@@ -13,11 +13,23 @@ typedef enum {
   Char
 } Basic;
 
+typedef enum {
+  Scope_if,
+  Scope_else,
+  Scope_fun
+} scope_t;
+
+typedef struct {
+  scope_t type;
+  int label;
+} Scopes;
+
 typedef struct {
   DMemory def;
   int level;
   int llvm;
 } Variable;
+
 
 
 int stackpos  = 0;
@@ -29,10 +41,14 @@ Variable variables[2048];
 char **types[1024];
 char *functions[4096];
 int scope = 1;
+int label = 0;
 
 char opcodes[4][3] = {
   "sub", "add", "mul", "div"
 };
+
+Scopes scopes[2048]; // { ID, Respective }
+size_t scopes_position = 0;
 
 char** 
 str_split(char* a_str, const char a_delim)
@@ -240,6 +256,11 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 .level = scope, 
                 .def = branch.saves.definition,
                 .llvm = 0
+              };
+
+              scopes[scopes_position++] = (Scopes) {
+                .type = Scope_fun,
+                .label = 0
               };
 
               char *prefix = "";
@@ -466,7 +487,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       if( strcmp (variables[i].def.id, array) != 0 )
                         /*->*/ continue; 
                     
-                      char *prefix;
+                      char *prefix = malloc(sizeof(char) * 16);
                       prefix[0] = '\0';
                       if(! isType (variables[i].def.array.type) )
                         /*->*/ prefix = "%";
@@ -662,6 +683,110 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           i++;
           stacktype[stackpos] = NULL;
         }
+      else
+      if( 
+        branch.type == Magic 
+        && strcmp (branch.saves.magic, "if") == 0
+      ) {
+          PNode next = ((PNode*)pTree->items)[i + 1];
+          for(
+            int x = 0;
+            x < varspos;
+            x++
+          ) {
+              if( variables[x].level > scope )
+                /*->*/ break;
+
+              if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
+                /*->*/ continue; 
+
+              PNode pOperator = ((PNode*)pTree->items)[i + 2];
+              char *operator;
+
+              
+              char *content = pOperator.saves.token.buffer; 
+              if( strcmp (content, "==") == 0 ){
+                operator = "eq";
+              } 
+              else
+              if( strcmp (content, ">=") == 0 ){
+                operator = "sge";
+              } 
+              else
+              if( strcmp (content, ">") == 0 ){
+                operator = "sgt";
+              } 
+              else
+              if( strcmp (content, "<=") == 0 ){
+                operator = "sle";
+              } 
+              else
+               if( strcmp (content, "<") == 0 ){
+                operator = "slt";
+              } 
+              else
+              if( strcmp (content, "!=") == 0 ){
+                operator = "ne";
+              } 
+
+              fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%', 
+                      var, 
+                      variables[x].def.type, '%',
+                      variables[x].llvm,
+                      llvm_sizeof (variables[x].def.type)
+              );
+
+              
+
+              PNode toCompare = ((PNode*)pTree->items)[i + 3];
+              if( toCompare.type == Normal && toCompare.saves.token.type == Identifier ) 
+                {
+                  for(
+                    int j = 0;
+                    j < varspos;
+                    j++
+                  ) {
+                      if( variables[j].level > scope )
+                        /*->*/ break;
+
+                      if( strcmp (variables[j].def.id, toCompare.saves.token.buffer) != 0 )
+                        /*->*/ continue; 
+
+                      
+                    }
+                }
+              else
+              if( toCompare.type == Normal && toCompare.saves.token.type == Integer ) 
+                {
+                  fprintf (output, "%c%d = icmp %s %s %c%d, %s\n", '%', 
+                          (var + 1),
+                          operator, 
+                          variables[x].def.type, '%',
+                          var,
+                          toCompare.saves.token.buffer
+                  );
+
+                  fprintf (output, "br i1 %c%d, label %cL%d, label %cE%d\n", '%',
+                          (var + 1), '%',
+                          label, '%',
+                          label
+                  );
+
+                  fprintf (output, "L%d:\n",
+                          label 
+                  );
+
+                  scopes[scopes_position++] = (Scopes) {
+                    .type = Scope_if,
+                    .label = label
+                  };
+                }
+              
+              i += 4;
+              var += 3;
+              label++;
+            }
+        }
       /*
         identifier operator(=) number
       */
@@ -701,6 +826,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       ) {
                           if( variables[v].level > scope )
                             /*->*/ break;
+
+                          printf ("TokenID:%d - %s\n", i + j, ((PNode*)pTree->items)[i + j].saves.token.buffer);
 
                           if( strcmp (variables[v].def.id, ((PNode*)pTree->items)[i + j].saves.token.buffer) != 0 )
                             /*->*/ continue;
@@ -930,7 +1057,48 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
       else
       if( branch.type == End )
         { 
-          fprintf (output, "}\n");
+          Scopes scope_info = scopes[(scopes_position--) - 1];
+          printf ("%d", scope_info.type);
+          if( scope_info.type == Scope_if ) 
+            {
+              PNode next = ((PNode*)pTree->items)[++i];
+              if( next.type == Magic && strcmp (next.saves.magic, "else") == 0 )
+                {
+                  fprintf (output, "br label %cC%d\n", '%',
+                          label
+                  );
+
+                  scopes[scopes_position++] = (Scopes) {
+                    .type = Scope_else,
+                    .label = label++
+                  };
+
+                  var++;
+                }
+              else {
+                fprintf (output, "br label %cE%d\n", '%',
+                        scope_info.label
+                );
+              }
+
+              fprintf (output, "E%d:\n",
+                      scope_info.label
+              );
+              
+            }
+          else 
+          if( scope_info.type == Scope_else ) 
+            {
+              fprintf (output, "br label %cC%d\nC%d:\n", '%',
+                scope_info.label,
+                scope_info.label
+              );
+            }
+          else 
+          if( scope_info.type == Scope_fun ) 
+            {
+              fprintf (output, "}\n");
+            }
           scope--;
 
           for(
