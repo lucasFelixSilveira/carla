@@ -2,14 +2,19 @@ type string = (_:i8);
 
 extern i32 puts = (string) cut
 
-i32 main = (i32 argv) {
+i32 main = () {
 
   string msg = "Testando"
+  string segundo = "Second"
   i8 counter = 0
-  while counter < 3 {
-    puts msg cut
-    counter += 1;
+  while counter < 4 {
+    if counter != 2 {
+      puts msg cut
+    } else {
+      puts segundo cut
+    }
+    counter += 1
   }
 
-  return 0;
+  return 0
 }

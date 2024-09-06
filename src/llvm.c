@@ -817,7 +817,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                           label
                   );
 
-                  fprintf (output, "L%d:\n",
+                  fprintf (output, "\nL%d:\n",
                           label 
                   );
 
@@ -830,6 +830,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               i += 4;
               var += 3;
               label++;
+              scope++;
             }
         }
       else
@@ -938,6 +939,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               i += 4;
               var += 3;
               label++;
+              scope++;
             }
         }
       /*
@@ -1249,12 +1251,14 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                         scope_info.label
                 );
                 scope--;
+                i--; 
+                var+=2;
               }
 
               fprintf (output, "\nE%d:\n",
                       scope_info.label
               );
-              
+                          
             }
           else 
           if( scope_info.type == Scope_else ) 
