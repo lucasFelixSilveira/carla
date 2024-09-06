@@ -39,6 +39,7 @@
   typedef struct {
     TokenType type;
     char *buffer;
+    size_t real;
   } Token;
 
   void tokenize (FILE *file, Vector *tks);

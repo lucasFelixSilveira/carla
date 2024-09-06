@@ -165,7 +165,7 @@ pGenerate (Vector *root, Vector *tks)
           int x = 1;
           goto jump_steps;
 next_parenthesis: {}
-x++;
+          x++;
 jump_steps: {}
 
           while( 

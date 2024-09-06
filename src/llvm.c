@@ -16,6 +16,7 @@ typedef enum {
 typedef enum {
   Scope_if,
   Scope_else,
+  Scope_while,
   Scope_fun
 } scope_t;
 
@@ -30,8 +31,6 @@ typedef struct {
   int llvm;
 } Variable;
 
-
-
 int stackpos  = 0;
 int varspos   = 0;
 int types_len = 0;
@@ -42,6 +41,7 @@ char **types[1024];
 char *functions[4096];
 int scope = 1;
 int label = 0;
+int arr_id = 0;
 
 char opcodes[4][3] = {
   "sub", "add", "mul", "div"
@@ -169,6 +169,30 @@ substr(int pos, int len, int total, char string[])
     substring[i] = '\0';
 
     return substring;
+}
+
+void 
+fheader(FILE *file, char *new_line) 
+{
+  fseek(file, 0, SEEK_SET);
+  fseek(file, 0, SEEK_END);
+  long file_size = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  char *original_content = malloc(file_size + 1);
+  fread(original_content, 1, file_size, file);
+  original_content[file_size] = '\0';
+
+  fseek(file, 0, SEEK_SET);
+
+  size_t new_line_length = strlen(new_line);
+  size_t total_content_length = new_line_length + file_size + 2;
+
+  fprintf(file, "%s\n%s", new_line, original_content);
+
+  free(original_content);
+
+  fseek(file, 0, SEEK_END);
 }
 
 char *
@@ -539,13 +563,34 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                   free (array);
                   free (index);
                 }
-              if( 
+              else if( 
                 next.type == Normal 
                 && next.saves.token.type == Integer 
               ) {
                   fprintf (output, "store %s %s, ptr %c%d, align %d\n", 
                           branch.saves.definition.type,
                           next.saves.token.buffer, '%',
+                          (var - 1),
+                          llvm_sizeof (branch.saves.definition.type)        
+                  );
+                }
+              if( // Alocar a string
+                next.type == Normal 
+                && next.saves.token.type == Literal 
+              ) {
+                  const char *predef = "$arr_9999999999 = comdat any\n@arr_9999999999 = linkonce_odr dso_local unnamed_addr constant [999999 x i8] c\"\\00\", comdat, align 1\n";
+                  char *content = (char*)malloc (strlen (predef) + strlen (next.saves.token.buffer));
+                  
+                  sprintf (content, "$arr_%d = comdat any\n@arr_%d = linkonce_odr dso_local unnamed_addr constant [%d x i8] c\"%s\\00\", comdat, align 1",
+                          arr_id,
+                          arr_id,
+                          (int) next.saves.token.real,
+                          strdup (next.saves.token.buffer)
+                  );
+                  fheader (output, content);
+
+                  fprintf (output, "store i8* @arr_%d, ptr %c%d, align %d\n", 
+                          arr_id++, '%',
                           (var - 1),
                           llvm_sizeof (branch.saves.definition.type)        
                   );
@@ -787,6 +832,114 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               label++;
             }
         }
+      else
+      if( 
+        branch.type == Magic 
+        && strcmp (branch.saves.magic, "while") == 0
+      ) {
+          PNode next = ((PNode*)pTree->items)[i + 1];
+          for(
+            int x = 0;
+            x < varspos;
+            x++
+          ) {
+              if( variables[x].level > scope )
+                /*->*/ break;
+
+              if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
+                /*->*/ continue; 
+
+              PNode pOperator = ((PNode*)pTree->items)[i + 2];
+              char *operator;
+
+              
+              char *content = pOperator.saves.token.buffer; 
+              if( strcmp (content, "==") == 0 ){
+                operator = "eq";
+              } 
+              else
+              if( strcmp (content, ">=") == 0 ){
+                operator = "sge";
+              } 
+              else
+              if( strcmp (content, ">") == 0 ){
+                operator = "sgt";
+              } 
+              else
+              if( strcmp (content, "<=") == 0 ){
+                operator = "sle";
+              } 
+              else
+               if( strcmp (content, "<") == 0 ){
+                operator = "slt";
+              } 
+              else
+              if( strcmp (content, "!=") == 0 ){
+                operator = "ne";
+              } 
+
+
+
+              fprintf (output, "br label %cE%d\n\nE%d:\n%c%d = load %s, ptr %c%d, align %d\n", '%',
+                      label, 
+                      label, '%',
+                      var, 
+                      variables[x].def.type, '%',
+                      variables[x].llvm,
+                      llvm_sizeof (variables[x].def.type)
+              );
+
+              
+
+              PNode toCompare = ((PNode*)pTree->items)[i + 3];
+              if( toCompare.type == Normal && toCompare.saves.token.type == Identifier ) 
+                {
+                  for(
+                    int j = 0;
+                    j < varspos;
+                    j++
+                  ) {
+                      if( variables[j].level > scope )
+                        /*->*/ break;
+
+                      if( strcmp (variables[j].def.id, toCompare.saves.token.buffer) != 0 )
+                        /*->*/ continue; 
+
+                      
+                    }
+                }
+              else
+              if( toCompare.type == Normal && toCompare.saves.token.type == Integer ) 
+                {
+                  fprintf (output, "%c%d = icmp %s %s %c%d, %s\n", '%', 
+                          (var + 1),
+                          operator, 
+                          variables[x].def.type, '%',
+                          var,
+                          toCompare.saves.token.buffer
+                  );
+
+                  fprintf (output, "br i1 %c%d, label %cL%d, label %cC%d\n", '%',
+                          (var + 1), '%',
+                          label, '%',
+                          label
+                  );
+
+                  fprintf (output, "\nL%d:\n",
+                          label 
+                  );
+
+                  scopes[scopes_position++] = (Scopes) {
+                    .type = Scope_while,
+                    .label = label
+                  };
+                }
+              
+              i += 4;
+              var += 3;
+              label++;
+            }
+        }
       /*
         identifier operator(=) number
       */
@@ -908,6 +1061,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                   i += tosum;
 
                   fprintf (output, ")\n");
+                  var++;
                 }
           }
       else
@@ -981,7 +1135,23 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           else
             {
               PNode operator = ((PNode*)pTree->items)[i];
-              char *operation = opcodes[operator.type - Sub];
+              char *opcode;
+
+              switch (operator.saves.token.type - Sub)
+                {
+                  case 0: {
+                    opcode = "sub";
+                  } break;
+                  case 1: {
+                    opcode = "add";
+                  } break;
+                  case 2: {
+                    opcode = "mul";
+                  } break;
+                  case 3: {
+                    opcode = "div";
+                  } break;
+                }
 
               for(
                 int y = 0;
@@ -1027,8 +1197,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                   fprintf (output, "%c%d = %s nsw i32 %c%d, %s\n", '%', 
                           (var + changed),
-                          opcodes[operator.saves.token.type - Sub], '%',
-                          // variables[y].def.type, '%',
+                          opcode, '%',
                           (var + changed) - 1,
                           ((PNode*)pTree->items)[++i].saves.token.buffer
                   ); 
@@ -1082,7 +1251,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 scope--;
               }
 
-              fprintf (output, "E%d:\n",
+              fprintf (output, "\nE%d:\n",
                       scope_info.label
               );
               
@@ -1090,7 +1259,17 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           else 
           if( scope_info.type == Scope_else ) 
             {
-              fprintf (output, "br label %cC%d\nC%d:\n", '%',
+              fprintf (output, "br label %cC%d\n\nC%d:\n", '%',
+                scope_info.label,
+                scope_info.label
+              );
+
+              scope--;
+            }
+          else
+          if( scope_info.type == Scope_while ) 
+            {
+              fprintf (output, "br label %cE%d\n\nC%d:\n", '%',
                 scope_info.label,
                 scope_info.label
               );
