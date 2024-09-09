@@ -14,6 +14,7 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 3, .val = "cut" },
     { .len = 2, .val = "if" },
     /* types */
+    { .len = 2, .val = "i1" },
     { .len = 2, .val = "i8" },
     { .len = 2, .val = "u8" },
     { .len = 3, .val = "i16" },
@@ -24,7 +25,8 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 3, .val = "u64" },
     { .len = 3, .val = "f32" },
     { .len = 3, .val = "f64" },
-    { .len = 4, .val = "void" }
+    { .len = 4, .val = "void" },
+    { .len = 5, .val = "label" }
   };
 
 char 

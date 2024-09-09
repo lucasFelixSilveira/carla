@@ -6,15 +6,16 @@ i32 main = () {
 
   string msg = "Testando"
   string segundo = "Second"
-  i8 counter = 0
-  while counter < 4 {
-    if counter != 2 {
+  i32 counter = 0
+  i8 test = 2;
+  i16 mds = 4;
+  while counter < mds {
+    if counter != test {
       puts msg cut
     } else {
       puts segundo cut
     }
     counter += 1
   }
-
-  return 0
+  return test
 }

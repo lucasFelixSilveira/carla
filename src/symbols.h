@@ -1,7 +1,7 @@
 #ifndef SYMBOLS_H
 # define SYMBOLS_H
 # define KEYWORDS_LENGTH 7
-# define TYPES_LENGTH 11
+# define TYPES_LENGTH 13
 # include "parser.h"
 
 typedef struct { char len; char *val; } Key;

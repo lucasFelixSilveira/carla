@@ -797,7 +797,78 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       if( strcmp (variables[j].def.id, toCompare.saves.token.buffer) != 0 )
                         /*->*/ continue; 
 
+                      if( variables[j].def.type[0] != 'i' ) 
+                        /*->*/ break;
+                    
+                      int size = llvm_sizeof (variables[j].def.type);
+                      int start = llvm_sizeof (variables[x].def.type);
                       
+                      fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%', 
+                        (var + 1),
+                        variables[j].def.type, '%',
+                        variables[j].llvm,
+                        size
+                      );
+
+                      var += 2;
+
+                      if( size > x ) 
+                        {
+                          fprintf (output, "%c%d = sext %s %c%d to %s\n", '%', 
+                            var,
+                            variables[x].def.type, '%',
+                            (var - 2),
+                            variables[j].def.type
+                          );
+                          var++;
+
+                          fprintf (output, "%c%d = icmp %s %s %c%d, %c%d\n", '%', 
+                                  (var + 1),
+                                  operator, 
+                                  variables[j].def.type, '%',
+                                  (var - 2), '%',
+                                  (var - 1)
+                          );
+                        }
+                      else if( size < start )
+                        {
+                          fprintf (output, "%c%d = sext %s %c%d to %s\n", '%', 
+                            var,
+                            variables[j].def.type, '%',
+                            (var - 1),
+                            variables[x].def.type
+                          );
+                          var++;
+
+                          fprintf (output, "%c%d = icmp %s %s %c%d, %c%d\n", '%', 
+                                  (var + 1),
+                                  operator, 
+                                  variables[x].def.type, '%',
+                                  (var - 3), '%',
+                                  (var - 1)
+                          );
+                        }
+
+                      fprintf (output, "br i1 %c%d, label %cL%d, label %cE%d\n", '%',
+                              (var + 1), '%',
+                              label, '%',
+                              label
+                      );
+
+                      fprintf (output, "\nL%d:\n",
+                              label 
+                      );
+
+                      scopes[scopes_position++] = (Scopes) {
+                        .type = Scope_if,
+                        .label = label
+                      };
+                      
+                      i += 4;
+                      var += 2;
+                      label++;
+                      scope++;
+
                     }
                 }
               else
@@ -825,12 +896,14 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     .type = Scope_if,
                     .label = label
                   };
+
+                  i += 4;
+                  var += 3;
+                  label++;
+                  scope++;
                 }
               
-              i += 4;
-              var += 3;
-              label++;
-              scope++;
+             
             }
         }
       else
@@ -906,7 +979,78 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       if( strcmp (variables[j].def.id, toCompare.saves.token.buffer) != 0 )
                         /*->*/ continue; 
 
+                      if( variables[j].def.type[0] != 'i' ) 
+                        /*->*/ break;
+                    
+                      int size = llvm_sizeof (variables[j].def.type);
+                      int start = llvm_sizeof (variables[x].def.type);
                       
+                      fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%', 
+                        (var + 1),
+                        variables[j].def.type, '%',
+                        variables[j].llvm,
+                        size
+                      );
+
+                      var += 2;
+
+                      if( size > x ) 
+                        {
+                          fprintf (output, "%c%d = sext %s %c%d to %s\n", '%', 
+                            var,
+                            variables[x].def.type, '%',
+                            (var - 2),
+                            variables[j].def.type
+                          );
+                          var++;
+
+                          fprintf (output, "%c%d = icmp %s %s %c%d, %c%d\n", '%', 
+                                  (var + 1),
+                                  operator, 
+                                  variables[j].def.type, '%',
+                                  (var - 2), '%',
+                                  (var - 1)
+                          );
+                        }
+                      else if( size < start )
+                        {
+                          fprintf (output, "%c%d = sext %s %c%d to %s\n", '%', 
+                            var,
+                            variables[j].def.type, '%',
+                            (var - 1),
+                            variables[x].def.type
+                          );
+                          var++;
+
+                          fprintf (output, "%c%d = icmp %s %s %c%d, %c%d\n", '%', 
+                                  (var + 1),
+                                  operator, 
+                                  variables[x].def.type, '%',
+                                  (var - 3), '%',
+                                  (var - 1)
+                          );
+                        }
+
+                      fprintf (output, "br i1 %c%d, label %cL%d, label %cC%d\n", '%',
+                              (var + 1), '%',
+                              label, '%',
+                              label
+                      );
+
+                      fprintf (output, "\nL%d:\n",
+                              label 
+                      );
+
+                      scopes[scopes_position++] = (Scopes) {
+                        .type = Scope_while,
+                        .label = label
+                      };
+                      
+                      i += 4;
+                      var += 2;
+                      label++;
+                      scope++;
+
                     }
                 }
               else
@@ -934,12 +1078,14 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     .type = Scope_while,
                     .label = label
                   };
+
+                  i += 4;
+                  var += 3;
+                  label++;
+                  scope++;
                 }
               
-              i += 4;
-              var += 3;
-              label++;
-              scope++;
+              
             }
         }
       /*
