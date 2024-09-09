@@ -37,7 +37,7 @@ extern i32 puts((_:i8)) cut
 - This can be used to import the LIBC function (puts) into your code.
 
 ### Function call
-```zig
+```lua
 puts variable; -- Optional CUT magic word
 ```
 - Since the first identifier is the identifier of a function, you can enter other identifiers, where the arguments will be. When anything else, if not an identifier, is identified, the call is cut off and it is finally executed.
@@ -96,9 +96,7 @@ i32 main = () {
 ```zig
 i32 main = (i32 argv) {
   if argv < 4 {
-    -- If Code Block
   } else {
-    -- Else Code Block
   }
 }
 ```
