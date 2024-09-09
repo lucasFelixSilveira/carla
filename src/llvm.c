@@ -877,10 +877,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       int start = llvm_sizeof (variables[x].def.type);
                       
                       fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%', 
-                        (var + 1),
-                        variables[j].def.type, '%',
-                        variables[j].llvm,
-                        size
+                              (var + 1),
+                              variables[j].def.type, '%',
+                              variables[j].llvm,
+                              size
                       );
 
                       var += 2;
@@ -906,10 +906,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       else if( size < start )
                         {
                           fprintf (output, "%c%d = sext %s %c%d to %s\n", '%', 
-                            var,
-                            variables[j].def.type, '%',
-                            (var - 1),
-                            variables[x].def.type
+                                  var,
+                                  variables[j].def.type, '%',
+                                  (var - 1),
+                                  variables[x].def.type
                           );
                           var++;
 
@@ -1059,10 +1059,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       int start = llvm_sizeof (variables[x].def.type);
                       
                       fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%', 
-                        (var + 1),
-                        variables[j].def.type, '%',
-                        variables[j].llvm,
-                        size
+                              (var + 1),
+                              variables[j].def.type, '%',
+                              variables[j].llvm,
+                              size
                       );
 
                       var += 2;
