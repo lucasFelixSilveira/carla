@@ -9,6 +9,7 @@
     "llvm.h": "c",
     "xstring": "c",
     "symbols.h": "c",
-    "debug.h": "c"
+    "debug.h": "c",
+    "string.h": "c"
   }
 }

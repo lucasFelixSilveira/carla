@@ -2,10 +2,10 @@ type string = (_:i8);
 
 extern i32 puts = (string) cut
 
-i32 main = () {
+i32 main = (i32 argv, (_:string) args) {
 
-  string msg = "Hello, world!"
-  for i..2 {
+  for 2..i {
+    string msg = (i:args);
     puts msg cut
   }
 

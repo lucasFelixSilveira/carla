@@ -118,6 +118,7 @@ pGenerate (Vector *root, Vector *tks)
           if( 
             (
               TKGET(POS(i,1)).type == Integer
+              || TKGET(POS(i,1)).type == Identifier
               || EQ(TKGET(POS(i,1)).buffer, "_")
             ) 
             && EQ(TKGET(POS(i,2)).buffer, ":")
@@ -135,7 +136,9 @@ pGenerate (Vector *root, Vector *tks)
                         .id = clone (TKGET(POS(i,5))), .type = "ptr", .key_type = 0,
                         .arg = EQ(TKGET(POS(i,6)).buffer, ",") || EQ(TKGET(POS(i,6)).buffer, ")"),
                         .array = (AMemory) {
-                          .size = TKGET(POS(i,1)).type == Integer ? TKGET(POS(i,1)).buffer : "undefined",
+                          .size = TKGET(POS(i,1)).type == Integer ? TKGET(POS(i,1)).buffer 
+                                                                  : TKGET(POS(i,1)).type == Identifier ? TKGET(POS(i,1)).buffer 
+                                                                                                       : "undefined", 
                           .type = TKGET(POS(i,3)).buffer
                         }
                       }
@@ -151,7 +154,9 @@ pGenerate (Vector *root, Vector *tks)
                     .type = ArrayType,
                     .saves = (Cache) { 
                       .array = (AMemory) {
-                        .size = TKGET(POS(i,1)).type == Integer ? TKGET(POS(i,1)).buffer : "undefined",
+                        .size = TKGET(POS(i,1)).type == Integer ? TKGET(POS(i,1)).buffer 
+                                                                : TKGET(POS(i,1)).type == Identifier ? TKGET(POS(i,1)).buffer 
+                                                                                                     : "undefined", 
                         .type = TKGET(POS(i,3)).buffer
                       }
                     }

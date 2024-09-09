@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <assert.h>
 #include "vector.h"
 #include "parser.h"
@@ -17,6 +18,7 @@ typedef enum {
   Scope_if,
   Scope_else,
   Scope_for_iter,
+  Scope_for_revese_iter,
   Scope_while,
   Scope_fun
 } scope_t;
@@ -51,6 +53,20 @@ char opcodes[4][3] = {
 
 Scopes scopes[2048]; // { ID, Respective }
 size_t scopes_position = 0;
+
+char 
+is_numeric(char *buff) 
+{
+  for (
+    int i = 0;
+    i < strlen (buff);
+    i++
+  ) {
+      if(! isdigit (buff[i]) ) 
+        /*->*/ return 0;
+    }
+  return 1;
+}
 
 char** 
 str_split(char* a_str, const char a_delim)
@@ -533,34 +549,88 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                               variables[i].llvm
                       );
 
-                      fprintf (output, "%c%d = getelementptr inbounds %s, %s %c%d, i64 %s\n", '%',
-                              var+1,
-                              op1, 
-                              strcmp (variables[i].def.array.size, "undefined") == 0 ? strdup (op2) : strdup (op3), '%',
-                              var,
-                              index
-                      );
+                      if( is_numeric (index) ) 
+                        {
+                          fprintf (output, "%c%d = getelementptr inbounds %s, %s %c%d, i64 %s\n", '%',
+                                  var+1,
+                                  op1, 
+                                  strcmp (variables[i].def.array.size, "undefined") == 0 ? strdup (op2) : strdup (op3), '%',
+                                  var,
+                                  index
+                          );
 
-                      fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
-                              var + 2,
-                              isType (variables[i].def.array.type) ? variables[i].def.array.type : concat("%", variables[i].def.array.type), '%',
-                              var + 1,
-                              llvm_sizeof (variables[i].def.array.type)
-                      );
+                          fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                                  var + 2,
+                                  isType (variables[i].def.array.type) ? variables[i].def.array.type : concat("%", variables[i].def.array.type), '%',
+                                  var + 1,
+                                  llvm_sizeof (variables[i].def.array.type)
+                          );
 
-                      free (op1);
-                      free (op2);
-                      free (op3);
+                          free (op1);
+                          free (op2);
+                          free (op3);
 
-                      fprintf (output, "store %s%s %c%d, ptr %c%d, align %d\n", 
-                              prefix,
-                              variables[i].def.array.type, '%',
-                              var + 2, '%',
-                              (var - 1),
-                              llvm_sizeof (branch.saves.definition.type)        
-                      );
+                          fprintf (output, "store %s%s %c%d, ptr %c%d, align %d\n", 
+                                  prefix,
+                                  variables[i].def.array.type, '%',
+                                  var + 2, '%',
+                                  (var - 1),
+                                  llvm_sizeof (branch.saves.definition.type)        
+                          );
 
-                      var+=3;
+                          var+=3;
+                        }
+                      else 
+                        {
+                          for(
+                            int x = 0;
+                            x < varspos;
+                            x++
+                          ) {
+                              if( variables[x].level > scope )
+                                /*->*/ break;
+
+                              if( strcmp (variables[x].def.id, index) != 0 )
+                                /*->*/ continue; 
+                              
+                              fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                                      (var + 1),
+                                      variables[x].def.type, '%',
+                                      variables[x].llvm,
+                                      llvm_sizeof (variables[x].def.type)
+                              );
+
+                              fprintf (output, "%c%d = getelementptr inbounds %s, %s %c%d, %s %c%d\n", '%',
+                                      var+2,
+                                      op1, 
+                                      strcmp (variables[i].def.array.size, "undefined") == 0 ? strdup (op2) : strdup (op3), '%',
+                                      var, 
+                                      variables[x].def.type, '%',
+                                      var+1
+                              );
+                            }
+
+                          fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                                  var + 3,
+                                  isType (variables[i].def.array.type) ? variables[i].def.array.type : concat("%", variables[i].def.array.type), '%',
+                                  var + 2,
+                                  llvm_sizeof (variables[i].def.array.type)
+                          );
+
+                          free (op1);
+                          free (op2);
+                          free (op3);
+
+                          fprintf (output, "store %s%s %c%d, ptr %c%d, align %d\n", 
+                                  prefix,
+                                  variables[i].def.array.type, '%',
+                                  var + 3, '%',
+                                  (var - 1),
+                                  llvm_sizeof (branch.saves.definition.type)        
+                          );
+
+                          var+=4;
+                        }
                     }
 
                   free (array);
@@ -1180,6 +1250,87 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 .label = label
               };
             }
+          else 
+          if( 
+            next.type == Normal && next.saves.token.type == Integer 
+            && ((PNode*)pTree->items)[i + 2].type == Normal 
+            && ((PNode*)pTree->items)[i + 2].saves.token.type == Iter
+            && ((PNode*)pTree->items)[i + 3].type == Normal 
+            && ((PNode*)pTree->items)[i + 3].saves.token.type == Identifier
+          ) {
+              int id = 0;
+              Variable __var;
+
+              for(
+                int x = 0;
+                x < varspos;
+                x++
+              ) {
+                  if( variables[x].level > scope )
+                    /*->*/ break;
+
+                  if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
+                    /*->*/ continue; 
+
+                  __var = variables[x];
+                  id = __var.llvm;
+                  
+                }
+
+              if( id == 0 ) {
+                variables[varspos] = (Variable) {
+                  .level = scope, 
+                  .def = (DMemory) {
+                    .arg = 0,
+                    .key_type = 0,
+                    .id = ((PNode*)pTree->items)[i + 3].saves.token.buffer,
+                    .array = (AMemory) {
+                      .size = "0",
+                      .type = "Unknown"
+                    },
+                    .type = "i64",
+                    .hopeful = 0
+                  },
+                  .llvm = var++
+                };
+                __var = variables[varspos++];
+              }
+
+              fprintf (output, "%c%d = alloca i64, align 8\nstore i64 %s, ptr %c%d, align 8\nbr label %cE%d\n\nE%d:\n", '%',
+                      (var - 1),
+                      ((PNode*)pTree->items)[i + 1].saves.token.buffer, '%',
+                      (var - 1), '%',
+                      label, 
+                      label
+              );
+
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                      var, '%',
+                      (var - 1)
+              );
+              var++;
+
+              fprintf (output, "%c%d = icmp sgt i64 %c%d, 0\n", '%',
+                      var, '%',
+                      (var - 1)
+              );
+
+              fprintf (output, "br i1 %c%d, label %cL%d, label %cC%d\n\nL%d:\n", '%',
+                      var, '%',
+                      label, '%',
+                      label, 
+                      label
+              );
+
+              var++;
+              scope++;
+              
+              scopes[scopes_position++] = (Scopes) {
+                .type = Scope_for_revese_iter,
+                .var_id = (varspos - 1),
+                .label = label
+              };
+            }
         }
       /*
         identifier operator(=) number
@@ -1528,6 +1679,32 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               );
 
               fprintf (output, "%c%d = add nsw i64 %c%d, 1\n", '%',
+                var, '%',
+                (var - 1)
+              );
+
+              var++;
+              fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
+                (var - 1), '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "br label %cE%d\n\nC%d:\n", '%',
+                scope_info.label,
+                scope_info.label
+              );
+
+              scope--;
+            }
+          else
+          if( scope_info.type == Scope_for_revese_iter ) 
+            {
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                var++, '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "%c%d = sub nsw i64 %c%d, 1\n", '%',
                 var, '%',
                 (var - 1)
               );
