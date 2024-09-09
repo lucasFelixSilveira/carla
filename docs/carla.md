@@ -61,3 +61,39 @@ i32 main = (i32 argv, (_:string) args) {
 ```sh-session
 ./executable "Hello, world!"
 ```
+
+## Hello world using variables
+```carla
+type string = (_:i8);
+
+extern i32 puts = (string) cut
+
+i32 main = () {
+  string msg = "Hello, world!"
+  puts msg
+  return 0
+}
+```
+
+# While loops
+- While loopings work just like any other language. A keyword, a comparison, and a block of code.
+```carla
+i32 main = () {
+  i8 counter = 0;
+  while counter < 4 {
+    counter += 1;
+  }
+}
+```
+
+# If and Else
+- The conditionals, IF and ELSE can be used just like Rust, however, with a difference, it does not force you to buy the same types, such as: i8 == i8; It allows you to compare different types — as long as they are primitive.
+```carla
+i32 main = (i32 argv) {
+  if argv < 4 {
+    -- If Code Block
+  } else {
+    -- Else Code Block
+  }
+}
+```

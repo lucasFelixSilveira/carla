@@ -4,18 +4,21 @@ extern i32 puts = (string) cut
 
 i32 main = () {
 
-  string msg = "Testando"
-  string segundo = "Second"
+  string first = "Running..."
+  string second = "Second!"
+  
   i32 counter = 0
-  i8 test = 2;
-  i16 mds = 4;
-  while counter < mds {
-    if counter != test {
-      puts msg cut
+  i8 delimiter = 2;
+  i16 limit = 4;
+  
+  while counter < limit {
+    if counter != delimiter {
+      puts first cut
     } else {
-      puts segundo cut
+      puts second cut
     }
     counter += 1
   }
-  return test
+
+  return 0
 }

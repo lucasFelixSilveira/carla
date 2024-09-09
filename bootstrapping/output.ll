@@ -1,7 +1,7 @@
 $arr_1 = comdat any
-@arr_1 = linkonce_odr dso_local unnamed_addr constant [7 x i8] c"Second\00", comdat, align 1
+@arr_1 = linkonce_odr dso_local unnamed_addr constant [8 x i8] c"Second!\00", comdat, align 1
 $arr_0 = comdat any
-@arr_0 = linkonce_odr dso_local unnamed_addr constant [9 x i8] c"Testando\00", comdat, align 1
+@arr_0 = linkonce_odr dso_local unnamed_addr constant [11 x i8] c"Running...\00", comdat, align 1
 %string = type i8*
 declare i32 @puts(%string) nounwind
 define i32 @main() {
@@ -48,7 +48,5 @@ store i32 %23, ptr %4, align 4
 br label %E0
 
 C0:
-%25 = load i8, ptr %5, align 1
-%26 = sext i8 %25 to i32
-ret i32 %26
+ret i32 0
 }
