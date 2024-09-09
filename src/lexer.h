@@ -11,7 +11,7 @@
     Integer,
     Literal,
     Semi,
-    Collon,
+    Iter,
     EndOfFile,
     Identifier,
     Keyword,

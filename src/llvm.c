@@ -16,6 +16,7 @@ typedef enum {
 typedef enum {
   Scope_if,
   Scope_else,
+  Scope_for_iter,
   Scope_while,
   Scope_fun
 } scope_t;
@@ -23,6 +24,7 @@ typedef enum {
 typedef struct {
   scope_t type;
   int label;
+  int var_id;
 } Scopes;
 
 typedef struct {
@@ -284,7 +286,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
               scopes[scopes_position++] = (Scopes) {
                 .type = Scope_fun,
-                .label = 0
+                .label = 0,
+                .var_id = 0
               };
 
               char *prefix = "";
@@ -861,7 +864,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                       scopes[scopes_position++] = (Scopes) {
                         .type = Scope_if,
-                        .label = label
+                        .label = label,
+                        .var_id = 0
                       };
                       
                       i += 4;
@@ -894,7 +898,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                   scopes[scopes_position++] = (Scopes) {
                     .type = Scope_if,
-                    .label = label
+                    .label = label,
+                    .var_id = 0
                   };
 
                   i += 4;
@@ -951,8 +956,6 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               if( strcmp (content, "!=") == 0 ){
                 operator = "ne";
               } 
-
-
 
               fprintf (output, "br label %cE%d\n\nE%d:\n%c%d = load %s, ptr %c%d, align %d\n", '%',
                       label, 
@@ -1043,7 +1046,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                       scopes[scopes_position++] = (Scopes) {
                         .type = Scope_while,
-                        .label = label
+                        .label = label,
+                        .var_id = 0
                       };
                       
                       i += 4;
@@ -1076,7 +1080,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                   scopes[scopes_position++] = (Scopes) {
                     .type = Scope_while,
-                    .label = label
+                    .label = label,
+                    .var_id = 0
                   };
 
                   i += 4;
@@ -1086,6 +1091,94 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 }
               
               
+            }
+        }
+      else
+      if( 
+        branch.type == Magic 
+        && strcmp (branch.saves.magic, "for") == 0
+      ) {
+          PNode next = ((PNode*)pTree->items)[i + 1];
+
+          if( 
+            next.type == Normal && next.saves.token.type == Identifier 
+            && ((PNode*)pTree->items)[i + 2].type == Normal 
+            && ((PNode*)pTree->items)[i + 2].saves.token.type == Iter
+            && ((PNode*)pTree->items)[i + 3].type == Normal 
+            && ((PNode*)pTree->items)[i + 3].saves.token.type == Integer
+          ) {
+              int id = 0;
+              Variable __var;
+
+              for(
+                int x = 0;
+                x < varspos;
+                x++
+              ) {
+                  if( variables[x].level > scope )
+                    /*->*/ break;
+
+                  if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
+                    /*->*/ continue; 
+
+                  __var = variables[x];
+                  id = __var.llvm;
+                  
+                }
+
+              if( id == 0 ) {
+                variables[varspos] = (Variable) {
+                  .level = scope, 
+                  .def = (DMemory) {
+                    .arg = 0,
+                    .key_type = 0,
+                    .id = next.saves.token.buffer,
+                    .array = (AMemory) {
+                      .size = "0",
+                      .type = "Unknown"
+                    },
+                    .type = "i64",
+                    .hopeful = 0
+                  },
+                  .llvm = var++
+                };
+                __var = variables[varspos++];
+              }
+
+              fprintf (output, "%c%d = alloca i64, align 8\nstore i64 0, ptr %c%d, align 8\nbr label %cE%d\n\nE%d:\n", '%',
+                      (var - 1), '%',
+                      (var - 1), '%',
+                      label, 
+                      label
+              );
+
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                      var, '%',
+                      (var - 1)
+              );
+              var++;
+
+              fprintf (output, "%c%d = icmp slt i64 %c%d, %s\n", '%',
+                      var, '%',
+                      (var - 1),
+                      ((PNode*)pTree->items)[i + 3].saves.token.buffer
+              );
+
+              fprintf (output, "br i1 %c%d, label %cL%d, label %cC%d\n\nL%d:\n", '%',
+                      var, '%',
+                      label, '%',
+                      label, 
+                      label
+              );
+
+              var++;
+              scope++;
+              
+              scopes[scopes_position++] = (Scopes) {
+                .type = Scope_for_iter,
+                .var_id = (varspos - 1),
+                .label = label
+              };
             }
         }
       /*
@@ -1386,7 +1479,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
                   scopes[scopes_position++] = (Scopes) {
                     .type = Scope_else,
-                    .label = label++
+                    .label = label++,
+                    .var_id = 0
                   };
 
                   var++;
@@ -1419,6 +1513,31 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           else
           if( scope_info.type == Scope_while ) 
             {
+              fprintf (output, "br label %cE%d\n\nC%d:\n", '%',
+                scope_info.label,
+                scope_info.label
+              );
+
+              scope--;
+            }
+          if( scope_info.type == Scope_for_iter ) 
+            {
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                var++, '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "%c%d = add nsw i64 %c%d, 1\n", '%',
+                var, '%',
+                (var - 1)
+              );
+
+              var++;
+              fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
+                (var - 1), '%',
+                variables[scope_info.var_id].llvm
+              );
+
               fprintf (output, "br label %cE%d\n\nC%d:\n", '%',
                 scope_info.label,
                 scope_info.label

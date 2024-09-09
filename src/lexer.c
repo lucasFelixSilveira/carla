@@ -52,6 +52,8 @@ ismatch (char c1, char c2)
     return RightShift;
   else if( c1 == '<' && c2 == '<' ) 
     return LeftShift;
+  else if( c1 == '.' && c2 == '.' ) 
+    return Iter;
   else
     return 0;
 }
@@ -82,6 +84,16 @@ tokenize (FILE *file, Vector *tks)
       
       char c = getc (file);
 
+      char j = getc (file);
+      if( c == '-' && j == '-' )
+        {
+          while(getc (file) != '\n')
+            {}
+          continue;
+        }
+      else 
+        /*->*/ ungetc (j, file);
+
       if(! isalnum (c) ) {
         if( len > 0 ) {
           vector_push (tks, (void*)(&(Token) {
@@ -102,7 +114,6 @@ tokenize (FILE *file, Vector *tks)
           char ch;
           while( (ch = getc (file)) != '"' ) {
             j++;
-            printf ("position: %d", (int)j);
             if( ch == '\\' ) {
               strbuff[i++] = ch; 
               char __ch2 = getc (file);

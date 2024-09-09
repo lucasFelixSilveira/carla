@@ -11,6 +11,7 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 5, .val = "while" },
     { .len = 4, .val = "type" },
     { .len = 4, .val = "else" },
+    { .len = 3, .val = "for" },
     { .len = 3, .val = "cut" },
     { .len = 2, .val = "if" },
     /* types */
