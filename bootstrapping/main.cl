@@ -4,7 +4,8 @@ extern i32 puts = (string) cut
 
 i32 main = (i32 argv, (_:string) args) {
 
-  for 2..i {
+  i8 k = 2;
+  for i..k {
     string msg = (i:args);
     puts msg cut
   }

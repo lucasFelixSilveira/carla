@@ -1331,6 +1331,187 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 .label = label
               };
             }
+          else 
+          if( 
+            next.type == Normal && next.saves.token.type == Identifier 
+            && ((PNode*)pTree->items)[i + 2].type == Normal 
+            && ((PNode*)pTree->items)[i + 2].saves.token.type == Iter
+            && ((PNode*)pTree->items)[i + 3].type == Normal 
+            && ((PNode*)pTree->items)[i + 3].saves.token.type == Identifier
+          ) {
+              int __id01 = 0;
+              int __id02 = 0;
+              Variable first;
+              Variable second;
+
+              for(
+                int x = 0;
+                x < varspos;
+                x++
+              ) {
+                  if( variables[x].level > scope )
+                    /*->*/ break;
+
+                  if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
+                    /*->*/ continue; 
+
+                  first = variables[x];
+                  __id01 = first.llvm;
+                }
+
+              for(
+                int x = 0;
+                x < varspos;
+                x++
+              ) {
+                  if( variables[x].level > scope )
+                    /*->*/ break;
+
+                  if( strcmp (variables[x].def.id, ((PNode*)pTree->items)[i + 3].saves.token.buffer) != 0 )
+                    /*->*/ continue; 
+
+                  second = variables[x];
+                  __id02 = first.llvm;
+                }
+
+              if( (__id01 + __id02) == 0 || ( __id01 != 0 && __id02 != 0 ))
+                {
+                  printf ("Compilation failed");
+                  exit (1);
+                }
+
+              Variable always_defined = (__id01 ? first : second);
+              int bytes = llvm_sizeof (always_defined.def.type);
+
+              fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                      var++,
+                      always_defined.def.type, '%',
+                      always_defined.llvm,
+                      bytes
+              );
+
+              if( bytes > 8 ) 
+                {
+                  fprintf (output, "%c%d = trunc %s %c%d to i64\n", '%',
+                          var,
+                          always_defined.def.type, '%',
+                          (var - 1)
+                  );
+                }
+              else
+              if( bytes < 8 ) 
+                {
+                  fprintf (output, "%c%d = sext %s %c%d to i64\n", '%',
+                          var,
+                          always_defined.def.type, '%',
+                          (var - 1)
+                  );
+                }
+              var++;
+
+              if( __id01 )
+                {
+                  fprintf (output, "%c%d = alloca i64, align 8\nstore i64 %c%d, ptr %c%d, align 8\nbr label %cE%d\n\nE%d:\n", '%',
+                          var, '%',
+                          (var - 1), '%',
+                          var, '%',
+                          label, 
+                          label
+                  );
+                }
+              else
+                {
+                  fprintf (output, "%c%d = alloca i64, align 8\nstore i64 0, ptr %c%d, align 8\nbr label %cE%d\n\nE%d:\n", '%',
+                          var, '%',
+                          var, '%',
+                          label, 
+                          label
+                  );
+                }
+
+              variables[varspos++] = (Variable) {
+                .level = scope, 
+                .def = (DMemory) {
+                  .arg = 0,
+                  .key_type = 0,
+                  .id = (__id01 ? ((PNode*)pTree->items)[i + 3] : next).saves.token.buffer,
+                  .array = (AMemory) {
+                    .size = "0",
+                    .type = "Unknown"
+                  },
+                  .type = "i64",
+                  .hopeful = 0
+                },
+                .llvm = var
+              };
+              var++;
+
+              fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                      var++,
+                      always_defined.def.type, '%',
+                      always_defined.llvm,
+                      bytes
+              );
+
+              if( bytes > 8 ) 
+                {
+                  fprintf (output, "%c%d = trunc %s %c%d to i64\n", '%',
+                          var,
+                          always_defined.def.type, '%',
+                          (var - 1)
+                  );
+                }
+              else
+              if( bytes < 8 ) 
+                {
+                  fprintf (output, "%c%d = sext %s %c%d to i64\n", '%',
+                          var,
+                          always_defined.def.type, '%',
+                          (var - 1)
+                  );
+                }
+              var++;
+              
+
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                      (var + 1), '%',
+                      (var - 3)
+              );
+              var += 2;
+
+              if( __id01 )
+                {
+                  fprintf (output, "%c%d = icmp %s i64 %c%d, 0\n", '%',
+                          var,
+                          (__id01 ? "sgt" : "sgt"), '%',
+                          (var - 1)
+                  );
+                }
+              else 
+                {
+                  fprintf (output, "%c%d = icmp %s i64 %c%d, %c%d\n", '%',
+                          var,
+                          (__id01 ? "sgt" : "sgt"), '%',
+                          (var - 3), '%',
+                          (var - 1)
+                  );
+                }
+
+              fprintf (output, "br i1 %c%d, label %cL%d, label %cC%d\n\nL%d:\n", '%',
+                      var++, '%',
+                      label, '%',
+                      label, 
+                      label
+              );
+
+              scope++;
+
+              scopes[scopes_position++] = (Scopes) {
+                .type = (__id01 ? Scope_for_revese_iter : Scope_for_iter),
+                .var_id = (varspos - 1),
+                .label = label
+              };
+            }
         }
       /*
         identifier operator(=) number

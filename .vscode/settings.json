@@ -10,6 +10,7 @@
     "xstring": "c",
     "symbols.h": "c",
     "debug.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "utility": "c"
   }
 }
