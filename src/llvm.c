@@ -1171,7 +1171,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           PNode next = ((PNode*)pTree->items)[i + 1];
 
           if( 
-            next.type == Normal && next.saves.token.type == Identifier 
+            next.type == Normal 
+            && next.saves.token.type == Identifier 
             && ((PNode*)pTree->items)[i + 2].type == Normal 
             && ((PNode*)pTree->items)[i + 2].saves.token.type == Iter
             && ((PNode*)pTree->items)[i + 3].type == Normal 
@@ -1252,7 +1253,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
             }
           else 
           if( 
-            next.type == Normal && next.saves.token.type == Integer 
+            next.type == Normal 
+            && next.saves.token.type == Integer 
             && ((PNode*)pTree->items)[i + 2].type == Normal 
             && ((PNode*)pTree->items)[i + 2].saves.token.type == Iter
             && ((PNode*)pTree->items)[i + 3].type == Normal 
@@ -1333,7 +1335,8 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
             }
           else 
           if( 
-            next.type == Normal && next.saves.token.type == Identifier 
+            next.type == Normal 
+            && next.saves.token.type == Identifier 
             && ((PNode*)pTree->items)[i + 2].type == Normal 
             && ((PNode*)pTree->items)[i + 2].saves.token.type == Iter
             && ((PNode*)pTree->items)[i + 3].type == Normal 
@@ -1511,6 +1514,84 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 .var_id = (varspos - 1),
                 .label = label
               };
+            }
+          else
+          if( 
+            next.type == Normal 
+            && next.saves.token.type == Identifier 
+            && ((PNode*)pTree->items)[i + 2].type == Normal 
+            && ((PNode*)pTree->items)[i + 2].saves.token.type == Unknown
+            && strcmp (((PNode*)pTree->items)[i + 2].saves.token.buffer, ":") == 0
+          ) {
+              if(
+                  ((PNode*)pTree->items)[i + 3].type == Normal 
+                  && ((PNode*)pTree->items)[i + 3].saves.token.type == Integer 
+                  && ((PNode*)pTree->items)[i + 4].type == Normal 
+                  && ((PNode*)pTree->items)[i + 4].saves.token.type == Iter
+                  && ((PNode*)pTree->items)[i + 5].type == Normal 
+                  && ((PNode*)pTree->items)[i + 5].saves.token.type == Integer  
+                ) {
+                    const char *first_buff = ((PNode*)pTree->items)[i + 3].saves.token.buffer;
+                    int x = atoi (first_buff);
+                    const char *second_buff = ((PNode*)pTree->items)[i + 5].saves.token.buffer;
+                    int y = atoi (second_buff);
+
+                    fprintf (output, "%c%d = alloca i64, align 8\nstore i64 %d, ptr %c%d, align 8\nbr label %cE%d\n\nE%d:\n", '%',
+                            var, 
+                            x, '%',
+                            var, '%',
+                            label, 
+                            label
+                    );
+
+                    int __id = var;
+
+                    variables[varspos++] = (Variable) {
+                      .level = scope, 
+                      .def = (DMemory) {
+                        .arg = 0,
+                        .key_type = 0,
+                        .id = next.saves.token.buffer,
+                        .array = (AMemory) {
+                          .size = "0",
+                          .type = "Unknown"
+                        },
+                        .type = "i64",
+                        .hopeful = 0
+                      },
+                      .llvm = var++
+                    };
+
+                    scopes[scopes_position++] = (Scopes) {
+                      .type = ((x > y) ? Scope_for_revese_iter : Scope_for_iter),
+                      .var_id = (varspos - 1),
+                      .label = label
+                    };
+                    
+                    scope++;
+
+                    fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                            var, '%',
+                            __id
+                    );
+
+                    fprintf (output, "%c%d = icmp %s i64 %c%d, %d\n", '%',
+                            (var + 1),
+                            ((x > y) ? "sgt" : "slt"), '%',
+                            var,
+                            y
+                    );
+
+                    fprintf (output, "br i1 %c%d, label %cL%d, label %cC%d\n\nL%d:\n", '%',
+                            (var + 1), '%',
+                            label, '%',
+                            label,
+                            label
+                    );
+
+                    var += 2;
+
+                  }
             }
         }
       /*
