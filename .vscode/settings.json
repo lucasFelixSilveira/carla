@@ -11,6 +11,7 @@
     "symbols.h": "c",
     "debug.h": "c",
     "string.h": "c",
-    "utility": "c"
+    "utility": "c",
+    "xmemory": "c"
   }
 }
