@@ -113,8 +113,14 @@ for 2..i {}
 ```
   - Specific range (2, 3, 4 / 4, 3, 2)
 ```zig
+i8 x = 2;
+i8 y = 4;
+-- For loops
 for i : 2..4 {}
 for i : 4..2 {}
+for i : 4..x {}
+for i : x..4 {}
+for i : x..y {}
 ```
 
 ```zig

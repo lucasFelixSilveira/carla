@@ -19,6 +19,7 @@ typedef enum {
   Scope_else,
   Scope_for_iter,
   Scope_for_revese_iter,
+  Scope_for_reverse_comparator,
   Scope_for_comparator,
   Scope_while,
   Scope_fun
@@ -1737,6 +1738,146 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     
                     label++;
                   }
+                else
+                if( 
+                  ((PNode*)pTree->items)[i + 3].type == Normal 
+                  && ((PNode*)pTree->items)[i + 3].saves.token.type == Integer 
+                  && ((PNode*)pTree->items)[i + 4].type == Normal 
+                  && ((PNode*)pTree->items)[i + 4].saves.token.type == Iter
+                  && ((PNode*)pTree->items)[i + 5].type == Normal 
+                  && ((PNode*)pTree->items)[i + 5].saves.token.type == Identifier  
+                ) {
+                    int x;
+                    int icmp_id;
+                    int __id;
+                    Variable address;
+
+                    for(
+                      int z = 0;
+                      z < varspos;
+                      z++
+                    ) {
+                        if( variables[z].level > scope )
+                          /*->*/ break;
+
+                        if( strcmp (variables[z].def.id, ((PNode*)pTree->items)[i + 5].saves.token.buffer) != 0 )
+                          /*->*/ continue; 
+
+                        address = variables[z];
+                        x = address.llvm;
+                      }
+
+                    const char *first_buff = ((PNode*)pTree->items)[i + 3].saves.token.buffer;
+                    int y = atoi (first_buff);
+
+                    int bytes = llvm_sizeof (address.def.type);
+                    fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
+                            var++, 
+                            address.def.type, '%',
+                            x,
+                            bytes
+                    );
+
+                    if( bytes > 8 ) 
+                      {
+                        fprintf (output, "%c%d = trunc %s %c%d to i64\n", '%', 
+                                var, 
+                                address.def.type, '%',
+                                (var - 1)
+                        );
+                        var++;
+                      }
+                    else
+                    if( bytes < 8 )
+                      {
+                        fprintf (output, "%c%d = sext %s %c%d to i64\n", '%', 
+                                var, 
+                                address.def.type, '%',
+                                (var - 1)
+                        );
+                        var++;
+                      }
+
+                    variables[varspos++] = (Variable) {
+                      .level = scope, 
+                      .def = (DMemory) {
+                        .arg = 0,
+                        .key_type = 0,
+                        .id = next.saves.token.buffer,
+                        .array = (AMemory) {
+                          .size = "0",
+                          .type = "Unknown"
+                        },
+                        .type = "i64",
+                        .hopeful = 0
+                      },
+                      .llvm = var
+                    };
+
+                    __id = var;
+                    fprintf (output, "%c%d = alloca i64, align 8\nstore i64 %d, ptr %c%d, align 8\n\n", '%',
+                            var,
+                            y, '%',
+                            var
+                    );
+                    var += 1;
+
+
+                    fprintf (output, "%c%d = icmp slt i64 %c%d, %d\n", '%',
+                            var, '%',
+                            (var - 2),
+                            y
+                    );
+
+                    icmp_id = var;
+
+                    fprintf (output, "br i1 %c%d, label %cEAD%d, label %cESB%d\n\nESB%d:\n", '%',
+                                      var, '%',
+                                      label, '%',
+                                      label,
+                                      label
+                    );
+                    var++;
+
+                    fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n%c%d = icmp slt i64 %c%d, %c%d\nbr i1 %c%d, label %cL%d, label %cC%d\n\nEAD%d:\n", '%',
+                            var, '%',
+                            __id, '%',
+                            (var + 1), '%',
+                            var, '%',
+                            (var - 3), '%',
+                            (var + 1), '%',
+                            label, '%',
+                            label,
+                            label
+                    );
+
+                    var += 2;
+
+                    fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n%c%d = icmp sgt i64 %c%d, %c%d\nbr i1 %c%d, label %cL%d, label %cC%d\n\nL%d:\n", '%',
+                            var, '%',
+                            __id, '%',
+                            (var + 1), '%',
+                            var, '%', 
+                            (var - 5), '%',
+                            (var + 1), '%',
+                            label, '%',
+                            label,
+                            label
+                    );
+
+                    var += 2;
+
+                    var++;
+
+                    scopes[scopes_position++] = (Scopes) {
+                      .type = Scope_for_reverse_comparator,
+                      .var_id = (varspos - 1),
+                      .label = label,
+                      .to_c = icmp_id
+                    };
+                    
+                    label++;
+                  }
             }
         }
       /*
@@ -2181,7 +2322,59 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
 
               scope--;
             }
-          else 
+          else
+          if( scope_info.type == Scope_for_reverse_comparator ) 
+            {
+              
+              fprintf (output, "\nbr i1 %c%d, label %cCAD%d, label %cCSB%d\n", '%',
+                      scope_info.to_c, '%',
+                      scope_info.label, '%',
+                      scope_info.label
+              );
+
+              fprintf (output, "\nCSB%d:\n", scope_info.label);
+
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                var++, '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "%c%d = add nsw i64 %c%d, 1\n", '%',
+                var, '%',
+                (var - 1)
+              );
+
+              var++;
+              fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
+                (var - 1), '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "br label %cESB%d\n", '%', scope_info.label);
+
+              fprintf (output, "\nCAD%d:\n", scope_info.label);
+
+              fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
+                var++, '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "%c%d = sub nsw i64 %c%d, 1\n", '%',
+                var, '%',
+                (var - 1)
+              );
+
+              var++;
+              fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
+                (var - 1), '%',
+                variables[scope_info.var_id].llvm
+              );
+
+              fprintf (output, "br label %cEAD%d\n\nC%d:\n", '%', scope_info.label, scope_info.label);
+
+              scope--;
+            }
+          else  
           if( scope_info.type == Scope_fun ) 
             {
               fprintf (output, "}\n");
