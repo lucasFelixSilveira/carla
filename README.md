@@ -34,7 +34,7 @@ In other words, don't surrender to the current schedule. Opt for the rational pr
 
 <div align="center">
 
-### Carla will not just be a language. It is a new concept of languages.
+### Carla's concept is to be simple, modern and as close to C as possible.
 
 #
 
