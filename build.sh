@@ -18,7 +18,7 @@ recursive "./src"
 
 object_files=$(find ./src -name '*.o')
 
-gcc $object_files -ggdb -o ./carla.exe
+gcc $object_files -debug -dr_debug -ggdb -o ./carla.exe
 
 echo "Compiled!"
 echo

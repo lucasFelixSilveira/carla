@@ -51,7 +51,7 @@ inStaticSymbols (char buffer[], int x, int y)
 }
 
 /* Checks if the:
-  [a-zA-Z@][a-zA-Z0-9]
+  [a-zA-Z@][a-zA-Z0-9]+
 REGEX is match */
 char
 isIdentifier (char buffer[])

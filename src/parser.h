@@ -39,11 +39,11 @@
 
   typedef struct {
     AMemory array;
+    char key_type;
     char hopeful;
     char *type;
     char *id;
     char arg;
-    char key_type;
   } DMemory;
 
   typedef union {
@@ -56,9 +56,9 @@
   } Cache;
 
   typedef struct {
-    NType type;
     Scope scope;
     Cache saves;
+    NType type;
   } PNode;
 
   void pGenerate (Vector *root, Vector *tks);

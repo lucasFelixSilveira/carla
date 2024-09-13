@@ -179,41 +179,41 @@ char *
 substr(int pos, int len, int total, char string[])
 {
 
-    char *substring = (char*)malloc (total);
+  char *substring = (char*)malloc (total);
 
-    int i = 0;
-    while (i < len) {
-        substring[i] = string[pos + i - 1];
-        i++;
+  int i = 0;
+  while (i < len) 
+    {
+      substring[i] = string[pos + i - 1];
+      i++;
     }
 
-    substring[i] = '\0';
-
-    return substring;
+  substring[i] = '\0';
+  return substring;
 }
 
 void 
 fheader(FILE *file, char *new_line) 
 {
-  fseek(file, 0, SEEK_SET);
-  fseek(file, 0, SEEK_END);
+  fseek (file, 0, SEEK_SET);
+  fseek (file, 0, SEEK_END);
   long file_size = ftell(file);
-  fseek(file, 0, SEEK_SET);
+  fseek (file, 0, SEEK_SET);
 
   char *original_content = malloc(file_size + 1);
-  fread(original_content, 1, file_size, file);
+  fread (original_content, 1, file_size, file);
   original_content[file_size] = '\0';
 
-  fseek(file, 0, SEEK_SET);
+  fseek (file, 0, SEEK_SET);
 
   size_t new_line_length = strlen(new_line);
   size_t total_content_length = new_line_length + file_size + 2;
 
-  fprintf(file, "%s\n%s", new_line, original_content);
+  fprintf (file, "%s\n%s", new_line, original_content);
 
-  free(original_content);
+  free (original_content);
 
-  fseek(file, 0, SEEK_END);
+  fseek (file, 0, SEEK_END);
 }
 
 char *
@@ -2222,19 +2222,19 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           if( scope_info.type == Scope_for_iter ) 
             {
               fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
-                var++, '%',
-                variables[scope_info.var_id].llvm
+                      var++, '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "%c%d = add nsw i64 %c%d, 1\n", '%',
-                var, '%',
-                (var - 1)
+                      var, '%',
+                      (var - 1)
               );
 
               var++;
               fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
-                (var - 1), '%',
-                variables[scope_info.var_id].llvm
+                      (var - 1), '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "br label %cE%d\n\nC%d:\n", '%',
@@ -2248,24 +2248,24 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
           if( scope_info.type == Scope_for_revese_iter ) 
             {
               fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
-                var++, '%',
-                variables[scope_info.var_id].llvm
+                      var++, '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "%c%d = sub nsw i64 %c%d, 1\n", '%',
-                var, '%',
-                (var - 1)
+                      var, '%',
+                      (var - 1)
               );
 
               var++;
               fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
-                (var - 1), '%',
-                variables[scope_info.var_id].llvm
+                      (var - 1), '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "br label %cE%d\n\nC%d:\n", '%',
-                scope_info.label,
-                scope_info.label
+                      scope_info.label,
+                      scope_info.label
               );
 
               scope--;
@@ -2283,19 +2283,19 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               fprintf (output, "\nCSB%d:\n", scope_info.label);
 
               fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
-                var++, '%',
-                variables[scope_info.var_id].llvm
+                      var++, '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "%c%d = sub nsw i64 %c%d, 1\n", '%',
-                var, '%',
-                (var - 1)
+                      var, '%',
+                      (var - 1)
               );
 
               var++;
               fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
-                (var - 1), '%',
-                variables[scope_info.var_id].llvm
+                      (var - 1), '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "br label %cESB%d\n", '%', scope_info.label);
@@ -2303,19 +2303,19 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               fprintf (output, "\nCAD%d:\n", scope_info.label);
 
               fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
-                var++, '%',
-                variables[scope_info.var_id].llvm
+                      var++, '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "%c%d = add nsw i64 %c%d, 1\n", '%',
-                var, '%',
-                (var - 1)
+                      var, '%',
+                      (var - 1)
               );
 
               var++;
               fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
-                (var - 1), '%',
-                variables[scope_info.var_id].llvm
+                      (var - 1), '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "br label %cEAD%d\n\nC%d:\n", '%', scope_info.label, scope_info.label);
@@ -2335,19 +2335,19 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               fprintf (output, "\nCSB%d:\n", scope_info.label);
 
               fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
-                var++, '%',
-                variables[scope_info.var_id].llvm
+                      var++, '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "%c%d = add nsw i64 %c%d, 1\n", '%',
-                var, '%',
-                (var - 1)
+                      var, '%',
+                      (var - 1)
               );
 
               var++;
               fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
-                (var - 1), '%',
-                variables[scope_info.var_id].llvm
+                      (var - 1), '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "br label %cESB%d\n", '%', scope_info.label);
@@ -2355,19 +2355,19 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
               fprintf (output, "\nCAD%d:\n", scope_info.label);
 
               fprintf (output, "%c%d = load i64, ptr %c%d, align 8\n", '%',
-                var++, '%',
-                variables[scope_info.var_id].llvm
+                      var++, '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "%c%d = sub nsw i64 %c%d, 1\n", '%',
-                var, '%',
-                (var - 1)
+                      var, '%',
+                      (var - 1)
               );
 
               var++;
               fprintf (output, "store i64 %c%d, ptr %c%d, align 8\n", '%',
-                (var - 1), '%',
-                variables[scope_info.var_id].llvm
+                      (var - 1), '%',
+                      variables[scope_info.var_id].llvm
               );
 
               fprintf (output, "br label %cEAD%d\n\nC%d:\n", '%', scope_info.label, scope_info.label);

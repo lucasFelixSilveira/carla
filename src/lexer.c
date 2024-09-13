@@ -141,6 +141,7 @@ tokenize (FILE *file, Vector *tks)
             .real = j
           }));
 
+          free (strbuff);
           continue;
         }
 
