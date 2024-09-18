@@ -5,8 +5,71 @@
 #include <assert.h>
 #include "vector.h"
 #include "parser.h"
+#include "smart.h"
 #include "symbols.h"
 
+#define BRANCHGET(root, i) ((SNode*) root->items)[i]
+#define PNGET(root, i) ((PNode*) root->items)[i]
+#define GETFNARG(root, i) ((int*)root.what.lambda.args)[i]
+
+int var = 0;
+
+void 
+parseType(char **dist, char *type) 
+{
+  if( isType(type) ) 
+    {
+      *dist = (char*)malloc (strlen (type) + 1);
+      memcpy (*dist, type, strlen (type) + 1);
+    }
+}
+
+void 
+llGenerate (FILE *output, Vector *sTree, Vector *pTree) 
+{
+  for(
+    int i = 0;
+    i < sTree->length;
+    i++
+  ) {
+      SNode init = BRANCHGET(sTree, i);
+      switch( init.type )
+        {
+          /** functions */
+          case DLambda:
+            {
+              fprintf (output, "define @%s(", init.what.lambda.definition.id);
+              
+              for(
+                int arg = 0;
+                arg < init.what.lambda.lArgs;
+                arg++
+              ) {
+                  if( arg > 0 )
+                    {
+                      fprintf (output, ", ");
+                    }
+
+                  PNode argument = PNGET(pTree, GETFNARG(init, arg));
+                  char *type;
+                  parseType (&type, argument.saves.definition.type);
+                  fprintf (output, "%s %c%d", 
+                          type, '%',
+                          var++
+                  );
+                  free (type);
+                }
+
+              fprintf (output, ") {\n");
+            } break;
+        
+          default:
+            break;
+        }    
+    }
+}
+
+/*
 typedef enum {
   List,
   Num,
@@ -66,7 +129,7 @@ is_numeric(char *buff)
     i++
   ) {
       if(! isdigit (buff[i]) ) 
-        /*->*/ return 0;
+        return 0;
     }
   return 1;
 }
@@ -124,26 +187,39 @@ isFunction (char *f_)
     i++
   ) {
       if( strcmp (functions[i], f_) == 0 )
-        /*->*/ return 1;
+        return 1;
     }
   
   return 0;
 }
 
+char *
+substr(int pos, int len, int total, char string[])
+{
+
+  char *substring = (char*)malloc (total);
+
+  int i = 0;
+  while (i < len) 
+    {
+      substring[i] = string[pos + i - 1];
+      i++;
+    }
+
+  substring[i] = '\0';
+  return substring;
+}
+
 int
 llvm_sizeof (char *type)
 {
-  if( strcmp (type, "i8") == 0 || strcmp (type, "u8") == 0 )
-    return 1;
-  if( strcmp (type, "i16") == 0 || strcmp (type, "u16") == 0 )
-    return 2;
-  if( strcmp (type, "i32") == 0 || strcmp (type, "u32") == 0 )
-    return 4;
-  if( strcmp (type, "i64") == 0 || strcmp (type, "u64") == 0 || strcmp (type, "ptr") == 0 )
-    return 8;
-  if( strcmp (type, "i128") == 0 || strcmp (type, "u128") == 0 )
-    return 16;
-  
+  if( type[0] == 'i' )
+    {
+      char *bits = substr (1, strlen (type) - 1, strlen (type), type);
+      int bytes = atoi(bits) / 8;
+      return bytes;
+    }
+    
   for(
     int i = 0; 
     i < types_len;
@@ -175,22 +251,6 @@ concat(const char* str1, const char* str2)
 }
 
 
-char *
-substr(int pos, int len, int total, char string[])
-{
-
-  char *substring = (char*)malloc (total);
-
-  int i = 0;
-  while (i < len) 
-    {
-      substring[i] = string[pos + i - 1];
-      i++;
-    }
-
-  substring[i] = '\0';
-  return substring;
-}
 
 void 
 fheader(FILE *file, char *new_line) 
@@ -332,7 +392,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       ) {
                           PNode branch = ((PNode*)pTree->items)[x];
                           if( branch.type != Definition ) 
-                            /*->*/ break;
+                            break;
 
                           char *t = strcmp (branch.saves.definition.type, "ptr") == 0 ? ( strcmp (branch.saves.definition.array.size, "undefined") == 0 ? concat(isType (branch.saves.definition.array.type) ? branch.saves.definition.array.type : concat("%", branch.saves.definition.array.type), "*")
                                                                                                                                                         : concat("[", concat(branch.saves.definition.array.size, concat(" x ", isType(branch.saves.definition.array.type) ? concat(branch.saves.definition.array.type, "]") : concat("%", concat(branch.saves.definition.array.type, "]"))))) )
@@ -420,7 +480,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                         }
 
                       if( strlen (prefix) == 0 )
-                        /*->*/ prefix = ".";
+                        prefix = ".";
 
                     }
 
@@ -480,7 +540,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                         }
 
                       if( strlen (prefix) == 0 )
-                        /*->*/ prefix = ".";
+                        prefix = ".";
 
                     }
                 }
@@ -528,15 +588,15 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     i++
                   ) {
                       if( variables[i].level > scope )
-                        /*->*/ break;
+                        break;
 
                       if( strcmp (variables[i].def.id, array) != 0 )
-                        /*->*/ continue; 
+                        continue; 
                     
                       char *prefix = malloc(sizeof(char) * 16);
                       prefix[0] = '\0';
                       if(! isType (variables[i].def.array.type) )
-                        /*->*/ prefix = "%";
+                        prefix = "%";
 
                       char *op1 = (char*)malloc (64);
                       char *op2 = (char*)malloc (64);
@@ -591,10 +651,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                             x++
                           ) {
                               if( variables[x].level > scope )
-                                /*->*/ break;
+                                break;
 
                               if( strcmp (variables[x].def.id, index) != 0 )
-                                /*->*/ continue; 
+                                continue; 
                               
                               fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
                                       (var + 1),
@@ -682,10 +742,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                   i++
                 ) {
                     if( variables[i].level > scope )
-                      /*->*/ break;
+                      break;
 
                     if( strcmp (variables[i].def.id, next.saves.token.buffer) != 0 )
-                      /*->*/ continue; 
+                      continue; 
 
                     int size_var = llvm_sizeof (variables[i].def.type);
                     fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
@@ -755,10 +815,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 i++
               ) {
                   if( variables[i].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[i].def.id, next.saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   int size_var = llvm_sizeof (variables[i].def.type);
                   int size_last = llvm_sizeof (stacktype[--stackpos]);
@@ -816,10 +876,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
             x++
           ) {
               if( variables[x].level > scope )
-                /*->*/ break;
+                break;
 
               if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
-                /*->*/ continue; 
+                continue; 
 
               PNode pOperator = ((PNode*)pTree->items)[i + 2];
               char *operator;
@@ -868,13 +928,13 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     j++
                   ) {
                       if( variables[j].level > scope )
-                        /*->*/ break;
+                        break;
 
                       if( strcmp (variables[j].def.id, toCompare.saves.token.buffer) != 0 )
-                        /*->*/ continue; 
+                        continue; 
 
                       if( variables[j].def.type[0] != 'i' ) 
-                        /*->*/ break;
+                        break;
                     
                       int size = llvm_sizeof (variables[j].def.type);
                       int start = llvm_sizeof (variables[x].def.type);
@@ -996,10 +1056,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
             x++
           ) {
               if( variables[x].level > scope )
-                /*->*/ break;
+                break;
 
               if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
-                /*->*/ continue; 
+                continue; 
 
               PNode pOperator = ((PNode*)pTree->items)[i + 2];
               char *operator;
@@ -1050,13 +1110,13 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     j++
                   ) {
                       if( variables[j].level > scope )
-                        /*->*/ break;
+                        break;
 
                       if( strcmp (variables[j].def.id, toCompare.saves.token.buffer) != 0 )
-                        /*->*/ continue; 
+                        continue; 
 
                       if( variables[j].def.type[0] != 'i' ) 
-                        /*->*/ break;
+                        break;
                     
                       int size = llvm_sizeof (variables[j].def.type);
                       int start = llvm_sizeof (variables[x].def.type);
@@ -1190,10 +1250,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 x++
               ) {
                   if( variables[x].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   __var = variables[x];
                   id = __var.llvm;
@@ -1274,10 +1334,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 x++
               ) {
                   if( variables[x].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   __var = variables[x];
                   id = __var.llvm;
@@ -1358,10 +1418,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 x++
               ) {
                   if( variables[x].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[x].def.id, next.saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   first = variables[x];
                   __id01 = first.llvm;
@@ -1373,10 +1433,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 x++
               ) {
                   if( variables[x].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[x].def.id, ((PNode*)pTree->items)[i + 3].saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   second = variables[x];
                   __id02 = second.llvm;
@@ -1617,10 +1677,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       z++
                     ) {
                         if( variables[z].level > scope )
-                          /*->*/ break;
+                          break;
 
                         if( strcmp (variables[z].def.id, ((PNode*)pTree->items)[i + 3].saves.token.buffer) != 0 )
-                          /*->*/ continue; 
+                          continue; 
 
                         address = variables[z];
                         x = address.llvm;
@@ -1758,10 +1818,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       z++
                     ) {
                         if( variables[z].level > scope )
-                          /*->*/ break;
+                          break;
 
                         if( strcmp (variables[z].def.id, ((PNode*)pTree->items)[i + 5].saves.token.buffer) != 0 )
-                          /*->*/ continue; 
+                          continue; 
 
                         address = variables[z];
                         x = address.llvm;
@@ -1880,9 +1940,6 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                   }
             }
         }
-      /*
-        identifier operator(=) number
-      */
       else
         if( 
           branch.type == Normal 
@@ -1895,10 +1952,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 x++
               ) {
                   if( variables[x].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[x].def.id, branch.saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   int *variables_id = (int*)malloc (sizeof (int) * 128);
 
@@ -1910,7 +1967,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       if(
                         ((PNode*)pTree->items)[i + j].type == Magic
                         && ((PNode*)pTree->items)[i + j].saves.token.type != Identifier  
-                      ) /*->*/ break; 
+                      ) break; 
 
                       for(
                         int v = 0;
@@ -1918,10 +1975,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                         v++
                       ) {
                           if( variables[v].level > scope )
-                            /*->*/ break;
+                            break;
 
                           if( strcmp (variables[v].def.id, ((PNode*)pTree->items)[i + j].saves.token.buffer) != 0 )
-                            /*->*/ continue;
+                            continue;
 
                           fprintf (output, "%c%d = load ", '%',
                                   var
@@ -1961,7 +2018,7 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                       if(
                         ((PNode*)pTree->items)[i + j].type == Magic
                         && ((PNode*)pTree->items)[i + j].saves.token.type != Identifier  
-                      ) /*->*/ break;
+                      ) break;
 
                       for(
                         int v = 0;
@@ -1969,10 +2026,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                         v++
                       ) {
                           if( variables[v].level > scope )
-                            /*->*/ break;
+                            break;
 
                           if( strcmp (variables[v].def.id, ((PNode*)pTree->items)[i + j].saves.token.buffer) != 0 )
-                            /*->*/ continue;
+                            continue;
 
                           if( j != 1 ) {
                             fprintf (output, ", ");
@@ -2045,10 +2102,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                     y++
                   ) {
                       if( variables[y].level > scope )
-                        /*->*/ break;
+                        break;
 
                       if( strcmp (variables[y].def.id, branch.saves.token.buffer) != 0 )
-                        /*->*/ continue; 
+                        continue; 
                         
                       switch(expr_type)
                         {
@@ -2099,10 +2156,10 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 y++
               ) {
                   if( variables[y].level > scope )
-                    /*->*/ break;
+                    break;
 
                   if( strcmp (variables[y].def.id, branch.saves.token.buffer) != 0 )
-                    /*->*/ continue; 
+                    continue; 
 
                   fprintf (output, "%c%d = load %s, ptr %c%d, align %d\n", '%',
                           var++, 
@@ -2392,8 +2449,9 @@ llGenerate (FILE *output, char *directory, Vector *pTree)
                 }
 
               if( variables[i].level < scope )
-                /*->*/ continue;
+                continue;
             }
         }
     }
 }
+*/

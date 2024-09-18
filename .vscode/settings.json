@@ -12,6 +12,7 @@
     "debug.h": "c",
     "string.h": "c",
     "utility": "c",
-    "xmemory": "c"
+    "xmemory": "c",
+    "smart.h": "c"
   }
 }

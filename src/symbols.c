@@ -27,7 +27,7 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 3, .val = "f32" },
     { .len = 3, .val = "f64" },
     { .len = 4, .val = "void" },
-    { .len = 5, .val = "label" }
+    { .len = 3, .val = "ptr" }
   };
 
 char 
