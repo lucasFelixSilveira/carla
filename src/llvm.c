@@ -8,37 +8,71 @@
 #include "smart.h"
 #include "symbols.h"
 
-#define BRANCHGET(root, i) ((SNode*) root->items)[i]
-#define PNGET(root, i) ((PNode*) root->items)[i]
+#define STATICARRAYTYPE "[00000000 x %********************************]"
+#define GET(type, root, i) ((type*)root->items)[i]
 #define GETFNARG(root, i) ((int*)root.what.lambda.args)[i]
+#define GETSCOPE(root, i) ((ScopeType*)root.items)[i]
+
+typedef enum {
+  FN
+} ScopeType;
 
 int var = 0;
 
 void 
-parseType(char **dist, char *type) 
+parseType(Vector *pTree, char **dist, char *type, int id) 
 {
   if( isType(type) ) 
+    { goto eq; }
+  else
+  if( strcmp (type, "ptr") == 0 ) 
     {
-      *dist = (char*)malloc (strlen (type) + 1);
-      memcpy (*dist, type, strlen (type) + 1);
+      PNode val = GET(PNode, pTree, id);
+      if( val.saves.definition.array.size == NULL || strcmp (val.saves.definition.array.size, "undefined") == 0 )
+        { goto eq; }
+      
+      printf ("aoba: %s\n", val.saves.definition.array.size);
+      if( isType(val.saves.definition.array.type) )
+        { 
+          *dist = (char*)malloc (strlen (STATICARRAYTYPE) + 1);
+          sprintf (*dist, "[%s x %s]", 
+                  val.saves.definition.array.size,
+                  val.saves.definition.array.type
+          );
+        }
+      else 
+        {
+          *dist = "Uknown";
+        }
     }
+    
+  goto c;
+  eq: {
+    *dist = (char*)malloc (strlen (type) + 1);
+    memcpy (*dist, type, strlen (type) + 1);
+  }
+  c: {}
 }
 
 void 
 llGenerate (FILE *output, Vector *sTree, Vector *pTree) 
 {
+  Vector scopes = vector_init (sizeof (ScopeType)); 
+  
   for(
     int i = 0;
     i < sTree->length;
     i++
   ) {
-      SNode init = BRANCHGET(sTree, i);
+      SNode init = GET(SNode, sTree, i);
       switch( init.type )
         {
           /** functions */
           case DLambda:
             {
-              fprintf (output, "define @%s(", init.what.lambda.definition.id);
+              char *pType;
+              parseType(pTree, &pType, init.what.lambda.definition.type, 0);
+              fprintf (output, "define %s @%s(", pType, init.what.lambda.definition.id);
               
               for(
                 int arg = 0;
@@ -50,9 +84,10 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                       fprintf (output, ", ");
                     }
 
-                  PNode argument = PNGET(pTree, GETFNARG(init, arg));
+                  int id = GETFNARG(init, arg);
+                  PNode argument = GET(PNode, pTree, id);
                   char *type;
-                  parseType (&type, argument.saves.definition.type);
+                  parseType (pTree, &type, argument.saves.definition.type, id);
                   fprintf (output, "%s %c%d", 
                           type, '%',
                           var++
@@ -61,12 +96,39 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                 }
 
               fprintf (output, ") {\n");
+
+              ScopeType i = FN;
+              vector_push (&scopes, (void*)(&i));
             } break;
         
+          /* Close brackets */
+          case CloseScope: 
+            {
+              ScopeType type = GETSCOPE(scopes, 0);
+ 
+              switch( type )
+                {
+                  case FN: 
+                    {
+                      fprintf (output, "}\n\n");
+                      goto rm;
+                    } break;
+                  default: break;
+                }
+              
+              goto not_rm;
+              rm: {
+                vector_remove (&scopes, 0);
+              }
+              not_rm: {}
+            } break;
+
           default:
             break;
         }    
     }
+
+  vector_free (&scopes);
 }
 
 /*

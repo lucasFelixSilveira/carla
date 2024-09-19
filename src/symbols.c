@@ -27,7 +27,6 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 3, .val = "f32" },
     { .len = 3, .val = "f64" },
     { .len = 4, .val = "void" },
-    { .len = 3, .val = "ptr" }
   };
 
 char 
@@ -56,6 +55,8 @@ REGEX is match */
 char
 isIdentifier (char buffer[])
 {
+  if( strlen (buffer) > 32 ) 
+    /*->*/ return 0;
   char first = buffer[0];
   if( first != '@' && !isalpha (first) ) 
     /*->*/ return 0;

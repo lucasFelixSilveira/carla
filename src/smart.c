@@ -51,6 +51,24 @@ sGenerate (Vector *sRoot, Vector *pRoot)
 
                   continue;
                 }
+              else if( branch.saves.definition.hopeful == 0 ) 
+                {
+                  vector_push (sRoot, (void*)(&(SNode) {
+                    .type = SDefinition,
+                    .what = (Declaration) {
+                      .definition = branch.saves.definition
+                    }
+                  }));
+                }
+            } break;
+          case End: 
+            {
+              vector_push (sRoot, (void*)(&(SNode) {
+                .type = CloseScope,
+                .what = (Declaration) {
+                  .nothing = NULL
+                }
+              }));
             } break;
           default: break;
         }

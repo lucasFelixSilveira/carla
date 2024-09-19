@@ -7,15 +7,16 @@
 #include "smart.h"
 #include "llvm.h"
 
-#define TKGET(tks, i) ((Token*) tks.items)[i]
-#define BRANCHGET(root, i) ((PNode*) root.items)[i]
+#define GET(type, root, i) ((type*) root.items)[i]
 
 int
 main() 
 {
+  // Open the source file for reading
   FILE *main = fopen ("./bootstrapping/main.cl", "r+");
   Vector tokens = vector_init (sizeof (Token));
   tokenize (main, &tokens);
+  fclose (main);
   
   int i = 0;
   #if DBG_LEXER 
@@ -23,6 +24,7 @@ main()
     pTokens (&tokens);
   #endif
 
+  // Initialize a vector for the parse tree nodes
   Vector root = vector_init (sizeof (PNode));
   pGenerate (&root, &tokens);
   #if DBG_PARSER
@@ -30,10 +32,12 @@ main()
     pRoot (&root);
   #endif
 
-
+  // Clean up the tokens vector to free allocated memory for token buffers
   for( int i = 0; i < tokens.length; i++ )
-    /*->*/ free (TKGET(tokens, i).buffer);
-  vector_free (&tokens);
+    /*->*/ free (GET(Token, tokens, i).buffer);
+  // Free the tokens vector itself
+  vector_free (&tokens); 
+
 
   Vector smartRoot = vector_init(sizeof (SNode));
   sGenerate (&smartRoot, &root);
@@ -43,38 +47,62 @@ main()
     pSmart (&smartRoot, &root);
   #endif
 
+   // Open the output file for writing the generated LLVM code
   FILE *output = fopen ("./bootstrapping/output.ll", "w+");
   llGenerate (output, &smartRoot, &root);  
+  fclose (output);
 
+  // Clean up heap storage to avoid memory leaks
+  // Clean up the parse tree (root) vector
   for( int i = 0; i < root.length; i++)
     {
-      if( BRANCHGET(root, i).type == Magic )
-        /*->*/ free (BRANCHGET(root, i).saves.magic);
-      if( BRANCHGET(root, i).type == LiteralType )
-        /*->*/ free (BRANCHGET(root, i).saves.lit);
+      PNode node = GET(PNode, root, i);
+      if( node.type == Magic )
+        /*->*/ free (node.saves.magic);
+      if( node.type == LiteralType )
+        /*->*/ free (node.saves.lit);
       else
-      if( BRANCHGET(root, i).type == Definition )
+      if( node.type == Definition )
         {
-          // free array data memory
-          free (BRANCHGET(root, i).saves.definition.array.size);
-          free (BRANCHGET(root, i).saves.definition.array.type);
+          // Free array data memory for definitions
+          free (node.saves.definition.array.size);
+          free (node.saves.definition.array.type);
           
-          // free definition info memory
-          free (BRANCHGET(root, i).saves.definition.id);
-          free (BRANCHGET(root, i).saves.definition.type);
+          // Free memory for definition metadata
+          free (node.saves.definition.id);
+          free (node.saves.definition.type);
         }
       else
-      if( BRANCHGET(root, i).type == ArrayType )
+      if( node.type == ArrayType )
         {
-          free (BRANCHGET(root, i).saves.array.size);
-          free (BRANCHGET(root, i).saves.array.type);
+          // Free array-related memory
+          free (node.saves.array.size);
+          free (node.saves.array.type);
         }
     }
+  // Free the parse tree vector itself
   vector_free (&root);
 
-  fclose (output);
-  fclose (main);
+  // Clean up the smart parse tree (smartRoot) vector
+  for( int i = 0; i < smartRoot.length; i++)
+    {
+      SNode node = GET(SNode, smartRoot, i); 
+      if( node.type == DLambda ) 
+        /*->*/ free (node.what.lambda.args);
+      else
+      if( node.type == SDefinition ) 
+        {
+          // Free array data memory for definitions
+          free (node.what.definition.array.size);
+          free (node.what.definition.array.type);
+          
+          // Free memory for definition metadata
+          free (node.what.definition.id);
+          free (node.what.definition.type);
+        }
+    }
 
+  // Compile the generated LLVM code based on the operating system
 # ifdef _WIN32 
   system ("cd bootstrapping & clang output.ll -o output.exe & cd ..");
 # else

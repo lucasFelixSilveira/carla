@@ -7,7 +7,8 @@
 
   typedef enum {
     DLambda,
-    SDefinition
+    SDefinition,
+    CloseScope
   } SmartNodes;
 
   typedef struct {
@@ -19,6 +20,7 @@
 
   typedef union {
     DMemory definition;
+    void   *nothing;
     SLambda lambda;
   } Declaration;
 
