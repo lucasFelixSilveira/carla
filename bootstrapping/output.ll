@@ -1,3 +1,3 @@
-define i32 @main(Uknown %0, i64 %1) {
+define i32 @main([3 x i32] %0, i64 %1) {
 }
 

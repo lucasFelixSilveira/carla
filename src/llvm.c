@@ -22,7 +22,7 @@ int var = 0;
 void 
 parseType(Vector *pTree, char **dist, char *type, int id) 
 {
-  if( isType(type) ) 
+  if( isType (type) ) 
     { goto eq; }
   else
   if( strcmp (type, "ptr") == 0 ) 
@@ -31,13 +31,16 @@ parseType(Vector *pTree, char **dist, char *type, int id)
       if( val.saves.definition.array.size == NULL || val.saves.definition.array.type == NULL  || strcmp (val.saves.definition.array.size, "undefined") == 0 )
         { goto eq; }
       
-      if( isType(val.saves.definition.array.type) )
+      if( isType (val.saves.definition.array.type) )
         { 
+          char *aType;
+          parseType (pTree, &aType, val.saves.definition.array.type, id);
           *dist = (char*)malloc (strlen (STATICARRAYTYPE) + 1);
           sprintf (*dist, "[%s x %s]", 
                   val.saves.definition.array.size,
-                  val.saves.definition.array.type
+                  aType
           );
+          free (aType);
         }
       else 
         {
