@@ -74,7 +74,7 @@ isIdentifier (char buffer[])
 }
 
 /* Checks if the:
-  [0-9]+
+  [0-9]*
 REGEX is match */
 char
 isNumeric (char buffer[])

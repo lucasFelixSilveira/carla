@@ -28,10 +28,9 @@ parseType(Vector *pTree, char **dist, char *type, int id)
   if( strcmp (type, "ptr") == 0 ) 
     {
       PNode val = GET(PNode, pTree, id);
-      if( val.saves.definition.array.size == NULL || strcmp (val.saves.definition.array.size, "undefined") == 0 )
+      if( val.saves.definition.array.size == NULL || val.saves.definition.array.type == NULL  || strcmp (val.saves.definition.array.size, "undefined") == 0 )
         { goto eq; }
       
-      printf ("aoba: %s\n", val.saves.definition.array.size);
       if( isType(val.saves.definition.array.type) )
         { 
           *dist = (char*)malloc (strlen (STATICARRAYTYPE) + 1);

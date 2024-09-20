@@ -38,7 +38,7 @@ main()
   // Free the tokens vector itself
   vector_free (&tokens); 
 
-
+  // Initialize a vector for the smart parse tree nodes
   Vector smartRoot = vector_init(sizeof (SNode));
   sGenerate (&smartRoot, &root);
 
@@ -84,7 +84,7 @@ main()
   vector_free (&root);
 
   // Clean up the smart parse tree (smartRoot) vector
-  for( int i = 0; i < smartRoot.length; i++)
+  for( int i = 0; i < smartRoot.length; i++) 
     {
       SNode node = GET(SNode, smartRoot, i); 
       if( node.type == DLambda ) 
