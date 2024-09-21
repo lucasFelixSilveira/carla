@@ -70,6 +70,86 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                 }
               }));
             } break;
+          case Normal:
+            {
+              switch( branch.saves.token.type )
+                {
+                  case Integer:
+                  case Identifier:
+                    {
+                      Vector expr = vector_init (sizeof (PNode));
+                      EXPR_T currentID = EXPR_UNDEFINED_T;
+                      
+                      if( branch.saves.token.type == Identifier )
+                        /*->*/ currentID = EXPR_IDENTIFIER_T;
+                      else
+                      if( branch.saves.token.type == Integer )
+                        /*->*/ currentID = EXPR_INT_T;
+                      
+                      while(1) 
+                        {
+                          i++;
+                          PNode current = BRANCHGET(pRoot, i);
+
+                          vector_push (&expr, (void*)((PNode*)&current));
+
+                          if( current.type == Normal )
+                            {
+                              if( 
+                                current.type == End  
+                                || current.saves.token.type == Semi 
+                                || current.saves.token.type == Keyword 
+                              ) {
+                                  i++;
+                                  break;
+                                }
+                              
+                              if( currentID == EXPR_IDENTIFIER_T )
+                                switch (current.saves.token.type)
+                                  {
+                                    case ArithmeticOperator:
+                                      {
+                                        currentID = EXPR_ARITHMETIC;
+                                      } break;
+                                    default: break;
+                                  }
+                              else 
+                              if( currentID == EXPR_INT_T )
+                                switch (current.saves.token.type)
+                                  {
+                                    case ArithmeticOperator:
+                                      {
+                                        currentID = EXPR_ARITHMETIC;
+                                      } break;
+                                    default: break;
+                                  }
+                              else 
+                              if( currentID == EXPR_ARITHMETIC )
+                                switch (current.saves.token.type)
+                                  {
+                                    case Identifier:
+                                      {
+                                        currentID = EXPR_IDENTIFIER_T;
+                                      } break;
+                                    case Integer:
+                                      {
+                                        currentID = EXPR_INT_T;
+                                      } break;
+                                    default: break;
+                                  }
+                            }
+                        }
+
+                      vector_push (sRoot, (void*)(&(SNode) {
+                        .type = SExpression, 
+                        .what = (Declaration) {
+                          .expr = &expr
+                        }
+                      }));
+                    } break;
+                  default: break;
+                }
+            }
           default: break;
         }
     }

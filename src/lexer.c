@@ -74,6 +74,32 @@ ishexa(char c)
   return 0;
 }
 
+int
+validSingleOp(char c) 
+{
+  char *operators = "!&|?%.";
+  char *arithmetic = "*+-/";
+  if( c == ';' )
+    /*->*/ return Semi;
+  for(
+    int i = 0;
+    i < strlen (operators);
+    i++
+  ) {
+      if( operators[i] == c )
+        /*->*/ return Operator;
+    }
+  for(
+    int i = 0;
+    i < strlen (arithmetic);
+    i++
+  ) {
+      if( arithmetic[i] == c )
+        /*->*/ return ArithmeticOperator;
+    }
+  return 0;
+}
+
 void 
 tokenize (FILE *file, Vector *tks)
 {
@@ -149,15 +175,16 @@ tokenize (FILE *file, Vector *tks)
         char t = 1;
         int id = ismatch (c, c2); 
         if( id == 0 ) {
+          id = validSingleOp (c);
           ungetc (c2, file);
           buffer[0] = c;
+          buffer[1] = 0;
         } else {
           buffer[0] = c;
           buffer[1] = c2;
+          buffer[2] = 0;
           t++;
         } 
-
-        buffer[t] = 0;
 
         vector_push (tks, (void*)(&(Token) {
           .buffer = strdup (buffer), 

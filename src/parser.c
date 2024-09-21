@@ -200,10 +200,7 @@ only_add: {}
           }));
           
           i++;
-        }  
-      else 
-      if( EQ(TKGET(i).buffer, ";") ) 
-        { i++; }
+        }
       else 
         { 
           vector_push (root, (void*)(&(PNode) {

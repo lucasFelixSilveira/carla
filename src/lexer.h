@@ -1,6 +1,6 @@
 #ifndef LEXER_H
 # define LEXER_H
-# define DBG_LEXER 0
+# define DBG_LEXER 1
 # include <stdio.h>
 # include "vector.h"
 # define OP_CONSTANT 69
@@ -16,6 +16,7 @@
     Identifier,
     Keyword,
     Operator,
+    ArithmeticOperator,
 
     /* BITs */
     RightShift = OP_CONSTANT,
@@ -33,7 +34,6 @@
     Walrus, Quad, Acess
   } TokenType;
 
-  typedef TokenType ArithmeticOperator;
   typedef TokenType OperationOperator;
 
   typedef struct {

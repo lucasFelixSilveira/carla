@@ -17,7 +17,7 @@ typedef enum {
   FN
 } ScopeType;
 
-int var = 0;
+unsigned int var = 0;
 
 void 
 parseType(Vector *pTree, char **dist, char *type, int id) 
@@ -28,16 +28,20 @@ parseType(Vector *pTree, char **dist, char *type, int id)
   if( strcmp (type, "ptr") == 0 ) 
     {
       PNode val = GET(PNode, pTree, id);
-      if( val.saves.definition.array.size == NULL || val.saves.definition.array.type == NULL  || strcmp (val.saves.definition.array.size, "undefined") == 0 )
-        { goto eq; }
+      AMemory array = val.saves.definition.array;
+      if( 
+        array.size == NULL 
+        || array.type == NULL 
+        || strcmp (array.size, "undefined") == 0
+      ) { goto eq; }
       
-      if( isType (val.saves.definition.array.type) )
+      if( isType (array.type) )
         { 
           char *aType;
-          parseType (pTree, &aType, val.saves.definition.array.type, id);
+          parseType (pTree, &aType, array.type, id);
           *dist = (char*)malloc (strlen (STATICARRAYTYPE) + 1);
           sprintf (*dist, "[%s x %s]", 
-                  val.saves.definition.array.size,
+                  array.size,
                   aType
           );
           free (aType);
@@ -50,12 +54,16 @@ parseType(Vector *pTree, char **dist, char *type, int id)
     
   goto c;
   eq: {
-    *dist = (char*)malloc (strlen (type) + 1);
-    memcpy (*dist, type, strlen (type) + 1);
+    int len = (strlen (type) + 1);
+    *dist = (char*)malloc (len);
+    memcpy (*dist, type, len);
   }
   c: {}
 }
 
+/**
+ * TODO: Terminar o return e as expressoes, para que sejam parceadas para LLVM de forma correta.
+ */
 void 
 llGenerate (FILE *output, Vector *sTree, Vector *pTree) 
 {
