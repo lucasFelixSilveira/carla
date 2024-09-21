@@ -4,6 +4,7 @@
 # include <stdio.h>
 # include "vector.h"
 # define OP_CONSTANT 69
+# define COMP_CONSTANT 123
 # define LARGE_CONSTANT 10000
 
   typedef enum {
@@ -28,7 +29,7 @@
     Imul, Idiv,
 
     /* Comparation */
-    Eq, Ne, Le, Ge, LL, GG,
+    Eq = COMP_CONSTANT, Ne, Le, Ge, LL, GG,
 
     /* Iterators */
     Walrus, Quad, Acess

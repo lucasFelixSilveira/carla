@@ -32,12 +32,6 @@ main()
     pRoot (&root);
   #endif
 
-  // Clean up the tokens vector to free allocated memory for token buffers
-  for( int i = 0; i < tokens.length; i++ )
-    /*->*/ free (GET(Token, tokens, i).buffer);
-  // Free the tokens vector itself
-  vector_free (&tokens); 
-
   // Initialize a vector for the smart parse tree nodes
   Vector smartRoot = vector_init(sizeof (SNode));
   sGenerate (&smartRoot, &root);
@@ -52,7 +46,14 @@ main()
   llGenerate (output, &smartRoot, &root);  
   fclose (output);
 
+
   // Clean up heap storage to avoid memory leaks
+  // Clean up the tokens vector to free allocated memory for token buffers
+  for( int i = 0; i < tokens.length; i++ )
+    /*->*/ free (GET(Token, tokens, i).buffer);
+  // Free the tokens vector itself
+  vector_free (&tokens); 
+
   // Clean up the parse tree (root) vector
   for( int i = 0; i < root.length; i++)
     {

@@ -9,7 +9,8 @@
     DLambda,
     SDefinition,
     SExpression,
-    CloseScope
+    CloseScope,
+    SMagic
   } SmartNodes;
 
   typedef struct {
@@ -19,11 +20,17 @@
     int       lArgs;
   } SLambda;
 
+  typedef struct {
+    Vector *vec;
+    int semantic;
+  } Expr;
+
   typedef union {
     DMemory definition;
+    Expr    expr;
     void   *nothing;
     SLambda lambda;
-    Vector *expr;
+    char   *magic;
   } Declaration;
 
   typedef struct {
@@ -36,9 +43,16 @@
   typedef enum {
     EXPR_IDENTIFIER_T,
     EXPR_UNDEFINED_T,
+    EXPR_COMPARATION,
     EXPR_ARITHMETIC,
     EXPR_INT_T
   } EXPR_T;
+
+  typedef enum {
+    EXPR_UNDEFINED_R,
+    EXPR_BOOL_R,
+    EXPR_INT_R
+  } EXPR_R;
 
   void sGenerate (Vector *sRoot, Vector *pRoot);
 

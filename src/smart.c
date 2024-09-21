@@ -70,6 +70,15 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                 }
               }));
             } break;
+          case Magic:
+            {
+              vector_push (sRoot, (void*)(&(SNode) {
+                .type = SMagic,
+                .what = (Declaration) {
+                  .magic = branch.saves.magic
+                }
+              }));
+            } break;
           case Normal:
             {
               switch( branch.saves.token.type )
@@ -79,6 +88,7 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                     {
                       Vector expr = vector_init (sizeof (PNode));
                       EXPR_T currentID = EXPR_UNDEFINED_T;
+                      EXPR_R semanticID = EXPR_UNDEFINED_R;
                       
                       if( branch.saves.token.type == Identifier )
                         /*->*/ currentID = EXPR_IDENTIFIER_T;
@@ -97,14 +107,15 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                             {
                               if( 
                                 current.type == End  
+                                || current.type == Magic 
                                 || current.saves.token.type == Semi 
-                                || current.saves.token.type == Keyword 
                               ) {
-                                  i++;
+                                  if( current.type != Magic ) 
+                                    /*->*/ i++;
                                   break;
                                 }
                               
-                              if( currentID == EXPR_IDENTIFIER_T )
+                              if( currentID == EXPR_IDENTIFIER_T && semanticID != EXPR_BOOL_R )
                                 switch (current.saves.token.type)
                                   {
                                     case ArithmeticOperator:
@@ -114,12 +125,21 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                                     default: break;
                                   }
                               else 
-                              if( currentID == EXPR_INT_T )
+                              if( currentID == EXPR_INT_T && semanticID != EXPR_BOOL_R )
                                 switch (current.saves.token.type)
                                   {
                                     case ArithmeticOperator:
                                       {
                                         currentID = EXPR_ARITHMETIC;
+                                      } break;
+                                    case COMP_CONSTANT:
+                                    case COMP_CONSTANT+1:
+                                    case COMP_CONSTANT+2:
+                                    case COMP_CONSTANT+3:
+                                    case COMP_CONSTANT+4:
+                                    case COMP_CONSTANT+5:
+                                      {
+                                        currentID = EXPR_COMPARATION;
                                       } break;
                                     default: break;
                                   }
@@ -129,10 +149,28 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                                   {
                                     case Identifier:
                                       {
+                                        semanticID = EXPR_INT_R;
                                         currentID = EXPR_IDENTIFIER_T;
                                       } break;
                                     case Integer:
                                       {
+                                        semanticID = EXPR_INT_R;
+                                        currentID = EXPR_INT_T;
+                                      } break;
+                                    default: break;
+                                  }
+                              else 
+                              if( currentID == EXPR_COMPARATION )
+                                switch (current.saves.token.type)
+                                  {
+                                    case Identifier:
+                                      {
+                                        semanticID = EXPR_BOOL_R;
+                                        currentID = EXPR_IDENTIFIER_T;
+                                      } break;
+                                    case Integer:
+                                      {
+                                        semanticID = EXPR_BOOL_R;
                                         currentID = EXPR_INT_T;
                                       } break;
                                     default: break;
@@ -143,7 +181,10 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                       vector_push (sRoot, (void*)(&(SNode) {
                         .type = SExpression, 
                         .what = (Declaration) {
-                          .expr = &expr
+                          .expr = (Expr) {
+                            .semantic = semanticID,
+                            .vec = &expr
+                          }
                         }
                       }));
                     } break;

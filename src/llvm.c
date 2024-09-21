@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "smart.h"
 #include "symbols.h"
+#include "hash.h"
 
 #define STATICARRAYTYPE "[00000000 x %********************************]"
 #define GET(type, root, i) ((type*)root->items)[i]
@@ -68,7 +69,7 @@ void
 llGenerate (FILE *output, Vector *sTree, Vector *pTree) 
 {
   Vector scopes = vector_init (sizeof (ScopeType)); 
-  
+
   for(
     int i = 0;
     i < sTree->length;
@@ -132,6 +133,18 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               }
               not_rm: {}
             } break;
+
+          /* Keywords */
+          case SMagic:
+            {
+              i++;
+              if( strcmp (init.what.magic, "return") == 0 )
+                {
+
+                  fprintf (output, "ret i32 ");
+
+                }
+            }
 
           default:
             break;
