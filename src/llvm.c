@@ -12,13 +12,20 @@
 #define STATICARRAYTYPE "[00000000 x %********************************]"
 #define GET(type, root, i) ((type*)root->items)[i]
 #define GETFNARG(root, i) ((int*)root.what.lambda.args)[i]
-#define GETSCOPE(root, i) ((ScopeType*)root.items)[i]
+#define GETS(type, root, i) ((type*)root.items)[i]
+
+int tab = 0;
 
 typedef enum {
   FN
 } ScopeType;
 
 unsigned int var = 0;
+
+typedef struct {
+  int v;
+  char *t;
+} StackRet;
 
 void 
 parseType(Vector *pTree, char **dist, char *type, int id) 
@@ -62,13 +69,28 @@ parseType(Vector *pTree, char **dist, char *type, int id)
   c: {}
 }
 
-/**
- * TODO: Terminar o return e as expressoes, para que sejam parceadas para LLVM de forma correta.
- */
+void
+genT(char **tabs)
+{
+  if( tab == 0 )
+    (*tabs)[0] = 0x0;
+  else 
+    {
+      int i = 0;
+      for(; i < tab; i++)
+        {
+          (*tabs)[i] = 0x9;
+          (*tabs)[i+1] = 0x0;
+        }
+    }
+}
+
 void 
 llGenerate (FILE *output, Vector *sTree, Vector *pTree) 
 {
+  char *tabs = (char*)malloc (1024); 
   Vector scopes = vector_init (sizeof (ScopeType)); 
+  Vector stackRet = vector_init (sizeof (StackRet)); 
 
   for(
     int i = 0;
@@ -108,20 +130,27 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
 
               fprintf (output, ") {\n");
 
+              tab++;
               ScopeType i = FN;
               vector_push (&scopes, (void*)(&i));
+              vector_push (&stackRet, (void*)(&(StackRet) {
+                .t = init.what.lambda.definition.type,
+                .v = 0 
+              }));
             } break;
         
           /* Close brackets */
           case CloseScope: 
             {
-              ScopeType type = GETSCOPE(scopes, 0);
+              ScopeType type = GETS(ScopeType, scopes, 0);
  
               switch( type )
                 {
                   case FN: 
                     {
-                      fprintf (output, "}\n\n");
+                      tab--;
+                      genT(&tabs);
+                      fprintf (output, "%s}\n\n", tabs);
                       goto rm;
                     } break;
                   default: break;
@@ -129,6 +158,7 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               
               goto not_rm;
               rm: {
+                vector_remove (&stackRet, (stackRet.length-1));
                 vector_remove (&scopes, 0);
               }
               not_rm: {}
@@ -140,8 +170,25 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               i++;
               if( strcmp (init.what.magic, "return") == 0 )
                 {
+                  genT(&tabs);
+                  StackRet ret = GETS(StackRet, stackRet, (stackRet.length-1)); 
+                  fprintf (output, "%sret %s ", tabs, ret.t);
 
-                  fprintf (output, "ret i32 ");
+                  SNode next = GET(SNode, sTree, i);
+
+                  if( next.type != SExprNode )
+                    /*->*/ exit (0);
+
+                  switch( next.what.expr.saves.token.type )
+                    {
+                      case Integer:
+                        {
+                          fprintf (output, "%s\n", next.what.expr.saves.token.buffer);
+                        } break;
+                      
+                      default: break;
+                    }
+
 
                 }
             }
@@ -151,6 +198,8 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
         }    
     }
 
+  free (tabs);
+  vector_free (&stackRet);
   vector_free (&scopes);
 }
 

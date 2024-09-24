@@ -22,11 +22,13 @@ const char *__Types[TYPES_LENGTH] = {
   "End"
 };
 
-#define SMART_TYPES_LENGTH 3
+#define SMART_TYPES_LENGTH 5
 const char *__SmartTypes[SMART_TYPES_LENGTH] = {
-  "Lambda",
-  "Definition",
-  "CloseScope"
+  "DLambda",
+  "SDefinition",
+  "SExprNode",
+  "CloseScope",
+  "SMagic"
 };
 
 void
