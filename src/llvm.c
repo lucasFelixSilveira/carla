@@ -15,6 +15,7 @@
 #define GETS(type, root, i) ((type*)root.items)[i]
 
 int tab = 0;
+Vector stack;
 
 typedef enum {
   FN
@@ -22,10 +23,55 @@ typedef enum {
 
 unsigned int var = 0;
 
-typedef struct {
-  int v;
-  char *t;
-} StackRet;
+typedef union {
+  char *return_type;
+} sCall_t;
+
+typedef enum {
+  LambdaFunction,
+  NormalVariable
+} eVar_t;
+
+typedef union {
+  int tab;
+  eVar_t type;
+  char *identifier;
+  unsigned int llvm;
+} sVars_t;
+
+typedef union {
+  Vector call;
+  Vector vars;
+} stack_t;
+
+char *
+substr(int pos, int len, int total, char string[])
+{
+
+  char *substring = (char*)malloc (total);
+
+  int i = 0;
+  while (i < len) 
+    {
+      substring[i] = string[pos + i - 1];
+      i++;
+    }
+
+  substring[i] = '\0';
+  return substring;
+}
+
+int
+llvm_sizeof (char *type)
+{
+  if( type[0] == 'i' )
+    {
+      char *bits = substr (2, strlen (type) - 1, strlen (type), type);
+      int bytes = atoi (bits) / 8;
+      return bytes;
+    }
+  return 0;
+}
 
 void 
 parseType(Vector *pTree, char **dist, char *type, int id) 
@@ -85,12 +131,44 @@ genT(char **tabs)
     }
 }
 
+void
+llvm_alloca(FILE *output, unsigned int *llvm, DMemory definition)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  fprintf (output, "%s%c%d = alloca %s, align %d\n", 
+          tabs, '%', 
+          (*llvm),
+          definition.type,
+          llvm_sizeof (definition.type)
+  );
+  (*llvm)++;
+  free (tabs);
+}
+
+void
+llvm_store_argument(FILE *output, DMemory definition, unsigned int start, unsigned int llvm, unsigned int inc)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  fprintf (output, "%sstore %s %c%d, ptr %c%d, align %d\n", 
+          tabs, 
+          definition.type, '%',
+          (start + 1 + llvm + inc), '%',
+          (start + llvm),
+          llvm_sizeof (definition.type)
+  );
+  free (tabs);
+}
+
 void 
 llGenerate (FILE *output, Vector *sTree, Vector *pTree) 
 {
   char *tabs = (char*)malloc (1024); 
   Vector scopes = vector_init (sizeof (ScopeType)); 
-  Vector stackRet = vector_init (sizeof (StackRet)); 
+  stack_t stack = (stack_t) {
+    .call = vector_init (sizeof (sCall_t))
+  };
 
   for(
     int i = 0;
@@ -107,6 +185,8 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               parseType(pTree, &pType, init.what.lambda.definition.type, 0);
               fprintf (output, "define %s @%s(", pType, init.what.lambda.definition.id);
               
+              unsigned int start = var;
+
               for(
                 int arg = 0;
                 arg < init.what.lambda.lArgs;
@@ -129,20 +209,49 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                 }
 
               fprintf (output, ") {\n");
-
               tab++;
+              var++;
+
+              for(
+                int arg = 0;
+                arg < init.what.lambda.lArgs;
+                arg++
+              ) {
+                  PNode info = GET(PNode, pTree, init.what.lambda.args[arg]);
+                  llvm_alloca (
+                              output, 
+                              &var, 
+                              info.saves.definition
+                  );
+                } 
+
+                for(
+                  int arg = 0;
+                  arg < init.what.lambda.lArgs;
+                  arg++
+                ) {
+                  PNode info = GET(PNode, pTree, init.what.lambda.args[arg]);
+                  llvm_store_argument (
+                                      output, 
+                                      info.saves.definition, 
+                                      start, 
+                                      arg, 
+                                      init.what.lambda.lArgs
+                  );
+                }
+
               ScopeType i = FN;
               vector_push (&scopes, (void*)(&i));
-              vector_push (&stackRet, (void*)(&(StackRet) {
-                .t = init.what.lambda.definition.type,
-                .v = 0 
+              vector_push (&stack.call, (void*)(&(sCall_t) {
+                .return_type = init.what.lambda.definition.type,
               }));
             } break;
         
           /* Close brackets */
           case CloseScope: 
             {
-              ScopeType type = GETS(ScopeType, scopes, 0);
+              int index = (scopes.length - 1);
+              ScopeType type = GETS(ScopeType, scopes, index);
  
               switch( type )
                 {
@@ -151,6 +260,7 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                       tab--;
                       genT(&tabs);
                       fprintf (output, "%s}\n\n", tabs);
+                      vector_remove (&stack.call, (stack.call.length-1));
                       goto rm;
                     } break;
                   default: break;
@@ -158,8 +268,7 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               
               goto not_rm;
               rm: {
-                vector_remove (&stackRet, (stackRet.length-1));
-                vector_remove (&scopes, 0);
+                vector_remove (&scopes, index);
               }
               not_rm: {}
             } break;
@@ -171,8 +280,11 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               if( strcmp (init.what.magic, "return") == 0 )
                 {
                   genT(&tabs);
-                  StackRet ret = GETS(StackRet, stackRet, (stackRet.length-1)); 
-                  fprintf (output, "%sret %s ", tabs, ret.t);
+
+                  int index = (stack.call.length - 1);
+
+                  sCall_t last_call = GETS(sCall_t, stack.call, index); 
+                  fprintf (output, "%sret %s ", tabs, last_call.return_type);
 
                   SNode next = GET(SNode, sTree, i);
 
@@ -188,8 +300,6 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                       
                       default: break;
                     }
-
-
                 }
             }
 
@@ -199,7 +309,8 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
     }
 
   free (tabs);
-  vector_free (&stackRet);
+  vector_free (&stack.call);
+  vector_free (&stack.vars);
   vector_free (&scopes);
 }
 
