@@ -81,21 +81,37 @@ sGenerate (Vector *sRoot, Vector *pRoot)
             } break;
           case Normal:
             {
-              switch( branch.saves.token.type )
-                {
-                  case Integer:
-                  case Literal:
-                  case Identifier:
-                    {
-                      vector_push (sRoot, (void*)(&(SNode) {
-                        .type = SExprNode, 
-                        .what = (Declaration) {
-                          .expr = branch
-                        }
-                      }));
-                    } break;
-                  default: break;
+              Expr expr;
+              switch (branch.type)
+              {
+                case Normal:
+                  {
+
+                    PNode next = BRANCHGET(pRoot, i + 1);
+                    if( next.type == Normal && next.saves.token.type == Semi )
+                      {
+
+                        expr = (Expr) {
+                          .type = SingleExpr,
+                          .value = (expr_v) {
+                            .single = branch.saves.token.buffer
+                          }
+                        };
+
+                        break;
+                      }
+                  
+                  } break;
+                
+                default: break;
+              }              
+
+              vector_push (sRoot, (void*)(&(SNode) {
+                .type = SExprNode, 
+                .what = (Declaration) {
+                  .expr = expr
                 }
+              }));
             }
           default: break;
         }

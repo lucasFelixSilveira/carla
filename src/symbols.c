@@ -24,6 +24,8 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     { .len = 3, .val = "u32" },
     { .len = 3, .val = "i64" },
     { .len = 3, .val = "u64" },
+    { .len = 4, .val = "i128" },
+    { .len = 4, .val = "u128" },
     { .len = 3, .val = "f32" },
     { .len = 3, .val = "f64" },
     { .len = 4, .val = "void" },

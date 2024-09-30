@@ -20,14 +20,27 @@
     int       lArgs;
   } SLambda;
 
-  typedef PNode ExprNode;
+  typedef enum {
+    SingleExpr,
+    ArithmeticExpr
+  } Sexpr_t;
+
+  typedef union {
+    char *single;
+    // ExprArithmetic arithmetic;
+  } expr_v; 
+
+  typedef struct {
+    Sexpr_t type;
+    expr_v value;
+  } Expr;
 
   typedef union {
     DMemory definition;
-    ExprNode    expr;
     void   *nothing;
     SLambda lambda;
     char   *magic;
+    Expr    expr;
   } Declaration;
 
   typedef struct {

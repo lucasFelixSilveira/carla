@@ -23,7 +23,7 @@ typedef enum {
 
 unsigned int var = 0;
 
-typedef union {
+typedef struct {
   char *return_type;
 } sCall_t;
 
@@ -32,14 +32,15 @@ typedef enum {
   NormalVariable
 } eVar_t;
 
-typedef union {
+typedef struct {
   int tab;
   eVar_t type;
   char *identifier;
   unsigned int llvm;
+  char *cFn;
 } sVars_t;
 
-typedef union {
+typedef struct {
   Vector call;
   Vector vars;
 } stack_t;
@@ -70,6 +71,10 @@ llvm_sizeof (char *type)
       int bytes = atoi (bits) / 8;
       return bytes;
     }
+
+  if( strcmp (type, "ptr") == 0 ) 
+    return 8;
+  
   return 0;
 }
 
@@ -147,15 +152,15 @@ llvm_alloca(FILE *output, unsigned int *llvm, DMemory definition)
 }
 
 void
-llvm_store_argument(FILE *output, DMemory definition, unsigned int start, unsigned int llvm, unsigned int inc)
+llvm_store_argument(FILE *output, DMemory definition, unsigned int start, unsigned int inc, int index)
 {
   char *tabs = (char*)malloc (1024);
   genT (&tabs);
   fprintf (output, "%sstore %s %c%d, ptr %c%d, align %d\n", 
           tabs, 
           definition.type, '%',
-          (start + 1 + llvm + inc), '%',
-          (start + llvm),
+          (start + index + inc + 1), '%',
+          (start + index),
           llvm_sizeof (definition.type)
   );
   free (tabs);
@@ -167,7 +172,8 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
   char *tabs = (char*)malloc (1024); 
   Vector scopes = vector_init (sizeof (ScopeType)); 
   stack_t stack = (stack_t) {
-    .call = vector_init (sizeof (sCall_t))
+    .call = vector_init (sizeof (sCall_t)),
+    .vars = vector_init (sizeof (sVars_t))
   };
 
   for(
@@ -223,6 +229,13 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                               &var, 
                               info.saves.definition
                   );
+                  vector_push (&stack.vars, (void*)(&(sVars_t) {
+                    .llvm = var,
+                    .identifier = info.saves.definition.id,
+                    .type = NormalVariable,
+                    .tab = tab,
+                    .cFn = init.what.lambda.definition.id
+                  }));
                 } 
 
                 for(
@@ -235,8 +248,8 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                                       output, 
                                       info.saves.definition, 
                                       start, 
-                                      arg, 
-                                      init.what.lambda.lArgs
+                                      init.what.lambda.lArgs,
+                                      arg
                   );
                 }
 
@@ -291,11 +304,12 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                   if( next.type != SExprNode )
                     /*->*/ exit (0);
 
-                  switch( next.what.expr.saves.token.type )
+                  Expr first = next.what.expr;
+                  switch( first.type )
                     {
-                      case Integer:
+                      case SingleExpr:
                         {
-                          fprintf (output, "%s\n", next.what.expr.saves.token.buffer);
+                          fprintf (output, "%s\n", first.value.single);
                         } break;
                       
                       default: break;

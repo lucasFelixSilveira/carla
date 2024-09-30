@@ -1,3 +1,3 @@
-i32 main = (i32 sex, i8 opa) {
-  return 0
+i32 main = (i32 argc, (_:string) argv) {
+  return 0;
 }
