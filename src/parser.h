@@ -18,6 +18,7 @@
     LiteralType,
     Definition,
     Expression,
+    ForceCast,
     ArrayType,
     Lambda,
     Normal,
@@ -46,6 +47,12 @@
     char arg;
   } DMemory;
 
+  typedef struct {
+    int bits;
+    char *var;
+    char *type;
+  } Cast;
+
   typedef union {
     DMemory definition;
     AMemory array;
@@ -53,6 +60,7 @@
     Token token;
     char *magic;
     char *lit;
+    Cast cast;
   } Cache;
 
   typedef struct {

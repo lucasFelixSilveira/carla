@@ -9,11 +9,12 @@
 #define BRANCHGET(root, i) ((PNode*)root->items)[i]
 #define TKGET(tks, i) ((Token*)tks->items)[i]
 
-#define TYPES_LENGTH 9
+#define TYPES_LENGTH 10
 const char *__Types[TYPES_LENGTH] = {
   "LiteralType",
   "Definition",
   "Expression",
+  "ForceCast",
   "ArrayType",
   "Lambda",
   "Normal",
@@ -57,6 +58,10 @@ pRoot (Vector *root)
               printf ("\t\t%s: %s\n", "type", branch.saves.definition.array.type);
               printf ("\t}\n");
             }
+        } break;
+        case ForceCast: {
+          printf ("\t%s: %d\n", "bits", branch.saves.cast.bits);
+          printf ("\t%s: %s\n", "variable", branch.saves.cast.var);
         } break;
         case ArrayType: {
           printf ("\t%s: {\n", "array");
@@ -112,6 +117,7 @@ pSmart (Vector *root, Vector *subRoot)
           printf ("\t%s: %d\n", "args length", branch.what.lambda.lArgs);
           if( branch.what.lambda.lArgs > 0 ) 
             {
+              printf ("\t%s: [\n", "args");
               for( 
                 int i = 0;
                 i < branch.what.lambda.lArgs;
@@ -119,13 +125,12 @@ pSmart (Vector *root, Vector *subRoot)
               ) {
                   int *args = branch.what.lambda.args;
                   PNode arg = BRANCHGET(subRoot, args[i]);
-                  printf ("\t%s: [\n", "args");
                   printf ("\t\t{\n");
                   printf ("\t\t\t%s: %s\n", "type", arg.saves.definition.type);
                   printf ("\t\t\t%s: %s\n", "id", arg.saves.definition.id);
-                  printf ("\t\t}\n");
-                  printf ("\t]\n");
+                  printf ("\t\t},\n");
                 }  
+              printf ("\t]\n");
             }  
         } break;
         default: break;

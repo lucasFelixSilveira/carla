@@ -109,6 +109,49 @@ pGenerate (Vector *root, Vector *tks)
           }));
         }
       else
+      if( 
+        EQ(TKGET(i).buffer, "[")
+        && (
+            (
+              TKGET(POS(i,1)).type == Integer
+              && (atoi (TKGET(POS(i,1)).buffer) % 8) == 0
+            ) || (
+              TKGET(POS(i,1)).type == Identifier
+              && isTypeStack (TKGET(POS(i,1)).buffer, (StackType) { .types = types, .length = type_len })
+            )
+        )
+        && EQ(TKGET(POS(i,2)).buffer, "]") 
+        && EQ(TKGET(POS(i,3)).buffer, "(") 
+        && TKGET(POS(i,4)).type == Identifier
+        && EQ(TKGET(POS(i,5)).buffer, ")") 
+      ) {
+          int bits;
+          char *type = NULL;
+
+          if( TKGET(POS(i,1)).type == Integer ) 
+            {
+              bits = atoi (TKGET(POS(i,1)).buffer);
+            }
+          else 
+            {
+              bits = 0;
+              type = strdup (TKGET(POS(i,1)).buffer);
+            }
+
+          vector_push (root, (void*)(&(PNode) {
+            .scope = current,
+            .type = ForceCast, 
+            .saves = (Cache) {
+              .cast = (Cast) {
+                .type = type,
+                .bits = bits,
+                .var  = strdup (TKGET(POS(i,4)).buffer)
+              }
+            }
+          }));
+          i += 5;
+        }
+      else
       if( EQ(TKGET(i).buffer, "(") ) 
         {
 

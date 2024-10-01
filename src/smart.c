@@ -51,7 +51,7 @@ sGenerate (Vector *sRoot, Vector *pRoot)
 
                   continue;
                 }
-              else if( branch.saves.definition.hopeful == 0 ) 
+              else 
                 {
                   vector_push (sRoot, (void*)(&(SNode) {
                     .type = SDefinition,
@@ -79,32 +79,49 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                 }
               }));
             } break;
+
+          case ForceCast:
           case Normal:
             {
+              if( branch.saves.token.buffer[0] == ';' )
+                break;
+              if( strlen (branch.saves.token.buffer) == 0 )
+                break;
+
               Expr expr;
-              switch (branch.type)
-              {
-                case Normal:
-                  {
+              switch(branch.type)
+                {
+                  case ForceCast:
+                    {
+                      expr = (Expr) {
+                        .type = CastExpr,
+                        .value = (expr_v) {
+                          .cast = branch
+                        }
+                      };
+                    } break;
+                    
+                  case Normal:
+                    {
 
-                    PNode next = BRANCHGET(pRoot, i + 1);
-                    if( next.type == Normal && next.saves.token.type == Semi )
-                      {
+                      PNode next = BRANCHGET(pRoot, i + 1);
+                      if( next.type == Normal && next.saves.token.type == Semi )
+                        {
+                          expr = (Expr) {
+                            .type = SingleExpr,
+                            .value = (expr_v) {
+                              .single = branch.saves.token.buffer
+                            }
+                          };
 
-                        expr = (Expr) {
-                          .type = SingleExpr,
-                          .value = (expr_v) {
-                            .single = branch.saves.token.buffer
-                          }
-                        };
+                          break;
+                        }
+                    
+                    } break;
 
-                        break;
-                      }
-                  
-                  } break;
-                
-                default: break;
-              }              
+
+                  default: break;
+                }              
 
               vector_push (sRoot, (void*)(&(SNode) {
                 .type = SExprNode, 
@@ -112,7 +129,7 @@ sGenerate (Vector *sRoot, Vector *pRoot)
                   .expr = expr
                 }
               }));
-            }
+            } break;
           default: break;
         }
     }

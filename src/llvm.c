@@ -38,6 +38,7 @@ typedef struct {
   char *identifier;
   unsigned int llvm;
   char *cFn;
+  char *var_t;
 } sVars_t;
 
 typedef struct {
@@ -159,8 +160,85 @@ llvm_store_argument(FILE *output, DMemory definition, unsigned int start, unsign
   fprintf (output, "%sstore %s %c%d, ptr %c%d, align %d\n", 
           tabs, 
           definition.type, '%',
-          (start + index + inc + 1), '%',
-          (start + index),
+          (start + index), '%',
+          (start + index + inc + 1),
+          llvm_sizeof (definition.type)
+  );
+  free (tabs);
+}
+
+void 
+llvm_get(stack_t stack, sVars_t *ret, char *id)
+{
+  for(
+    int i = 0;
+    i < stack.vars.length;
+    i++
+  ) {
+      sVars_t variable = GETS(sVars_t, stack.vars, i); 
+      if( strcmp (id, variable.identifier) != 0 )
+        continue;
+
+      *ret = variable;      
+    }
+}
+
+void
+llvm_load(FILE *output, sVars_t variable, unsigned int *var) 
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  fprintf (output, "%s%c%d = load %s, ptr %c%d, align %d\n", 
+          tabs, '%',
+          (*var)++,
+          variable.var_t, '%',
+          variable.llvm,
+          llvm_sizeof (variable.var_t)
+  );
+  free (tabs);
+}
+
+void 
+llvm_cast(FILE *output, unsigned int *var, int from, int to, unsigned int variable) 
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  if( from != to )
+    { 
+      fprintf (output, "%s%c%d = ", 
+              tabs, '%',
+              (*var)++
+      );
+  
+      if( from > to ) 
+        fprintf (output, "trunc ");
+      else
+        fprintf (output, "sext ");
+    
+      if( from != to )
+        {
+          fprintf (output, "i%d %c%d to i%d\n", 
+                  from, '%',
+                  variable,
+                  to
+          );
+        }
+    }
+  free (tabs);
+}
+
+void 
+llvm_store(FILE *output, stack_t stack, DMemory definition, unsigned int value)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  sVars_t variable;
+  llvm_get (stack, &variable, definition.id);
+  fprintf (output, "%sstore %s %c%d, ptr %c%d, align %d\n", 
+          tabs,
+          definition.type, '%',
+          value, '%',
+          variable.llvm,
           llvm_sizeof (definition.type)
   );
   free (tabs);
@@ -187,77 +265,148 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
           /** functions */
           case DLambda:
             {
-              char *pType;
-              parseType(pTree, &pType, init.what.lambda.definition.type, 0);
-              fprintf (output, "define %s @%s(", pType, init.what.lambda.definition.id);
-              
-              unsigned int start = var;
+              if( tab == 0 ) 
+                {
+                  char *pType;
+                  parseType (
+                            pTree, 
+                            &pType, 
+                            init.what.lambda.definition.type, 
+                            0
+                  );
+                  fprintf (output, "define %s @%s(", 
+                          pType, 
+                          init.what.lambda.definition.id
+                  );
+                  
+                  unsigned int start = var;
 
-              for(
-                int arg = 0;
-                arg < init.what.lambda.lArgs;
-                arg++
-              ) {
-                  if( arg > 0 )
-                    {
-                      fprintf (output, ", ");
+                  for(
+                    int arg = 0;
+                    arg < init.what.lambda.lArgs;
+                    arg++
+                  ) {
+                      if( arg > 0 )
+                        {
+                          fprintf (output, ", ");
+                        }
+
+                      int id = GETFNARG(init, arg);
+                      PNode argument = GET(PNode, pTree, id);
+                      char *type;
+                      parseType (
+                                pTree, 
+                                &type, 
+                                argument.saves.definition.type, 
+                                id
+                      );
+                      fprintf (output, "%s %c%d", 
+                              type, '%',
+                              var++
+                      );
+                      free (type);
                     }
 
-                  int id = GETFNARG(init, arg);
-                  PNode argument = GET(PNode, pTree, id);
-                  char *type;
-                  parseType (pTree, &type, argument.saves.definition.type, id);
-                  fprintf (output, "%s %c%d", 
-                          type, '%',
-                          var++
-                  );
-                  free (type);
-                }
+                  fprintf (output, ") {\n");
+                  tab++;
+                  var++;
 
-              fprintf (output, ") {\n");
-              tab++;
-              var++;
+                  for(
+                    int arg = 0;
+                    arg < init.what.lambda.lArgs;
+                    arg++
+                  ) {
+                      PNode info = GET(PNode, pTree, init.what.lambda.args[arg]);
+                      vector_push (&stack.vars, (void*)(&(sVars_t) {
+                        .llvm = var,
+                        .identifier = info.saves.definition.id,
+                        .type = NormalVariable,
+                        .tab = tab,
+                        .cFn = init.what.lambda.definition.id,
+                        .var_t = init.what.lambda.definition.type
+                      }));
 
-              for(
-                int arg = 0;
-                arg < init.what.lambda.lArgs;
-                arg++
-              ) {
-                  PNode info = GET(PNode, pTree, init.what.lambda.args[arg]);
-                  llvm_alloca (
-                              output, 
-                              &var, 
-                              info.saves.definition
-                  );
-                  vector_push (&stack.vars, (void*)(&(sVars_t) {
-                    .llvm = var,
-                    .identifier = info.saves.definition.id,
-                    .type = NormalVariable,
-                    .tab = tab,
-                    .cFn = init.what.lambda.definition.id
+                      llvm_alloca (
+                                  output, 
+                                  &var, 
+                                  info.saves.definition
+                      );
+                    } 
+
+                    for(
+                      int arg = 0;
+                      arg < init.what.lambda.lArgs;
+                      arg++
+                    ) {
+                      PNode info = GET(PNode, pTree, init.what.lambda.args[arg]);
+                      llvm_store_argument (
+                                          output, 
+                                          info.saves.definition, 
+                                          start, 
+                                          init.what.lambda.lArgs,
+                                          arg
+                      );
+                    }
+
+                  ScopeType i = FN;
+                  vector_push (&scopes, (void*)(&i));
+                  vector_push (&stack.call, (void*)(&(sCall_t) {
+                    .return_type = init.what.lambda.definition.type,
                   }));
-                } 
+                }
+            } break;
 
-                for(
-                  int arg = 0;
-                  arg < init.what.lambda.lArgs;
-                  arg++
-                ) {
-                  PNode info = GET(PNode, pTree, init.what.lambda.args[arg]);
-                  llvm_store_argument (
-                                      output, 
-                                      info.saves.definition, 
-                                      start, 
-                                      init.what.lambda.lArgs,
-                                      arg
-                  );
+          /* Var definition */
+          case SDefinition:
+            {
+              DMemory definition = init.what.definition;
+              llvm_alloca (output, &var, definition);
+              
+              vector_push (&stack.vars, (void*)(&(sVars_t) {
+                .llvm = (var - 1),
+                .identifier = init.what.definition.id,
+                .type = NormalVariable,
+                .tab = tab,
+                .cFn = init.what.definition.id,
+                .var_t = init.what.definition.type
+              }));
+              
+              if(! definition.hopeful )
+                break;
+
+              SNode next = GET(SNode, sTree, ++i);
+
+              if( next.type != SExprNode )
+                break;
+
+              switch(next.what.expr.type)
+                {
+                  case CastExpr:
+                    {
+                      Cast cast = next.what.expr.value.cast.saves.cast;
+                      sVars_t variable;
+                      llvm_get (stack, &variable, cast.var);
+                      llvm_load (output, variable, &var);
+                      llvm_cast (
+                                output,
+                                &var, 
+                                (llvm_sizeof (variable.var_t) * 8), 
+                                cast.bits == 0 ? (llvm_sizeof (cast.type) * 8) 
+                                               : cast.bits, 
+                                (var-1)
+                      );
+                    }
+                  default: break;
                 }
 
-              ScopeType i = FN;
-              vector_push (&scopes, (void*)(&i));
-              vector_push (&stack.call, (void*)(&(sCall_t) {
-                .return_type = init.what.lambda.definition.type,
-              }));
+              llvm_store (
+                         output,
+                         stack,
+                         init.what.definition,
+                         (var-1)
+              );
+
+              
             } break;
         
           /* Close brackets */
@@ -265,12 +414,12 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
             {
               int index = (scopes.length - 1);
               ScopeType type = GETS(ScopeType, scopes, index);
+              tab--;
  
               switch( type )
                 {
                   case FN: 
                     {
-                      tab--;
                       genT(&tabs);
                       fprintf (output, "%s}\n\n", tabs);
                       vector_remove (&stack.call, (stack.call.length-1));
@@ -278,7 +427,7 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                     } break;
                   default: break;
                 }
-              
+
               goto not_rm;
               rm: {
                 vector_remove (&scopes, index);
@@ -292,12 +441,11 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
               i++;
               if( strcmp (init.what.magic, "return") == 0 )
                 {
-                  genT(&tabs);
+                  genT (&tabs);
 
                   int index = (stack.call.length - 1);
 
                   sCall_t last_call = GETS(sCall_t, stack.call, index); 
-                  fprintf (output, "%sret %s ", tabs, last_call.return_type);
 
                   SNode next = GET(SNode, sTree, i);
 
@@ -309,7 +457,36 @@ llGenerate (FILE *output, Vector *sTree, Vector *pTree)
                     {
                       case SingleExpr:
                         {
-                          fprintf (output, "%s\n", first.value.single);
+                          if( isNumeric (first.value.single) )
+                            {
+                              fprintf (output, "%sret %s %s\n", 
+                                      tabs, 
+                                      last_call.return_type, 
+                                      first.value.single
+                              );
+                            }
+                          else 
+                            {
+                              sVars_t variable;
+                              llvm_get (stack, &variable, first.value.single);
+                              llvm_load (output, variable, &var);
+                              if( llvm_sizeof (variable.var_t) != llvm_sizeof (last_call.return_type) )
+                                {
+                                  llvm_cast (
+                                            output,
+                                            &var, 
+                                            (llvm_sizeof (variable.var_t) * 8), 
+                                            (llvm_sizeof (last_call.return_type) * 8), 
+                                            (var-1)
+                                  );
+                                }
+
+                              fprintf (output, "%sret %s %c%d\n", 
+                                      tabs, 
+                                      last_call.return_type, '%', 
+                                      (var - 1)
+                              );
+                            }
                         } break;
                       
                       default: break;

@@ -22,11 +22,12 @@
 
   typedef enum {
     SingleExpr,
-    ArithmeticExpr
+    CastExpr
   } Sexpr_t;
 
   typedef union {
     char *single;
+    PNode cast;
     // ExprArithmetic arithmetic;
   } expr_v; 
 
