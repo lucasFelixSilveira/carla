@@ -13,6 +13,9 @@
     "string.h": "c",
     "utility": "c",
     "xmemory": "c",
-    "smart.h": "c"
+    "smart.h": "c",
+    "hash.h": "c",
+    "carla.h": "c",
+    "inttypes.h": "c"
   }
 }

@@ -3,13 +3,12 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "lexer.h"
-#include "vector.h"
-#include "symbols.h"
+#include "../utils/vector.h"
+#include "../utils/symbols.h"
 
 #ifndef _WIN32
 # include <wctype.h>
 #endif
-
 
 char buffer[2048];
 size_t len = 0;
@@ -27,31 +26,27 @@ char
 ismatch (char c1, char c2)
 {
   if( c1 == '=' && c2 == '=' ) 
-    return Eq;
-  else if( c1 == ':' && c2 == '=' ) 
-    return Walrus;
+    return ComparationOP;
+  else if( c1 == '!' && c2 == '=' ) 
+    return ComparationOP;
+  else if( c1 == '>' && c2 == '=' ) 
+    return ComparationOP;
+  else if( c1 == '<' && c2 == '=' ) 
+    return ComparationOP;
   else if( c1 == ':' && c2 == ':' ) 
     return Quad;
-  else if( c1 == '-' && c2 == '>' ) 
-    return Acess;
   else if( c1 == '+' && c2 == '=' ) 
-    return Add;
+    return MathOP;
   else if( c1 == '-' && c2 == '=' ) 
-    return Sub;
+    return MathOP;
   else if( c1 == '*' && c2 == '=' ) 
-    return Imul;
+    return MathOP;
   else if( c1 == '/' && c2 == '=' ) 
-    return Idiv;
-  else if( c1 == '!' && c2 == '=' ) 
-    return Ne;
-  else if( c1 == '>' && c2 == '=' ) 
-    return Ge;
-  else if( c1 == '<' && c2 == '=' ) 
-    return Le;
+    return MathOP;
   else if( c1 == '>' && c2 == '>' ) 
-    return RightShift;
+    return BitsOP;
   else if( c1 == '<' && c2 == '<' ) 
-    return LeftShift;
+    return BitsOP;
   else if( c1 == '.' && c2 == '.' ) 
     return Iter;
   else
@@ -68,7 +63,7 @@ ishexa(char c)
     i++
   ) {
       if( hex[i] == c ) 
-        /*->*/ return 1;
+        return 1;
     }
 
   return 0;
@@ -77,31 +72,22 @@ ishexa(char c)
 int
 validSingleOp(char c) 
 {
-  char *operators = "!&|?%.";
   char *arithmetic = "*+-/";
   if( c == ';' )
-    /*->*/ return Semi;
-  for(
-    int i = 0;
-    i < strlen (operators);
-    i++
-  ) {
-      if( operators[i] == c )
-        /*->*/ return Operator;
-    }
+    return Semi;
   for(
     int i = 0;
     i < strlen (arithmetic);
     i++
   ) {
       if( arithmetic[i] == c )
-        /*->*/ return ArithmeticOperator;
+        return MathOP;
     }
   return 0;
 }
 
 void 
-tokenize (FILE *file, Vector *tks)
+tkGenerate(Vector *tks, FILE *file)
 {
   while(1)
     {
@@ -163,7 +149,7 @@ tokenize (FILE *file, Vector *tks)
 
           vector_push (tks, (void*)(&(Token) {
             .buffer = strdup (strbuff), 
-            .type = Literal,
+            .type = Integer,
             .real = j
           }));
 
@@ -199,7 +185,7 @@ tokenize (FILE *file, Vector *tks)
   
   vector_push (tks, (void*)(&(Token) {
     .buffer = "", 
-    .type = EndOfFile,
+    .type = End,
     .real = 0
   }));
 }

@@ -1,4 +1,3 @@
 bootstrapping/tests/test.cl
-debug.sh
-test_as.sh
-learning_llvm
+carla/debug.sh
+carla/test_as.sh

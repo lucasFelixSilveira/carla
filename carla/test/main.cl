@@ -1,0 +1,1 @@
+int32 main = (int8 argv) {}
