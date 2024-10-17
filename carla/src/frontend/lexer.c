@@ -87,7 +87,7 @@ validSingleOp(char c)
 }
 
 void 
-tkGenerate(Vector *tks, FILE *file)
+tkGenerate(Vector *lex, FILE *file)
 {
   while(1)
     {
@@ -108,7 +108,7 @@ tkGenerate(Vector *tks, FILE *file)
 
       if(! isalnum (c) ) {
         if( len > 0 ) {
-          vector_push (tks, (void*)(&(Token) {
+          vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (buffer), 
             .type = valid_buffer ()
           }));
@@ -147,7 +147,7 @@ tkGenerate(Vector *tks, FILE *file)
           }
           strbuff[i] = 0; 
 
-          vector_push (tks, (void*)(&(Token) {
+          vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (strbuff), 
             .type = Integer,
             .real = j
@@ -172,7 +172,7 @@ tkGenerate(Vector *tks, FILE *file)
           t++;
         } 
 
-        vector_push (tks, (void*)(&(Token) {
+        vector_push (lex, (void*)(&(Token) {
           .buffer = strdup (buffer), 
           .type = (id == 0 ? Unknown : id),
           .real = 0
@@ -183,7 +183,7 @@ tkGenerate(Vector *tks, FILE *file)
       }
     }
   
-  vector_push (tks, (void*)(&(Token) {
+  vector_push (lex, (void*)(&(Token) {
     .buffer = "", 
     .type = End,
     .real = 0

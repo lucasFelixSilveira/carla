@@ -20,19 +20,19 @@
 
 ### Functions
 ```zig
-i32 main = (void) {}
+int32 main = (void) {}
 ```
 - Return type -> Name -> Operator(sign) -> (arguments) { ...code... }
 
 #### Arguments struct
 ```zig
-type string = (_:i8);
-i32 main = (i32 argv, (_:string) args) {}
+type string = (_:int8);
+int32 main = (int32 argv, (_:string) args) {}
 ```
 
 #### Extern functions (LIBC)
 ```zig
-extern i32 puts((_:i8)) cut
+extern int32 puts((_:int8)) cut
 ```
 - This can be used to import the LIBC function (puts) into your code.
 
@@ -44,7 +44,7 @@ puts variable; -- Optional CUT magic word
 
 ### Variables
 ```zig
-i32 status = 0;
+int32 status = 0;
 ```
 - Type -> Identifier -> Operator(sign) -> Value
 
@@ -52,11 +52,11 @@ i32 status = 0;
 # Code Exemples
 ## Hello World (using process arguments)
 ```zig
-type string = (_:i8);
+type string = (_:int8);
 
-extern i32 puts = (string) cut
+extern int32 puts = (string) cut
 
-i32 main = (i32 argv, (_:string) args) {
+int32 main = (int32 argv, (_:string) args) {
   string arg = (1:args);
   puts arg;
   return 0;
@@ -69,11 +69,11 @@ i32 main = (i32 argv, (_:string) args) {
 
 ## Hello world using variables
 ```zig
-type string = (_:i8);
+type string = (_:int8);
 
-extern i32 puts = (string) cut
+extern int32 puts = (string) cut
 
-i32 main = () {
+int32 main = () {
   string msg = "Hello, world!"
   puts msg
   return 0
@@ -83,8 +83,8 @@ i32 main = () {
 # While loops
 - While loopings work just like any other language. A keyword, a comparison, and a block of code.
 ```zig
-i32 main = () {
-  i8 counter = 0;
+int32 main = () {
+  int8 counter = 0;
   while counter < 4 {
     counter += 1;
   }
@@ -92,9 +92,9 @@ i32 main = () {
 ```
 
 # If and Else
-- The conditionals, IF and ELSE can be used just like Rust, however, with a difference, it does not force you to buy the same types, such as: i8 == i8; It allows you to compare different types — as long as they are primitive.
+- The conditionals, IF and ELSE can be used just like Rust, however, with a difference, it does not force you to buy the same types, such as: int8 == int8; It allows you to compare different types — as long as they are primitive.
 ```zig
-i32 main = (i32 argv) {
+int32 main = (int32 argv) {
   if argv < 4 {
   } else {
   }
@@ -113,8 +113,8 @@ for 2..i {}
 ```
   - Specific range (2, 3, 4 / 4, 3, 2)
 ```zig
-i8 x = 2;
-i8 y = 4;
+int8 x = 2;
+int8 y = 4;
 -- For loops
 for i : 2..4 {}
 for i : 4..2 {}
@@ -124,11 +124,11 @@ for i : x..y {}
 ```
 
 ```zig
-type string = (_:i8);
+type string = (_:int8);
 
-extern i32 puts = (string) cut
+extern int32 puts = (string) cut
 
-i32 main = () {
+int32 main = () {
 
   string msg = "Hello, world!"
   for i..2 {

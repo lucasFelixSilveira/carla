@@ -16,6 +16,8 @@
     "smart.h": "c",
     "hash.h": "c",
     "carla.h": "c",
-    "inttypes.h": "c"
+    "inttypes.h": "c",
+    "types.h": "c",
+    "time.h": "c"
   }
 }

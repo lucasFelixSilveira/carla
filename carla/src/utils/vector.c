@@ -22,7 +22,6 @@ vector_push (Vector *pVector, void *item)
   if( nItems == NULL ) 
     {
       fprintf (stderr, "Fail to alloc memory.\n");
-      exit (EXIT_FAILURE);
     }
   pVector->items = nItems;
   memcpy ((char *)pVector->items + (pVector->length - 1) * itemSize, item, itemSize);

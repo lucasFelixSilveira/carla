@@ -1,7 +1,7 @@
 #ifndef SYMBOLS_H
 # define SYMBOLS_H
 # define KEYWORDS_LENGTH 2
-# define TYPES_LENGTH 9
+# define TYPES_LENGTH 12
 
 typedef struct { char len; char *val; } Key;
 extern const Key staticSymbols[]; 

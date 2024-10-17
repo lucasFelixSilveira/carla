@@ -1,1 +1,1 @@
-int32 main = (int8 argv) {}
+int32 main = (int32 argc, []int8* argv) {}

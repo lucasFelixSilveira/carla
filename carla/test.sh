@@ -1,9 +1,11 @@
 ./build.sh
-mv ./carla.exe ./bin
+mv ./carla.exe ./test
+
+cd test
 
 read -p "Press any key to run file"
 clear
-./bin/carla.exe
+./carla.exe main.cl
 
 echo
 echo
@@ -14,3 +16,5 @@ echo
 
 ./bootstrapping/output.exe
 read -p "LLVM: ---- Status code: $?"
+
+cd ..

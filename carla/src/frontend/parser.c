@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "../utils/vector.h"
 #include "../utils/symbols.h"
 #include "parser.h"
@@ -8,12 +9,21 @@
 
 /*
   Expressions
+  |
   |- Type -> Definition
   |     |- Identifier -> Optional[=]
-  |     |           |- = or ;
+  |     |           |- =
+  |     |           |- ;
+  |     |           |- , <- NEED BE A LAMBDA ARGUMENT
+  |
   |- Keyword -> Magic
   |        |- Expression -> Boolean
+  |
   |- Expression -> (FunctionCall | Expression) 
+  |
+  |- /[(](\w|\W)*[{]$/ -> Lambda 
+  |                            |- Definitions (arguments)
+  |                            |            |- Begin  
 */
 
 void 
@@ -21,16 +31,15 @@ tGenerate(Vector *tree, Vector *tks)
 {
   char lambda = 0;
   int i = 0;
-  for(
-    ; i < tks->length;
-    i++
-  ) {
+  for(; i < tks->length; i++ ) 
+    {
       Token first = GET(tks, i);
       switch(first.type)
         {
+          case Type:
           case Identifier:
             {
-              if( isType (first.buffer) )
+              if( first.type == Type || isType (first.buffer) )
                 {
                   i++;
                   Token id = GET(tks, i);
@@ -84,13 +93,14 @@ tGenerate(Vector *tree, Vector *tks)
                   }));
                   lambda = 0;
                 }
+                
+             
 
               if( strcmp (first.buffer, "(") == 0 )
                 {
                   int j = i + 1;
-                  while( strcmp (GET(tks, j++).buffer, ")") != 0 )
-                    {};
-                  if( strcmp(GET(tks, j).buffer, "{") == 0 )
+                  while( strcmp (GET(tks, j++).buffer, ")") != 0 );
+                  if( strcmp (GET(tks, j).buffer, "{") == 0 )
                     {
                       vector_push (tree, ((void*)&(PNode) {
                         .type = NODE_LAMBDA,

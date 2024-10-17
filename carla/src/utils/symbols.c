@@ -10,6 +10,9 @@ const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
     /* types */
     { .len = 4, .val = "bool" },
     { .len = 4, .val = "int8" },
+    { .len = 4, .val = "byte" },
+    { .len = 5, .val = "ascii" },
+    { .len = 5, .val = "asciz" },
     { .len = 5, .val = "int16" },
     { .len = 5, .val = "int32" },
     { .len = 5, .val = "int64" },

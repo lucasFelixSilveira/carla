@@ -15,6 +15,7 @@
     Quad,
     Semi,
     Text,
+    Type,
     Iter,
     End,
     Unknown
@@ -26,6 +27,6 @@
     size_t real;
   } Token;
 
-  void tkGenerate(Vector *tks, FILE *file);
+  void tkGenerate(Vector *lex, FILE *file);
 
 #endif
