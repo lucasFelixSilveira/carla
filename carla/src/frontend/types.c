@@ -49,7 +49,7 @@ parseType(Vector *lex, Vector *tks)
           case Unknown:
             {
               int success = 0;
-              if( strcmp (first.buffer, "[") == 0 )
+              if( strcmp (first.buffer, "[") == 0 && (GET(lex, i - 1).type == Unknown || GET(lex, i - 1).type == Keyword) )
                 {
                   char *type = (char*)malloc (255);
                   type[0] = 0;
@@ -58,7 +58,11 @@ parseType(Vector *lex, Vector *tks)
                     Token next = GET(lex, i);
                     if( next.type == Integer || strcmp (next.buffer, "]") == 0 ) {
                       int old = strcmp (next.buffer, "]") == 0;
-                      char **buff = &next.buffer;
+                      char **buff;
+                      if( next.type == Integer ) {
+                        char *d = strdup (next.buffer);
+                        buff = &d;
+                      }
                       if( old )
                         *buff = "";
                       else

@@ -18,6 +18,7 @@
     "carla.h": "c",
     "inttypes.h": "c",
     "types.h": "c",
-    "time.h": "c"
+    "time.h": "c",
+    "strings.h": "c"
   }
 }

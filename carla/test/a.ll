@@ -4,15 +4,13 @@ target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:
 target triple = "x86_64-pc-windows-msvc19.40.33812"
 
 ; Function Attrs: mustprogress noinline nounwind optnone uwtable
-define dso_local noundef i32 @"?x@@YAHQEAY1HL@NF@H@Z"(ptr noundef %0) #0 {
+define dso_local noundef i32 @"?x@@YAHQEAJ@Z"(ptr noundef %0) #0 {
   %2 = alloca ptr, align 8
   store ptr %0, ptr %2, align 8
   %3 = load ptr, ptr %2, align 8
-  %4 = getelementptr inbounds [123 x [213 x i32]], ptr %3, i64 1
-  %5 = getelementptr inbounds [123 x [213 x i32]], ptr %4, i64 0, i64 1
-  %6 = getelementptr inbounds [213 x i32], ptr %5, i64 0, i64 2
-  %7 = load i32, ptr %6, align 4
-  ret i32 %7
+  %4 = getelementptr inbounds i32, ptr %3, i64 1
+  %5 = load i32, ptr %4, align 4
+  ret i32 %5
 }
 
 ; Function Attrs: mustprogress noinline norecurse nounwind optnone uwtable

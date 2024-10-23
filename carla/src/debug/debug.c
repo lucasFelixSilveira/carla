@@ -14,8 +14,13 @@ char *TType[] = {
   "NODE_TEXT",
   "NODE_OPERATION",
   "NODE_DEFINITION",
+  "NODE_DEF_LIBC",
+  "NODE_SINGLE",
+  "NODE_ACCESS",
   "NODE_LAMBDA",
   "NODE_BEGIN",
+  "NODE_TYPE",
+  "NODE_CUT",
   "NODE_END"
 };
 
@@ -45,12 +50,25 @@ pNodes (Vector *root)
       
       switch(brench.type)
         {
+          case NODE_DEF_LIBC:
           case NODE_DEFINITION:
             {
               printf ("|\t|-hopeful: %s\n|\t|-type: %s\n|\t|-id: %s\n", 
-                (brench.data.definition.hopeful) ? "true" : "false",
-                brench.data.definition.type,
-                brench.data.definition.id
+                     (brench.data.definition.hopeful) ? "true" : "false",
+                     brench.data.definition.type,
+                     brench.data.definition.id
+              );
+            } break;
+          case NODE_ACCESS:
+            {
+              printf ("|\t|-vector: %s\n", 
+                     brench.data.value
+              );
+            } break;
+          case NODE_TYPE:
+            {
+              printf ("|\t|-type: %s\n", 
+                     brench.data.value
               );
             } break;
           

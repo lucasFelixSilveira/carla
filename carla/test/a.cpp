@@ -1,8 +1,8 @@
 
 int 
-x(int y[34][123][213])
+x(long y[34])
 {
-  return y[1][1][2];
+  return y[1];
 }
 
 int

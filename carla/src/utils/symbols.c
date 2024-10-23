@@ -5,8 +5,9 @@
 
 const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
   = { 
-    { .len = 6, .val = "use" },
+    { .len = 6, .val = "extern" },
     { .len = 6, .val = "return" },
+    { .len = 3, .val = "end" },
     /* types */
     { .len = 4, .val = "bool" },
     { .len = 4, .val = "int8" },

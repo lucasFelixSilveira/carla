@@ -10,11 +10,13 @@
 /*
   Expressions
   |
-  |- Type -> Definition
-  |     |- Identifier -> Optional[=]
-  |     |           |- =
-  |     |           |- ;
-  |     |           |- , <- NEED BE A LAMBDA ARGUMENT
+  |- (EXTERN) ?
+  |- | Type -> Definition
+  |       |- Identifier -> Optional[=]
+  |       |           |- =
+  |       |           |- ;
+  |       |           |- END <- NEED BE A LIBC FUNCTION
+  |       |           |- , <- NEED BE A LAMBDA ARGUMENT
   |
   |- Keyword -> Magic
   |        |- Expression -> Boolean
@@ -37,8 +39,31 @@ tGenerate(Vector *tree, Vector *tks)
       switch(first.type)
         {
           case Type:
+          case Integer:
+          case Text:
+          case Keyword:
           case Identifier:
             {
+
+              if( first.type == Keyword && strcmp (first.buffer, "end") == 0 )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_CUT,
+                    .data = {
+                      .number = 0
+                    }
+                  }));
+                  lambda = 0;
+                  break;
+                }
+
+              Token cache = { .buffer = NULL };
+              if( first.type == Keyword && strcmp (first.buffer, "extern") == 0 )
+                {
+                  cache = GET(tks, i);
+                  first = GET(tks, ++i);
+                }
+
               if( first.type == Type || isType (first.buffer) )
                 {
                   i++;
@@ -48,15 +73,16 @@ tGenerate(Vector *tree, Vector *tks)
                       i++;
                       char *final = GET(tks, i).buffer;
                       if(
-                          strcmp (final, "=") == 0 ||
-                          strcmp (final, ";") == 0 ||
+                          strcmp (final, "=")    == 0 ||
+                          strcmp (final, ";")    == 0 ||
+                          strcmp (final, "end")  == 0 ||
                           (
                             (strcmp (final, ",") == 0 || strcmp (final, ")") == 0) 
                             && lambda
                           ) 
                         ) {
                             vector_push (tree, ((void*)&(PNode) {
-                              .type = NODE_DEFINITION,
+                              .type = (cache.buffer == NULL) ? NODE_DEFINITION : NODE_DEF_LIBC,
                               .data = {
                                 .definition = {
                                   .hopeful = strcmp (final, "=") == 0,
@@ -69,8 +95,95 @@ tGenerate(Vector *tree, Vector *tks)
                       else
                         goto __cancel_parse__;
                     }
+                  else
+                    {
+                      vector_push (tree, ((void*)&(PNode) {
+                        .type = NODE_TYPE,
+                        .data = {
+                          .value = first.buffer
+                        }
+                    }));
+                    }
+                  break;
                 }
+
+
+              // EXPRESSIONS
+              Token next = GET(tks, i + 1);
+              if( 
+                  ( first.type    == Integer || first.type == Identifier || first.type == Text ) 
+                  && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown )
+              ) {
+                  if(
+                      ( next.type == Semi ) 
+                      || (
+                          next.type == Unknown 
+                          && (
+                            next.buffer[0] == ']' 
+                            || next.buffer[0] == '}'
+                            || next.buffer[0] == ')'
+                          )
+                         )
+                    ) { 
+                        if( first.type == Identifier ) 
+                          vector_push (tree, ((void*)&(PNode) {
+                            .type = NODE_SINGLE,
+                            .data = {
+                              .single = {
+                                .type = NODE_ID,
+                                .data = {
+                                  .value = first.buffer
+                                }
+                              }
+                            }
+                          }));
+                        else
+                        if( first.type == Text ) 
+                          vector_push (tree, ((void*)&(PNode) {
+                            .type = NODE_SINGLE,
+                            .data = {
+                              .single = {
+                                .type = NODE_TEXT,
+                                .data = {
+                                  .value = first.buffer
+                                }
+                              }
+                            }
+                          }));
+                        else
+                        if( first.type == Integer ) 
+                          printf ("NUMBER: %d", atoi (first.buffer));
+                          vector_push (tree, ((void*)&(PNode) {
+                            .type = NODE_SINGLE,
+                            .data = {
+                              .single = {
+                                .type = NODE_NUMBER,
+                                .data = {
+                                  .number = atoi (first.buffer)
+                                }
+                              }
+                            }
+                          }));
+                        break;
+                      }
+                }
+
+              Token can  = GET(tks, i + 2);
+              if( next.type == Unknown && next.buffer[0] == '[' 
+                  && (
+                    can.type == Integer || can.type == Identifier
+                  ) 
+                ) {
+                    vector_push (tree, ((void*)&(PNode) {
+                      .type = NODE_ACCESS,
+                      .data = {
+                        .value = first.buffer
+                      }
+                    }));
+                    break;
+                  }
             } break;
+
           case Unknown:
             {
               if( strcmp (first.buffer, "}") == 0 )
@@ -94,8 +207,6 @@ tGenerate(Vector *tree, Vector *tks)
                   lambda = 0;
                 }
                 
-             
-
               if( strcmp (first.buffer, "(") == 0 )
                 {
                   int j = i + 1;
