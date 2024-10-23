@@ -41,7 +41,7 @@ isCarla(char *__file__)
 }
 
 void 
-carla_project(char **output_file) 
+carla_project(char **output_file, char **output_libs) 
 {
   char cwd[1024];
   getcwd (cwd, sizeof (cwd));
@@ -58,7 +58,12 @@ carla_project(char **output_file)
   // Output LLVM file directory
   sprintf (dir_name, "%s%s%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll");
   memcpy (*output_file, dir_name, strlen (dir_name));
-
+  
+  // Output LLVM output libraries directory
+  sprintf (dir_name, "%s%s%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll");
+  memcpy (*output_libs, dir_name, strlen (dir_name));
+  MKDIR (dir_name);
+  
   // Output folder to .exe and llvm file
   sprintf (dir_name, "%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "logs");
   MKDIR (dir_name);

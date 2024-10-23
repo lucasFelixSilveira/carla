@@ -12,6 +12,7 @@
     Integer,
     BitsOP,
     MathOP,
+    Macro,
     Quad,
     Semi,
     Text,

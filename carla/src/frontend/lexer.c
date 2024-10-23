@@ -18,6 +18,7 @@ valid_buffer ()
 {
   if( isKeyword (buffer) ) return Keyword;
   else if( isIdentifier (buffer) ) return Identifier;
+  else if( isMacro (buffer) ) return Macro;
   else if( isNumeric (buffer) ) return Integer;
   return Unknown;
 }

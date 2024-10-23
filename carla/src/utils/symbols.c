@@ -3,11 +3,14 @@
 #include <ctype.h>
 #include "symbols.h"
 
-const Key staticSymbols[KEYWORDS_LENGTH + TYPES_LENGTH]
+const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
   = { 
+    /* keywords */
     { .len = 6, .val = "extern" },
     { .len = 6, .val = "return" },
     { .len = 3, .val = "end" },
+    /* macros */
+    { .len = 7, .val = "@import" },
     /* types */
     { .len = 4, .val = "bool" },
     { .len = 4, .val = "int8" },
@@ -91,4 +94,8 @@ isKeyword (char buffer[])
 
 char
 isType (char buffer[])
-{ return inStaticSymbols (buffer, KEYWORDS_LENGTH - 1, KEYWORDS_LENGTH + TYPES_LENGTH); }
+{ return inStaticSymbols (buffer, (KEYWORDS_LENGTH + MACROS_LENGTH) - 1, KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH); }
+
+char
+isMacro (char buffer[])
+{ return inStaticSymbols (buffer, KEYWORDS_LENGTH - 1, KEYWORDS_LENGTH + MACROS_LENGTH); }

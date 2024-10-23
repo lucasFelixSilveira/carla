@@ -28,8 +28,15 @@
   |                            |            |- Begin  
 */
 
+#define BEGIN_SWITCH(str)    { char *_switch_str = str;
+#define CASE(val)            if( strcmp (_switch_str, (val)) == 0 ) {
+#define BREAK_CASE(val)      } else if( strcmp (_switch_str, (val)) == 0 ) {
+#define DEFAULT              } else {
+#define END_SWITCH           }
+#define BREAK                }
+
 void 
-tGenerate(Vector *tree, Vector *tks) 
+tGenerate(Vector *tree, Vector *tks, Vector *libs) 
 {
   char lambda = 0;
   int i = 0;
@@ -38,6 +45,23 @@ tGenerate(Vector *tree, Vector *tks)
       Token first = GET(tks, i);
       switch(first.type)
         {
+          case Macro:
+            {
+              BEGIN_SWITCH (first.buffer)
+                CASE("@import")
+                  Token quoute = GET(tks, ++i);
+                  if( quoute.type == Text )
+                    {
+                      char *file = (char*)malloc (strlen (quoute.buffer) + 1);
+                      memcpy (file, first.buffer, strlen (first.buffer));
+                      vector_push (libs, file);
+                    }
+                  else
+                    goto __cancel_parse__;
+                BREAK
+              END_SWITCH
+            } break;
+
           case Type:
           case Integer:
           case Text:

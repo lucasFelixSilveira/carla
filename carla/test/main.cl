@@ -1,4 +1,4 @@
-#[import("io")]
+@import "stdio" 
 
 int32 main = (int32 argc, []byte* argv) {
   []byte msg = "Hello, World";

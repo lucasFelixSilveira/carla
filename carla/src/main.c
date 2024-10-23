@@ -22,6 +22,7 @@ main(int argc, char *argv[])
   if(! carla )
     return 1;
   char *output_file;
+  char *output_libs;
   carla_project (&output_file);
 
   // Tokenize the file received
@@ -43,7 +44,8 @@ main(int argc, char *argv[])
 
   // Generate a Tree using the tokens
   Vector tree = vector_init (sizeof (PNode));
-  tGenerate (&tree, &tokens);
+  Vector libs = vector_init (sizeof (char*));
+  tGenerate (&tree, &tokens, &libs);
 
   #if DBG_PARSER 
     // Debug the PNode vector
@@ -71,5 +73,9 @@ main(int argc, char *argv[])
   vector_free (&lexemes);
   vector_free (&tokens);
   vector_free (&tree);
+
+  
+  vector_free (&libs);
+  free (output_libs);
   return 0;
 }

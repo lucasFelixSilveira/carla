@@ -8,14 +8,14 @@
 <br>
 
 ```carla
-  #[import("io")]
+@import "stdio" 
 
-  int32 main = (int32 argc, []byte* argv) {
-    []byte msg = "Hello, World";
-    io::println(msg);
+int32 main = (int32 argc, []byte* argv) {
+  []byte msg = "Hello, World";
+  io::println(msg);
 
-    return 0;
-  }
+  return 0;
+}
 ```
 <br>
 <br>

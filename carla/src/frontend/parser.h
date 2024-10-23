@@ -58,5 +58,5 @@
     } data;
   } PNode;
 
-  void tGenerate(Vector *tree, Vector *tks);
+  void tGenerate(Vector *tree, Vector *tks, Vector *libs);
 #endif
