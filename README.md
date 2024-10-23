@@ -4,17 +4,18 @@
   <p>Carla is a programming language project with a different approach than others.</p>
   <a href="#carla-fundamentals">See more about the differences and fundamentals!</a>
   
-  ```carla
-#[import("io")]
+</div>
 
-int32 main = (int32 argc, []byte* argv) {
+```carla
+  #[import("io")]
+
+  int32 main = (int32 argc, []byte* argv) {
   []byte msg = "Hello, World";
   io::println(msg);
 
   return 0;
-}
-  ```
-</div>
+  }
+```
 <br>
 <br>
 <br>
