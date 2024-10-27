@@ -89,6 +89,17 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   break;
                 }
 
+              if( first.type == Keyword && strcmp (first.buffer, "return") == 0 )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_RET,
+                    .data = {
+                      .number = 0
+                    }
+                  }));
+                  break;
+                }
+
               Token cache = { .buffer = NULL };
               if( first.type == Keyword && strcmp (first.buffer, "extern") == 0 )
                 {

@@ -25,6 +25,7 @@
     "wctype.h": "c",
     "type_traits": "c",
     "xtr1common": "c",
-    "lib.h": "c"
+    "lib.h": "c",
+    "std.h": "c"
   }
 }

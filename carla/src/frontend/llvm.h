@@ -1,6 +1,7 @@
 #ifndef LLVM_H
 # define LLVM_H
 # include "../utils/vector.h"
+# include "parser.h"
 # include "std.h"
 
   typedef enum {
@@ -9,6 +10,10 @@
     Else,
     For
   } ScopeType;
+
+  typedef struct {
+    char *type;
+  } RetStack;
 
   typedef enum {
     Normal,
@@ -26,12 +31,15 @@
 
   typedef enum {
     ACCESS_EXPR,
-    FUNCTION_CALL
+    FUNCTION_CALL,
+    RETURN_KEY
   } eExprCache;
 
   typedef struct {
     eExprCache type;
     union {
+      char nothing;
+      PNode node;
       struct {
         unsigned int load_vec;
         char *type;

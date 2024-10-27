@@ -31,10 +31,11 @@ genT(char **tabs)
   else 
     {
       int i = 0;
-      for(; i < tab; i++)
+      for(; i < tab; i += 2)
         {
-          (*tabs)[i] = 0x9;
-          (*tabs)[i+1] = 0x0;
+          (*tabs)[i]   = 0x20;
+          (*tabs)[i+1] = 0x20;
+          (*tabs)[i+2] =  0x0;
         }
     }
 }
@@ -266,10 +267,11 @@ void
 llGenerate(FILE *output, Vector *pTree)
 {
 
-  Vector     vars   = vector_init (sizeof (Variable));
-  Vector     scopes = vector_init (sizeof (ScopeType));
-  uint32_t **hoping = (uint32_t**)malloc ((512 * 3) * sizeof (int));
-  uint16_t   hope   = 0;
+  Vector     vars     = vector_init (sizeof (Variable));
+  Vector     scopes   = vector_init (sizeof (ScopeType));
+  Vector     retStack = vector_init (sizeof (RetStack));
+  uint32_t **hoping   = (uint32_t**)malloc ((512 * 3) * sizeof (int));
+  uint16_t   hope     = 0;
 
   int i = 0;
   for(; i < pTree->length; i++ )
@@ -308,12 +310,21 @@ llGenerate(FILE *output, Vector *pTree)
                   case NODE_SINGLE:
                     {
                       i++;
+                      ExprCache resolve = cache[--clen];
                       switch(next.data.single.type)
                         {
                           case NODE_NUMBER: 
                             {
-                              llvm_alloca_t (output, "int64");
-                              llvm_store_l (output, 64, (int)next.data.single.data.number, (var - 1));
+                              if( resolve.type == RETURN_KEY )
+                                {
+                                  llvm_alloca_t (output, resolve.info.node.data.definition.type);
+                                  llvm_store_l (output, llvm_sizeof (llvm_type (resolve.info.node.data.definition.type)) * 8, (int)next.data.single.data.number, (var - 1));
+                                }
+                              else
+                                {
+                                  llvm_alloca_t (output, "int64");
+                                  llvm_store_l (output, 64, (int)next.data.single.data.number, (var - 1));
+                                }
                             } break;
                           case NODE_ID:
                             {
@@ -323,7 +334,6 @@ llGenerate(FILE *output, Vector *pTree)
                           default: break;
                         }
 
-                      ExprCache resolve = cache[--clen];
                       switch (resolve.type)
                         {
                           case ACCESS_EXPR:
@@ -342,7 +352,10 @@ llGenerate(FILE *output, Vector *pTree)
                               };
                               clen++;
                             } break;
-                          
+
+                          case RETURN_KEY:
+                            { clen++; } break;
+
                           default:
                             break;
                         }
@@ -411,7 +424,24 @@ llGenerate(FILE *output, Vector *pTree)
           if( hope > 0 )
             {
               uint32_t *last = hoping[--hope];
-              
+              if( clen > 0 ) 
+                {
+                  ExprCache resolve = cache[clen - 1];
+                  if( resolve.type == RETURN_KEY )
+                    {
+                      clen--;
+                      llvm_store (output, resolve.info.node, (var - 1), last[0]);
+                      char *tabs = (char*)malloc (1024);
+                      genT (&tabs);
+                      fprintf (output, "%sret %s %c%d\n",
+                              tabs,
+                              llvm_type (resolve.info.node.data.definition.type), '%',
+                              last[0]
+                      );
+                      free (tabs);
+                      continue;
+                    }
+                }
               llvm_store (output, GET(pTree, last[1]), (var - 1), last[0]);
             }
           continue;
@@ -443,6 +473,10 @@ llGenerate(FILE *output, Vector *pTree)
                     .llvm   = 0,
                     .tab    = tab,
                     .id     = branch.data.definition.id
+                  }));
+
+                  vector_push (&retStack, ((void*)&(RetStack) {
+                    .type = branch.data.definition.type
                   }));
 
                   int j = 0;
@@ -556,6 +590,35 @@ llGenerate(FILE *output, Vector *pTree)
 
               free (tabs);
             } break;
+
+          case NODE_RET:
+            {
+              PNode node = {
+                .data = {
+                  .definition = {
+                    .type = GETNP(RetStack, retStack, (retStack.length - 1)).type
+                  }
+                }
+              };
+
+              llvm_alloca (output, node);
+              
+              uint32_t *append = (uint32_t*) malloc (8);
+              append[0] = (var - 1);
+              append[1] = i; 
+              hoping[hope++] = append;
+
+              cache[clen++] = (ExprCache) {
+                .type = RETURN_KEY,
+                .info = {
+                  .node = node
+                }
+              };
+
+              goto wait_expr;
+            
+            } break;
+
           case NODE_INTERNAL:
             { 
               i--;

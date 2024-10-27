@@ -18,6 +18,7 @@
     NODE_TYPE,
     NODE_CUT,
     NODE_CLOSE,
+    NODE_RET,
     NODE_END,
     NODE_EEXPR
   } NodeType;
