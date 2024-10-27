@@ -19,24 +19,27 @@
 ```
 
 ### Functions
-```zig
+```carla
 int32 main = () {}
 ```
 - Return type -> Name -> Operator(sign) -> (arguments) { ...code... }
 
 #### Arguments struct
-```zig
+```carla
 int32 main = (int32 argv, []int8* args) {}
 ```
 
 ### Function call
-```lua
-puts variable; -- Optional CUT magic word
+```carla
+func(variable);
+
+-- Or you can use (if the function has inside of a module):
+module::func(variable);
 ```
 - Since the first identifier is the identifier of a function, you can enter other identifiers, where the arguments will be. When anything else, if not an identifier, is identified, the call is cut off and it is finally executed.
 
 ### Variables
-```zig
+```carla
 int32 status = 0;
 ```
 - Type -> Identifier -> Operator(sign) -> Value
@@ -44,7 +47,7 @@ int32 status = 0;
 
 # Code Exemples
 ## Hello World (using process arguments)
-```zig
+```carla
 #include <stdio>
 int32 main = (int32 argv, []int8* args) {
   []int8 arg = args[1];
@@ -58,7 +61,7 @@ int32 main = (int32 argv, []int8* args) {
 ```
 
 ## Hello world using variables
-```zig
+```carla
 #include <stdio>
 int32 main = () {
   []int8 msg = "Hello, world!";
@@ -69,7 +72,7 @@ int32 main = () {
 
 # While loops
 - While loopings work just like any other language. A keyword, a comparison, and a block of code.
-```zig
+```carla
 int32 main = () {
   int8 counter = 0;
   while counter < 4 {
@@ -80,7 +83,7 @@ int32 main = () {
 
 # If and Else
 - The conditionals, IF and ELSE can be used just like Rust, however, with a difference, it does not force you to buy the same types, such as: int8 == int8; It allows you to compare different types — as long as they are primitive.
-```zig
+```carla
 int32 main = (int32 argv) {
   if argv < 4 {
   } else {
@@ -91,15 +94,15 @@ int32 main = (int32 argv) {
 # For loop
 - Our forum has a slightly different structure from the others. Having some operators:
   - Ascending order (0, 1, 2, 3...)
-```zig
+```carla
 for i..2 {}
 ```
   - Descending order (...3, 2, 1, 0)
-```zig
+```carla
 for 2..i {}
 ```
   - Specific range (2, 3, 4 / 4, 3, 2)
-```zig
+```carla
 int8 x = 2;
 int8 y = 4;
 -- For loops
@@ -110,7 +113,7 @@ for i : x..4 {}
 for i : x..y {}
 ```
 
-```zig
+```carla
 #include <stdio>
 int32 main = () {
 
