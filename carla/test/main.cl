@@ -1,7 +1,7 @@
 #include <stdio>
 
 int32 main = (int32 argc, []byte* argv) {
-  []byte arg = argv[0];
-  io::println(arg);
+  []byte msg = argv[1];
+  io::println(msg);
   return 0;
 }

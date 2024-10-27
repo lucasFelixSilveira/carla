@@ -11,6 +11,7 @@
 # define MKDIR _mkdir
 # define FILE_MODE _S_IWRITE | _S_IREAD
 # define PATH_SEPARATOR "\\"
+# define SUFIX ".exe"
 #else
 # include <unistd.h>
 # include <sys/types.h>
@@ -18,6 +19,7 @@
 # define CHMOD chmod
 # define MKDIR mkdir
 # define PATH_SEPARATOR "/"
+# define SUFIX ""
 #endif
 
 int

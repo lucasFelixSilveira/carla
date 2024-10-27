@@ -14,7 +14,7 @@ echo
 echo "Output exe stdout:"
 echo
 
-./bootstrapping/output.exe
+./out.exe
 read -p "LLVM: ---- Status code: $?"
 
 cd ..

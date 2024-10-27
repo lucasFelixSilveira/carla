@@ -430,13 +430,17 @@ llGenerate(FILE *output, Vector *pTree)
                   if( resolve.type == RETURN_KEY )
                     {
                       clen--;
-                      llvm_store (output, resolve.info.node, (var - 1), last[0]);
+                      llvm_load (output, (Variable) {
+                        .llvm = (var-1),
+                        resolve.info.node.data.definition.type
+                      });
+
                       char *tabs = (char*)malloc (1024);
                       genT (&tabs);
                       fprintf (output, "%sret %s %c%d\n",
                               tabs,
                               llvm_type (resolve.info.node.data.definition.type), '%',
-                              last[0]
+                              (var - 1)
                       );
                       free (tabs);
                       continue;
@@ -508,6 +512,10 @@ llGenerate(FILE *output, Vector *pTree)
                   int q = j;
 
                   fprintf (output, ") {\n");
+                  if( strcmp (branch.data.definition.id, "main") == 0 )
+                    {
+                      fprintf (output, "entry:\n");
+                    }
                   var++;
                   tab++;
 
@@ -601,8 +609,6 @@ llGenerate(FILE *output, Vector *pTree)
                 }
               };
 
-              llvm_alloca (output, node);
-              
               uint32_t *append = (uint32_t*) malloc (8);
               append[0] = (var - 1);
               append[1] = i; 
