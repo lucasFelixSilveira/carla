@@ -1,127 +1,86 @@
 <div align="center">
-  <img width="200%" src="../assets/small.png">
-  <h1>Carla documentation</h1>
+  <img width="200%" src="./assets/small.png">
+  <h1>What is "Carla"?</h1>
+  <p>Carla is a programming language project with a different approach than others.</p>
+  <a href="#carla-fundamentals">See more about the differences and fundamentals!</a>
+  
 </div>
 <br>
+
+```carla
+#include <stdio> 
+
+int32 main = (int32 argc, []byte* argv) {
+  []byte msg = "Hello, World";
+  io::println(msg);
+
+  return 0;
+}
+```
 <br>
+<br>
+<br>
+
+# Carla Fundamentals
+### About
+Carla is a pattern created by a young programmer, who felt tired of languages ​​and their paradigms. Where, he was always very fond of fundamentalism and modernizing every little thing as much as possible. Inspired by the fundamentals of C, the beauty of Rust, and admired by the Heskell difference, he started the **Carla** project.
+
+### Fundamentals  
+- Practicality
+- Modernity 
+- Fundamentalism
+- Mathematical ease
+
+# And what is Carla's objective?
+Carla's true objective is to draw attention to the "Carla protocol". Therefore, some standards that, if followed, could change the direction of current computing.
+
+### What was the initial spark for the creation of Carla?
+
+Have you ever entered a Discord, Telegram or Whatsapp chat and seen a lot of people struggling with JavaScript, Python, Ruby? This is exactly what served as the snap.
+
+### After all, what is the purpose?
+If you are tired of using programming every day, for example, if you want your code not to break, put an `try` in the code, and it will not give a **Segmentation fault**.
+
+In other words, don't surrender to the current schedule. Opt for the rational programming choice, Carla Protocol. It doesn't make sense to program without knowing how much memory is used to allocate a pointer, and things like that.
+
+#
+
 <div align="center">
 
-# Running carla
-<img src="https://imgur.com/kHoXfhS.png" height="500px">
+### Carla's concept is to be simple, modern and as close to C as possible.
 
+#
+
+<table>
+  <tr><img width="170px" src="./assets/small.png"></tr>
+  <tr>
+    <!-- Documentation -->
+    <td>Documentation</td>
+    <td> 
+      <a href="./docs/carla.md">
+        <img src='https://img.shields.io/badge/Docs-v1-blue.svg'/>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <!-- License -->
+    <td>License</td>
+    <td> 
+      <a href="./LICENSE">
+        <img src='https://img.shields.io/badge/License-MIT-yellow.svg'/>
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <!-- Carla protocol -->
+    <td>Carla protocol</td>
+    <td> 
+      <a href="./LICENSE">
+      <a href="./PROTOCOL.md">
+        <img src='https://img.shields.io/badge/Carla_Protocol-view-purple'/>
+      </a>
+    </td>
+  </tr>
+</table>
+See what a language needs to fit into the carla protocol
 </div>
-
-# Language structure
-
-### Comments
-```lua
--- That's a comment on Carla!
-```
-
-### Functions
-```carla
-int32 main = () {}
-```
-- Return type -> Name -> Operator(sign) -> (arguments) { ...code... }
-
-#### Arguments struct
-```carla
-int32 main = (int32 argv, []int8* args) {}
-```
-
-### Function call
-```carla
-func(variable);
-
--- Or you can use (if the function has inside of a module):
-module::func(variable);
-```
-- Since the first identifier is the identifier of a function, you can enter other identifiers, where the arguments will be. When anything else, if not an identifier, is identified, the call is cut off and it is finally executed.
-
-### Variables
-```carla
-int32 status = 0;
-```
-- Type -> Identifier -> Operator(sign) -> Value
-
-
-# Code Exemples
-## Hello World (using process arguments)
-```carla
-#include <stdio>
-int32 main = (int32 argv, []int8* args) {
-  []int8 arg = args[1];
-  io::println(arg);
-  return 0;
-}
-```
-- And run the executable using:
-```sh-session
-./executable "Hello, world!"
-```
-
-## Hello world using variables
-```carla
-#include <stdio>
-int32 main = () {
-  []int8 msg = "Hello, world!";
-  io::println(msg);
-  return 0;
-}
-```
-
-# While loops
-- While loopings work just like any other language. A keyword, a comparison, and a block of code.
-```carla
-int32 main = () {
-  int8 counter = 0;
-  while counter < 4 {
-    counter += 1;
-  }
-}
-```
-
-# If and Else
-- The conditionals, IF and ELSE can be used just like Rust, however, with a difference, it does not force you to buy the same types, such as: int8 == int8; It allows you to compare different types — as long as they are primitive.
-```carla
-int32 main = (int32 argv) {
-  if argv < 4 {
-  } else {
-  }
-}
-```
-
-# For loop
-- Our forum has a slightly different structure from the others. Having some operators:
-  - Ascending order (0, 1, 2, 3...)
-```carla
-for i..2 {}
-```
-  - Descending order (...3, 2, 1, 0)
-```carla
-for 2..i {}
-```
-  - Specific range (2, 3, 4 / 4, 3, 2)
-```carla
-int8 x = 2;
-int8 y = 4;
--- For loops
-for i : 2..4 {}
-for i : 4..2 {}
-for i : 4..x {}
-for i : x..4 {}
-for i : x..y {}
-```
-
-```carla
-#include <stdio>
-int32 main = () {
-
-  []int8 msg = "Hello, world!";
-  for i..2 {
-    io::println(msg);
-  }
-
-  return 0;
-}
-```
