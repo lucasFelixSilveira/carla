@@ -19,6 +19,12 @@
     "inttypes.h": "c",
     "types.h": "c",
     "time.h": "c",
-    "strings.h": "c"
+    "strings.h": "c",
+    "control.h": "c",
+    "build.h": "c",
+    "wctype.h": "c",
+    "type_traits": "c",
+    "xtr1common": "c",
+    "lib.h": "c"
   }
 }

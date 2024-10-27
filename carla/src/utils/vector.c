@@ -24,7 +24,7 @@ vector_push (Vector *pVector, void *item)
       fprintf (stderr, "Fail to alloc memory.\n");
     }
   pVector->items = nItems;
-  memcpy ((char *)pVector->items + (pVector->length - 1) * itemSize, item, itemSize);
+  memcpy ((char*)pVector->items + (pVector->length - 1) * itemSize, item, itemSize);
 }
 
 void 
@@ -37,7 +37,7 @@ vector_remove(Vector *pVector, int index)
   size_t i = index; 
   for (; i < pVector->length - 1; ++i )
     { 
-      memcpy ((char *)pVector->items + i * itemSize, (char *)pVector->items + (i + 1) * itemSize, itemSize);
+      memcpy ((char*)pVector->items + i * itemSize, (char*)pVector->items + (i + 1) * itemSize, itemSize);
     }
 
   pVector->length--;

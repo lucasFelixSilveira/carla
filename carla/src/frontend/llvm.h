@@ -1,6 +1,7 @@
 #ifndef LLVM_H
 # define LLVM_H
 # include "../utils/vector.h"
+# include "std.h"
 
   typedef enum {
     Lambda,
@@ -24,7 +25,8 @@
   } Variable;
 
   typedef enum {
-    ACCESS_EXPR
+    ACCESS_EXPR,
+    FUNCTION_CALL
   } eExprCache;
 
   typedef struct {
@@ -35,6 +37,7 @@
         char *type;
         char *id;
       } access;
+      Fn fn_call;
     } info;
   } ExprCache;
 

@@ -107,7 +107,7 @@ tkGenerate(Vector *lex, FILE *file)
       else 
         /*->*/ ungetc (j, file);
 
-      if(! isalnum (c) ) {
+      if(! isalnum (c) && c != '#' ) {
         if( len > 0 ) {
           vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (buffer), 
@@ -120,12 +120,36 @@ tkGenerate(Vector *lex, FILE *file)
           /*->*/ continue;
 
 
-        if( c == '"' ) {
+        char subt = 0;
+        if( c == '<' ) 
+          {
+            char sbuff[128];
+            int len = 0;
+            char _c;
+            while( (_c = getc (file)) != '>' )
+              sbuff[len++] = _c;
+
+            if( getc (file) == 0x0a ) 
+              subt = 1;
+
+            int __l = len;
+            while( len >= 0 )
+              {
+                if( len == __l )
+                  ungetc ('\x01', file);
+                ungetc (sbuff[len--], file);
+              }
+          }
+
+        if( c == 0x01 )
+          continue;
+
+        if( c == '"' || subt ) {
           char *strbuff = (char*)malloc (1024);
           size_t i = 0;
           size_t j = 1;
           char ch;
-          while( (ch = getc (file)) != '"' ) {
+          while( (ch = getc (file)) != 0 && (( !subt && ch != '"' ) || ( subt && ch != '\x01' )) ) {
             j++;
             if( ch == '\\' ) {
               strbuff[i++] = ch; 
@@ -150,7 +174,7 @@ tkGenerate(Vector *lex, FILE *file)
 
           vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (strbuff), 
-            .type = Integer,
+            .type = Text,
             .real = j
           }));
 

@@ -1,12 +1,13 @@
-
-int 
-x(long y[34])
-{
-  return y[1];
+void u(int v, int *w) {
+  *w = v;
+  return;
 }
 
 int
 main()
 {
-  return 23;
+  int x = 0;
+  int y = 2;
+  u(y, &x);
+  return x;
 }

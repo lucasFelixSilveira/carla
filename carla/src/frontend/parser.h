@@ -8,6 +8,7 @@
     NODE_ID,
     NODE_TEXT,
     NODE_OPERATION,
+    NODE_INTERNAL,
     NODE_DEFINITION,
     NODE_DEF_LIBC,
     NODE_SINGLE,
@@ -16,7 +17,9 @@
     NODE_BEGIN,
     NODE_TYPE,
     NODE_CUT,
-    NODE_END
+    NODE_CLOSE,
+    NODE_END,
+    NODE_EEXPR
   } NodeType;
 
   typedef union {
@@ -55,6 +58,10 @@
         } data;
         NodeType type;
       } single;
+      struct {
+        char *function;
+        char *lib;
+      } internal;
     } data;
   } PNode;
 

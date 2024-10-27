@@ -13,6 +13,7 @@ char *TType[] = {
   "NODE_ID",
   "NODE_TEXT",
   "NODE_OPERATION",
+  "NODE_INTERNAL",
   "NODE_DEFINITION",
   "NODE_DEF_LIBC",
   "NODE_SINGLE",
@@ -21,7 +22,9 @@ char *TType[] = {
   "NODE_BEGIN",
   "NODE_TYPE",
   "NODE_CUT",
-  "NODE_END"
+  "NODE_CLOSE",
+  "NODE_END",
+  "NODE_EEXPR"
 };
 
 void
@@ -33,7 +36,7 @@ pTokens (Vector *tks)
     i++
   ) {
       Token tk = TKGET(tks, i);
-      printf ("Token<%d> { type: %d\tbuffer: %s\t},\n", i, tk.type, tk.buffer);
+      printf ("Token<%d> {\n\ttype: %d\n\tbuffer: %s\n},\n", i, tk.type, tk.buffer);
     }
 }
 
@@ -69,6 +72,13 @@ pNodes (Vector *root)
             {
               printf ("|\t|-type: %s\n", 
                      brench.data.value
+              );
+            } break;
+          case NODE_INTERNAL:
+            {
+              printf ("|\t|-function: %s\n|\t|-library: %s\n", 
+                     brench.data.internal.function,
+                     brench.data.internal.lib
               );
             } break;
           

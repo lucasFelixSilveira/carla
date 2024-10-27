@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "../utils/vector.h"
 #include "../utils/symbols.h"
+#include "../utils/carla.h"
 #include "parser.h"
 #include "lexer.h"
 
@@ -48,13 +49,20 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
           case Macro:
             {
               BEGIN_SWITCH (first.buffer)
-                CASE("@import")
+                CASE("#include")
                   Token quoute = GET(tks, ++i);
                   if( quoute.type == Text )
                     {
-                      char *file = (char*)malloc (strlen (quoute.buffer) + 1);
-                      memcpy (file, first.buffer, strlen (first.buffer));
-                      vector_push (libs, file);
+                      int result;
+                      VECTOR_CONTAINS(Library, libs, lib, quoute.buffer, &result);
+                      if( result ) 
+                        continue;
+
+                      vector_push (libs, ((void*)&(Library) {
+                        .lib = strdup (quoute.buffer),
+                        .fn  = NULL,
+                        .is  = 0 
+                      }));
                     }
                   else
                     goto __cancel_parse__;
@@ -132,8 +140,54 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                 }
 
 
-              // EXPRESSIONS
+
               Token next = GET(tks, i + 1);
+              Token after = GET(tks, i + 2);
+              Token parenthesis = GET(tks, i + 3);
+              if( first.type == Identifier && next.type == Quad && after.type == Identifier && parenthesis.type == Unknown && parenthesis.buffer[0] == '(' )
+                {
+                  i += 3;
+
+                  char *module = (char*)malloc (128);
+                  sprintf (module, "std%s", first.buffer);
+                  int result;
+                  VECTOR_CONTAINS(Library, libs, lib, module, &result);
+
+                  if( result )
+                    {
+                      Library library;
+                      VECTOR_FIND(Library, libs, lib, module, &library);
+                      VECTOR_CONTAINS(Library, libs, fn, after.buffer, &result);
+
+                      if(! result )
+                        {
+                          vector_push (libs, ((void*)&(Library) {
+                            .fn  = strdup (after.buffer),
+                            .lib = library.lib,
+                            .is  = 1
+                          }));
+                        }
+
+                      vector_push (tree, ((void*)&(PNode) {
+                        .type = NODE_INTERNAL,
+                        .data = {
+                          .internal   = {
+                            .function = after.buffer,
+                            .lib      = module
+                          }
+                        }
+                      }));
+
+                      continue;
+                    } 
+                  else
+                    {
+                      free (module);
+                      goto __cancel_parse__;
+                    }
+                }
+
+              // EXPRESSIONS
               if( 
                   ( first.type    == Integer || first.type == Identifier || first.type == Text ) 
                   && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown )
@@ -176,7 +230,6 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                           }));
                         else
                         if( first.type == Integer ) 
-                          printf ("NUMBER: %d", atoi (first.buffer));
                           vector_push (tree, ((void*)&(PNode) {
                             .type = NODE_SINGLE,
                             .data = {
@@ -188,8 +241,18 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                               }
                             }
                           }));
+
+                        if( next.type == Semi )
+                          vector_push (tree, ((void*)&(PNode) {
+                            .type = NODE_EEXPR,
+                            .data = {
+                              .number = 0
+                            }
+                          }));
+
                         break;
                       }
+
                 }
 
               Token can  = GET(tks, i + 2);
@@ -208,12 +271,32 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   }
             } break;
 
+          case Semi:
+            {
+              vector_push (tree, ((void*)&(PNode) {
+                .type = NODE_EEXPR,
+                .data = {
+                  .number = 0
+                }
+              }));
+            }
+
           case Unknown:
             {
               if( strcmp (first.buffer, "}") == 0 )
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_END,
+                    .data = {
+                      .number = 0
+                    }
+                  }));
+                }
+
+              if( strcmp (first.buffer, ")") == 0 )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_CLOSE,
                     .data = {
                       .number = 0
                     }

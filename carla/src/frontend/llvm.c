@@ -6,6 +6,7 @@
 #include "../utils/symbols.h"
 #include "parser.h"
 #include "llvm.h"
+#include "std.h"
 
 #define GET(vector, index) ((PNode*)vector->items)[index]
 #define GETNP(type, vector, index) ((type*)vector.items)[index]
@@ -15,6 +16,11 @@ unsigned int var = 0;
 int tab = 0;
 
 ExprCache cache[1024];
+struct ARG {
+  unsigned int llvm;
+  char *arg_type;
+} args[128];
+int alen;
 int clen;
 
 void
@@ -94,6 +100,7 @@ llvm_type (char *type)
         continue;
       
       memcpy (__type, matrix[i][1], strlen (matrix[i][1]));
+      __type[strlen (matrix[i][1])] = 0;
       return __type;
     }
 
@@ -240,7 +247,7 @@ void
 llvm_getelementptr(FILE *output, ExprCache vec) 
 {
   char *tabs = (char*)malloc (1024);
-  char *type = llvm_type (backPtr(vec.info.access.type));
+  char *type = llvm_type (vec.info.access.type);
   genT (&tabs);
   fprintf (output, "%s%c%d = getelementptr inbounds %s, %s %c%d, i64 %c%d\n", 
           tabs, '%',
@@ -308,6 +315,11 @@ llGenerate(FILE *output, Vector *pTree)
                               llvm_alloca_t (output, "int64");
                               llvm_store_l (output, 64, (int)next.data.single.data.number, (var - 1));
                             } break;
+                          case NODE_ID:
+                            {
+                              Variable id = llvm_get (&vars, next.data.value);
+                              llvm_load (output, id);
+                            }
                           default: break;
                         }
 
@@ -318,6 +330,17 @@ llGenerate(FILE *output, Vector *pTree)
                             {
                               llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64"});
                               llvm_getelementptr (output, resolve);
+                              llvm_load (output, (Variable) { .llvm = (var-1), .type = backPtr(resolve.info.access.type) });
+                            } break;
+
+                          case FUNCTION_CALL:
+                            {
+                              // args[alen][0] = resolve.info.fn.llvm_id;
+                              args[alen++] = (struct ARG) {
+                                .llvm = (var - 1),
+                                .arg_type = (next.data.single.type == NODE_ID) ? "[]byte" : "int64"
+                              };
+                              clen++;
                             } break;
                           
                           default:
@@ -325,13 +348,71 @@ llGenerate(FILE *output, Vector *pTree)
                         }
 
                     } break;
+
+                  case NODE_INTERNAL:
+                    {
+                      i++;
+                      cache[clen++] = (ExprCache) {
+                        .type = FUNCTION_CALL,
+                        .info = {
+                          .fn_call = std_fn (branch)
+                        }
+                      };
+                    } break;
+
+                  case NODE_CLOSE: 
+                    {
+                      i++;
+                      ExprCache resolve = cache[--clen];
+                      if( resolve.type != FUNCTION_CALL )
+                        goto __llvm_gen_error__;
+                      
+                      char *tabs = (char*)malloc (1024);
+                      genT (&tabs);
+                      if( strcmp (resolve.info.fn_call.type, "void") != 0 )
+                        {
+                          fprintf (output, "%s%c%d = ", 
+                                  tabs, '%',
+                                  var++
+                          );
+                        } 
+                      else 
+                        fprintf (output, "%s", tabs);
+                      free (tabs);
+
+                      fprintf (output, "call %s @%s.%s(",
+                              resolve.info.fn_call.type, 
+                              resolve.info.fn_call.lib,
+                              resolve.info.fn_call.id
+                      );
+
+                      int j = 0;
+                      for(; j < alen; j++ )
+                        {
+                          fprintf (output, "%s%s %c%d", 
+                            (j == 0) ? "" : ", ",
+                            llvm_type (args[j].arg_type), '%',
+                            args[j].llvm
+                          );
+                        }
+
+                      fprintf (output, ")\n");
+                      break;
+                    }
                   
                   default: 
                     goto finish;
                 }
 
               continue;
-              finish: {break;}
+              finish: { break; }
+            }
+          
+          if( hope > 0 )
+            {
+              uint32_t *last = hoping[--hope];
+              
+              llvm_store (output, GET(pTree, last[1]), (var - 1), last[0]);
             }
           continue;
         }
@@ -422,6 +503,14 @@ llGenerate(FILE *output, Vector *pTree)
                   continue;
                 }
 
+              vector_push (&vars, ((void*)&(Variable) {
+                .v_type = Normal, 
+                .type   = branch.data.definition.type,
+                .llvm   = var,
+                .tab    = tab,
+                .id     = branch.data.definition.id
+              }));
+
               llvm_alloca (output, branch);
               if(! branch.data.definition.hopeful )
                 continue;
@@ -467,6 +556,11 @@ llGenerate(FILE *output, Vector *pTree)
 
               free (tabs);
             } break;
+          case NODE_INTERNAL:
+            { 
+              i--;
+              goto wait_expr;
+            }
           default: break;
         }
     }
@@ -487,7 +581,7 @@ llGenerate(FILE *output, Vector *pTree)
   vector_free (&scopes);
   
   j = 0;
-  for(; j < 512; j++ )
+  for(; j < hope; j++ )
     free (hoping[j]);
   free (hoping);
 }

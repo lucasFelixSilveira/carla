@@ -10,7 +10,7 @@ const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
     { .len = 6, .val = "return" },
     { .len = 3, .val = "end" },
     /* macros */
-    { .len = 7, .val = "@import" },
+    { .len = 8, .val = "#include" },
     /* types */
     { .len = 4, .val = "bool" },
     { .len = 4, .val = "int8" },
