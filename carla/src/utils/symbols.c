@@ -13,17 +13,21 @@ const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
     { .len = 8, .val = "#include" },
     /* types */
     { .len = 4, .val = "bool" },
-    { .len = 4, .val = "int8" },
+    { .len = 4, .val = "void" },
+    { .len = 5, .val = "float" },
+    { .len = 7, .val = "float64" },
     { .len = 4, .val = "byte" },
     { .len = 5, .val = "ascii" },
-    { .len = 5, .val = "asciz" },
+    { .len = 4, .val = "int8" },
     { .len = 5, .val = "int16" },
     { .len = 5, .val = "int32" },
     { .len = 5, .val = "int64" },
     { .len = 6, .val = "int128" },
-    { .len = 5, .val = "float" },
-    { .len = 7, .val = "float64" },
-    { .len = 4, .val = "void" },
+    { .len = 5, .val = "uint8" },
+    { .len = 6, .val = "uint16" },
+    { .len = 6, .val = "uint32" },
+    { .len = 6, .val = "uint64" },
+    { .len = 7, .val = "uint128" },
   };
 
 char 

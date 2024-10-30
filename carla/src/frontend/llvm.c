@@ -5,8 +5,24 @@
 #include "../utils/strings.h"
 #include "../utils/symbols.h"
 #include "parser.h"
+#include "types.h"
 #include "llvm.h"
 #include "std.h"
+
+int 
+exponence(int x, int y)
+{
+  int result = 1;
+
+  for(int i = 0; i < y; i++)
+    {
+      result *= x;
+    }
+
+  return result;
+}
+
+// llvm_store (output, GET(pTree, last[1]), (var - 1), last[0]);
 
 #define GET(vector, index) ((PNode*)vector->items)[index]
 #define GETNP(type, vector, index) ((type*)vector.items)[index]
@@ -43,7 +59,7 @@ genT(char **tabs)
 int
 llvm_sizeof (char *type)
 {
-  if( type[0] == 'i' )
+  if( type[0] == 'i' || type[0] == 'u' )
     {
       char *bits = substr (type, 1, strlen (type) - 1);
       int bytes = atoi (bits) / 8;
@@ -68,21 +84,31 @@ llvm_type (char *type)
     return "ptr";
 
   char *__type = (char*)malloc (128);
-  const char *prefix = "int";
-  for( char i = 0; i < 3; i++ )
-    {
-      if( prefix[i] != type[i] )
-        break;
-      if( i == 2 )
-        {
-          char *bits = substr (type, 3, strlen (type) - 2);
-          char *result = (char*)malloc (strlen (type));
-          sprintf (result, "i%s", bits);
-          free (bits);
-          free (__type);
-          return result;
-        }
-    }
+  char *prefix = "int";
+
+  integer_by_bits: {
+    size_t len = strlen (prefix);
+    for( char i = 0; i < len; i++ )
+      {
+        if( prefix[i] != type[i] )
+          break;
+        if( i == (len - 1) )
+          {
+            char *bits = substr (type, len, strlen (type) - (len - 1));
+            char *result = (char*)malloc (strlen (type));
+            sprintf (result, "i%s", bits);
+            free (bits);
+            free (__type);
+            return result;
+          }
+      }
+    if( prefix[0] == 'u' )
+      goto __next_step_type;
+  }
+  
+  prefix = "uint";
+  goto integer_by_bits;
+  __next_step_type: {}
 
   if( strcmp (type, "void") == 0 )
     {
@@ -179,8 +205,13 @@ llvm_store(FILE *output, PNode node, int __src_var__, int __dst_var__)
 }
 
 void
-llvm_store_l(FILE *output, int bits, int number, uint32_t dist)
+llvm_store_l(FILE *output, int bits, int original, uint32_t dist)
 {
+  int number = original;
+  if( original > (exponence(2, bits) / 2) - 1 )
+    {
+      number = -(((exponence(2, bits) / 2)) - (number - ((exponence(2, bits) / 2))));
+    }
   char *tabs = (char*)malloc (1024);
   genT (&tabs);
   fprintf (output, "%sstore i%d %d, ptr %c%d, align %d\n", 
@@ -227,6 +258,31 @@ llvm_get_i(Vector *vec, char *id)
   exit (0);
 }
 
+void
+llvm_resize(FILE *output, unsigned int collect, char *type, Variable changable)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  
+  fprintf (output, "%s%c%d = ", 
+          tabs, '%',
+          var++ 
+  );
+  free (tabs);
+
+  if( llvm_sizeof (llvm_type (type)) > llvm_sizeof (llvm_type (changable.type)) )
+    fprintf (output, "sext ");
+  else 
+    fprintf (output, "trunc ");
+  
+  fprintf (output, "%s %c%d to %s\n", 
+          llvm_type (changable.type), '%',
+          collect,
+          llvm_type (type)
+  );
+
+}
+
 void 
 llvm_load(FILE *output, Variable toLoad)
 {
@@ -267,11 +323,9 @@ void
 llGenerate(FILE *output, Vector *pTree)
 {
 
-  Vector     vars     = vector_init (sizeof (Variable));
-  Vector     scopes   = vector_init (sizeof (ScopeType));
-  Vector     retStack = vector_init (sizeof (RetStack));
-  uint32_t **hoping   = (uint32_t**)malloc ((512 * 3) * sizeof (int));
-  uint16_t   hope     = 0;
+  Vector vars     = vector_init (sizeof (Variable));
+  Vector scopes   = vector_init (sizeof (ScopeType));
+  Vector retStack = vector_init (sizeof (RetStack));
 
   int i = 0;
   for(; i < pTree->length; i++ )
@@ -281,7 +335,6 @@ llGenerate(FILE *output, Vector *pTree)
       goto jmp_expr;
       wait_expr: 
         {
-          uint16_t old_h = hope;
           while(1) 
             {
               PNode next = GET(pTree, i + 1);
@@ -298,9 +351,10 @@ llGenerate(FILE *output, Vector *pTree)
                         .type = ACCESS_EXPR,
                         .info = {
                           .access = {
-                            .load_vec = (var-1),
-                            .type     = access.type,
-                            .id       = access.id
+                            .need_load = 1,
+                            .load_vec  = (var-1),
+                            .type      = access.type,
+                            .id        = access.id
                           }
                         }
                       };
@@ -315,21 +369,69 @@ llGenerate(FILE *output, Vector *pTree)
                         {
                           case NODE_NUMBER: 
                             {
-                              if( resolve.type == RETURN_KEY )
+                              switch (resolve.type)
                                 {
-                                  llvm_alloca_t (output, resolve.info.node.data.definition.type);
-                                  llvm_store_l (output, llvm_sizeof (llvm_type (resolve.info.node.data.definition.type)) * 8, (int)next.data.single.data.number, (var - 1));
-                                }
-                              else
-                                {
-                                  llvm_alloca_t (output, "int64");
-                                  llvm_store_l (output, 64, (int)next.data.single.data.number, (var - 1));
+                                  case RETURN_KEY:
+                                    {
+                                      llvm_alloca_t (output, resolve.info.node.data.definition.type);
+                                      llvm_store_l (output, llvm_sizeof (llvm_type (resolve.info.node.data.definition.type)) * 8, (int)next.data.single.data.number, (var - 1));
+                                      llvm_load (output, (Variable) { .llvm = (var-1), .type = resolve.info.node.data.definition.type });
+                                    } break;
+                                
+                                  case VAR_DECLARATION: 
+                                    {
+                                      llvm_store_l (output, llvm_sizeof (llvm_type (resolve.info.var.node.data.definition.type)) * 8, (int)next.data.single.data.number, resolve.info.var.llvm);
+                                    } break;
+
+                                  case ACCESS_EXPR:
+                                    {
+                                      llvm_alloca_t (output, "int64");
+                                      llvm_store_l (output, 64, (int)next.data.single.data.number, (var - 1));
+                                      llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64"});
+                                    } break;
+
+                                  default: 
+                                    {
+                                      llvm_alloca_t (output, "int64");
+                                      llvm_store_l (output, 64, (int)next.data.single.data.number, (var - 1));
+                                    } break; 
+
                                 }
                             } break;
                           case NODE_ID:
                             {
                               Variable id = llvm_get (&vars, next.data.value);
                               llvm_load (output, id);
+                              
+                              switch (resolve.type)
+                                {
+                                  case VAR_DECLARATION:
+                                  case ACCESS_EXPR:
+                                  case RETURN_KEY:
+                                    {
+                                      char *type = (resolve.type == RETURN_KEY) ? 
+                                        resolve.info.node.data.definition.type 
+                                        : (resolve.type == VAR_DECLARATION) ?
+                                          resolve.info.var.node.data.definition.type
+                                          : "int64";
+
+                                      char isInteger = types_int (type) && types_int (id.type);
+                                      if(! isInteger )
+                                        break;
+                                      
+                                      if( llvm_sizeof (llvm_type (type)) != llvm_sizeof (llvm_type (id.type)) )
+                                          llvm_resize (output, (var - 1), type, id);
+
+                                      switch (resolve.type)
+                                        {
+                                          case VAR_DECLARATION:
+                                            clen++; break;
+                                          default: break;
+                                        }
+                                    } break;
+                                    
+                                  default: break;
+                                }
                             }
                           default: break;
                         }
@@ -338,14 +440,12 @@ llGenerate(FILE *output, Vector *pTree)
                         {
                           case ACCESS_EXPR:
                             {
-                              llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64"});
                               llvm_getelementptr (output, resolve);
                               llvm_load (output, (Variable) { .llvm = (var-1), .type = backPtr(resolve.info.access.type) });
                             } break;
 
                           case FUNCTION_CALL:
                             {
-                              // args[alen][0] = resolve.info.fn.llvm_id;
                               args[alen++] = (struct ARG) {
                                 .llvm = (var - 1),
                                 .arg_type = (next.data.single.type == NODE_ID) ? "[]byte" : "int64"
@@ -356,8 +456,7 @@ llGenerate(FILE *output, Vector *pTree)
                           case RETURN_KEY:
                             { clen++; } break;
 
-                          default:
-                            break;
+                          default: break;
                         }
 
                     } break;
@@ -410,8 +509,9 @@ llGenerate(FILE *output, Vector *pTree)
                         }
 
                       fprintf (output, ")\n");
-                      break;
-                    }
+
+                      alen = 0;
+                    } break;
                   
                   default: 
                     goto finish;
@@ -421,33 +521,36 @@ llGenerate(FILE *output, Vector *pTree)
               finish: { break; }
             }
           
-          if( hope > 0 )
-            {
-              uint32_t *last = hoping[--hope];
-              if( clen > 0 ) 
-                {
-                  ExprCache resolve = cache[clen - 1];
-                  if( resolve.type == RETURN_KEY )
-                    {
-                      clen--;
-                      llvm_load (output, (Variable) {
-                        .llvm = (var-1),
-                        resolve.info.node.data.definition.type
-                      });
+            if( clen > 0 ) 
+              {
+                ExprCache resolve = cache[clen - 1];
+                switch(resolve.type) 
+                  {
+                    case RETURN_KEY: 
+                      {
+                        clen--;
 
-                      char *tabs = (char*)malloc (1024);
-                      genT (&tabs);
-                      fprintf (output, "%sret %s %c%d\n",
-                              tabs,
-                              llvm_type (resolve.info.node.data.definition.type), '%',
-                              (var - 1)
-                      );
-                      free (tabs);
-                      continue;
-                    }
-                }
-              llvm_store (output, GET(pTree, last[1]), (var - 1), last[0]);
-            }
+                        char *tabs = (char*)malloc (1024);
+                        genT (&tabs);
+                        fprintf (output, "%sret %s %c%d\n",
+                                tabs,
+                                llvm_type (resolve.info.node.data.definition.type), '%',
+                                (var - 1)
+                        );
+                        free (tabs);
+                        continue;
+                      }
+
+                    case VAR_DECLARATION:
+                      {
+                        clen--;
+
+                        llvm_store (output, resolve.info.var.node, (var - 1), resolve.info.var.llvm);
+                      } break;
+
+                    default: break;
+                  }
+              }
           continue;
         }
       jmp_expr: {}
@@ -557,10 +660,15 @@ llGenerate(FILE *output, Vector *pTree)
               if(! branch.data.definition.hopeful )
                 continue;
 
-              uint32_t *append = (uint32_t*) malloc (8);
-              append[0] = (var - 1);
-              append[1] = i; 
-              hoping[hope++] = append;
+              cache[clen++] = (ExprCache) {
+                .type = VAR_DECLARATION,
+                .info = {
+                  .var = {
+                    .llvm = (var - 1),
+                    .node = branch
+                  }
+                }
+              };
               
               goto wait_expr;
               
@@ -609,11 +717,6 @@ llGenerate(FILE *output, Vector *pTree)
                 }
               };
 
-              uint32_t *append = (uint32_t*) malloc (8);
-              append[0] = (var - 1);
-              append[1] = i; 
-              hoping[hope++] = append;
-
               cache[clen++] = (ExprCache) {
                 .type = RETURN_KEY,
                 .info = {
@@ -649,8 +752,4 @@ llGenerate(FILE *output, Vector *pTree)
   vector_free (&vars);
   vector_free (&scopes);
   
-  j = 0;
-  for(; j < hope; j++ )
-    free (hoping[j]);
-  free (hoping);
 }

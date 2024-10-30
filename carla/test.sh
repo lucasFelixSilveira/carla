@@ -7,6 +7,9 @@ read -p "Press any key to run file"
 clear
 ./carla.exe main.cl
 
+sleep 1
+clang ./target/out/ir.ll -o ./target/out/out.exe
+
 echo
 echo
 read -p "Compiler: ---- Status code: [$?] ---- Press any key to test the LLVM binary"
@@ -14,7 +17,8 @@ echo
 echo "Output exe stdout:"
 echo
 
-./out.exe
-read -p "LLVM: ---- Status code: $?"
+
+
+../run.sh
 
 cd ..

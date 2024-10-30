@@ -200,7 +200,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
 
               // EXPRESSIONS
               if( 
-                  ( first.type    == Integer || first.type == Identifier || first.type == Text ) 
+                  ( first.type    == Integer || first.type == Identifier || first.type == Text    ) 
                   && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown )
               ) {
                   if(

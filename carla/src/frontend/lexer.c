@@ -116,11 +116,21 @@ tkGenerate(Vector *lex, FILE *file)
           len = 0;
         } 
 
-        if( iswspace (c) ) 
+        if( iswspace (c) || c == '\r' || c == '\n' ) 
           /*->*/ continue;
 
 
-        char subt = 0;
+        char subt = getc (file);
+        if( c == '-' && isdigit (subt) )
+          {
+            buffer[len++] = c;
+            buffer[len++] = subt;
+            buffer[len] = 0;
+            continue;
+          }
+        ungetc (subt, file);
+        subt = 0;
+
         if( c == '<' ) 
           {
             char sbuff[128];

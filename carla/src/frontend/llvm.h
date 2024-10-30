@@ -32,7 +32,8 @@
   typedef enum {
     ACCESS_EXPR,
     FUNCTION_CALL,
-    RETURN_KEY
+    RETURN_KEY,
+    VAR_DECLARATION
   } eExprCache;
 
   typedef struct {
@@ -44,8 +45,13 @@
         unsigned int load_vec;
         char *type;
         char *id;
+        char need_load;
       } access;
       Fn fn_call;
+      struct {
+        PNode node;
+        unsigned int llvm;
+      } var;
     } info;
   } ExprCache;
 

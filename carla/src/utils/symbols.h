@@ -2,7 +2,9 @@
 # define SYMBOLS_H
 # define KEYWORDS_LENGTH 3
 # define MACROS_LENGTH 1
-# define TYPES_LENGTH 12
+# define TYPES_LENGTH 16
+# define INTEGER_TYPES_LENGTH 12
+# define TOTAL KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH 
 
   typedef struct { char len; char *val; } Key;
   extern const Key staticSymbols[]; 
