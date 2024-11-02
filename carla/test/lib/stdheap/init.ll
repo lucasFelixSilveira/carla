@@ -1,0 +1,1 @@
+declare ptr @malloc(i64)

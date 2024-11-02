@@ -7,35 +7,26 @@ entry:
   store i16 %0, ptr %3, align 2
   store ptr %1, ptr %4, align 8
   %5 = alloca ptr, align 8
-  %6 = load ptr, ptr %4, align 8
-  %7 = alloca i64, align 8
-  store i64 1, ptr %7, align 8
-  %8 = load i64, ptr %7, align 8
-  %9 = getelementptr inbounds ptr, ptr %6, i64 %8
-  %10 = load ptr, ptr %9, align 8
-  store ptr %10, ptr %5, align 8
-  %11 = load ptr, ptr %5, align 8
-  call void @stdio.println(ptr %11)
-  %12 = alloca i128, align 16
-  %13 = load ptr, ptr %5, align 8
-  %14 = alloca i64, align 8
-  store i64 0, ptr %14, align 8
-  %15 = load i64, ptr %14, align 8
-  %16 = getelementptr inbounds ptr, ptr %13, i64 %15
-  %17 = load i8, ptr %16, align 1
-  store i128 %17, ptr %12, align 16
-  %18 = load i128, ptr %12, align 16
-  %19 = trunc i128 %18 to i32
-  ret i32 %19
+  %6 = alloca i64, align 8
+  store i64 15, ptr %6, align 8
+  %7 = load i64, ptr %6, align 8
+  %8 = call ptr @heap.alloc(i64 %7)
+  store ptr %8, ptr %5, align 8
+  %9 = alloca i32, align 4
+  store i32 0, ptr %9, align 4
+  %10 = load i32, ptr %9, align 4
+  ret i32 %10
 }
 
 ; Extern functions
 declare i32 @puts(ptr)
-define void @stdio.println(ptr %0) {
-  %2 = alloca ptr, align 8
-  store ptr %0, ptr %2, align 8
-  %3 = load ptr, ptr %2, align 8
-  %4 = call i32 @puts(ptr %3)
-  ret void
+; stdio Initialized
+declare ptr @malloc(i64)
+; stdheap Initialized
+define ptr @heap.alloc(i64 %0) {
+  %2 = alloca i64, align 4
+  store i64 %0, ptr %2, align 4
+  %3 = load i64, ptr %2, align 4
+  %5 = call ptr @malloc(i64 %3)
+  ret ptr %5
 }
-

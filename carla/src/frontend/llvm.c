@@ -9,6 +9,12 @@
 #include "llvm.h"
 #include "std.h"
 
+/** 
+  TODO: Expressoes com mais de 1 NODE de expressão, exemlo: 1 + 2
+  TODO: For loops, while loops, INTER operator e WALRUS (not :=) operator
+  TODO: Auto-cast do resultado de uma expressão para o tipo correspondente ao da variável na qual é receptora
+*/
+
 int 
 exponence(int x, int y)
 {
@@ -209,9 +215,8 @@ llvm_store_l(FILE *output, int bits, int original, uint32_t dist)
 {
   int number = original;
   if( original > (exponence(2, bits) / 2) - 1 )
-    {
-      number = -(((exponence(2, bits) / 2)) - (number - ((exponence(2, bits) / 2))));
-    }
+    number = -(((exponence(2, bits) / 2)) - (number - ((exponence(2, bits) / 2))));
+
   char *tabs = (char*)malloc (1024);
   genT (&tabs);
   fprintf (output, "%sstore i%d %d, ptr %c%d, align %d\n", 
@@ -446,6 +451,11 @@ llGenerate(FILE *output, Vector *pTree)
 
                           case FUNCTION_CALL:
                             {
+                              if( next.data.single.type == NODE_NUMBER )
+                                {
+                                  llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64" });
+                                }
+
                               args[alen++] = (struct ARG) {
                                 .llvm = (var - 1),
                                 .arg_type = (next.data.single.type == NODE_ID) ? "[]byte" : "int64"
@@ -467,7 +477,7 @@ llGenerate(FILE *output, Vector *pTree)
                       cache[clen++] = (ExprCache) {
                         .type = FUNCTION_CALL,
                         .info = {
-                          .fn_call = std_fn (branch)
+                          .fn_call = std_fn (next)
                         }
                       };
                     } break;

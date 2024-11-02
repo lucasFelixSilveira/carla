@@ -26,24 +26,39 @@ putin(FILE *llvm, Vector *libs, char exec_dir[])
   for(; j < libs->length; j++ )
     {
       Library library = GET(Library, libs, j);
-      if(! library.is )
-        continue;
-        
+      
+
       char *origin_path = (char*)malloc (1024);
-      sprintf (origin_path, "%s%clib%c%s%c%s.ll", 
-              exec_path,
-              PATH_SEPARATOR,
-              PATH_SEPARATOR,
-              library.lib,
-              PATH_SEPARATOR,
-              library.fn
-      );
+      if( library.is )
+        {
+          sprintf (origin_path, "%s%clib%c%s%c%s.ll", 
+                  exec_path,
+                  PATH_SEPARATOR,
+                  PATH_SEPARATOR,
+                  library.lib,
+                  PATH_SEPARATOR,
+                  library.fn
+          );
+        }
+      else
+        {
+          sprintf (origin_path, "%s%clib%c%s%cinit.ll", 
+                  exec_path,
+                  PATH_SEPARATOR,
+                  PATH_SEPARATOR,
+                  library.lib,
+                  PATH_SEPARATOR
+          );
+        }
+
       FILE *origin = fopen (origin_path, "r");
 
       char c;
       while((c = fgetc(origin)) != EOF)
         fprintf(llvm, "%c", c);
 
+      if(! library.is )
+        fprintf (llvm, "\n; %s Initialized", library.lib);
       fprintf (llvm, "\n");
     }
 }

@@ -4,8 +4,8 @@
 
   typedef struct {
     char *type;
-    char *libc;
     char *lib;
+    char *args;
     char *id;
   } Fn;
 
