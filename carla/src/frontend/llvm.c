@@ -53,7 +53,7 @@ genT(char **tabs)
   else 
     {
       int i = 0;
-      for(; i < tab; i += 2)
+      for(; i < (tab * 2); i += 2)
         {
           (*tabs)[i]   = 0x20;
           (*tabs)[i+1] = 0x20;
