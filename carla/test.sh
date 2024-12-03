@@ -8,7 +8,7 @@ clear
 ./carla.exe main.cl
 
 sleep 1
-clang ./target/out/ir.ll -o ./target/out/out.exe
+clang ./target/out/ir.ll -o ./target/out/out.exe 
 
 echo
 echo

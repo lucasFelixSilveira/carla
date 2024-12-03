@@ -28,8 +28,6 @@ exponence(int x, int y)
   return result;
 }
 
-// llvm_store (output, GET(pTree, last[1]), (var - 1), last[0]);
-
 #define GET(vector, index) ((PNode*)vector->items)[index]
 #define GETNP(type, vector, index) ((type*)vector.items)[index]
 #define STATIC_TYPE_LENGTH 2
@@ -437,7 +435,7 @@ llGenerate(FILE *output, Vector *pTree)
                                     
                                   default: break;
                                 }
-                            }
+                            } break;
                           default: break;
                         }
 
@@ -458,8 +456,12 @@ llGenerate(FILE *output, Vector *pTree)
 
                               args[alen++] = (struct ARG) {
                                 .llvm = (var - 1),
-                                .arg_type = (next.data.single.type == NODE_ID) ? "[]byte" : "int64"
+                                .arg_type = 
+                                  (next.data.single.type == NODE_NUMBER) ? 
+                                    "int64" :
+                                    llvm_get (&vars, next.data.single.data.value).type
                               };
+
                               clen++;
                             } break;
 
@@ -503,7 +505,7 @@ llGenerate(FILE *output, Vector *pTree)
                       free (tabs);
 
                       fprintf (output, "call %s @%s.%s(",
-                              resolve.info.fn_call.type, 
+                              llvm_type (resolve.info.fn_call.type), 
                               resolve.info.fn_call.lib,
                               resolve.info.fn_call.id
                       );
@@ -512,9 +514,9 @@ llGenerate(FILE *output, Vector *pTree)
                       for(; j < alen; j++ )
                         {
                           fprintf (output, "%s%s %c%d", 
-                            (j == 0) ? "" : ", ",
-                            llvm_type (args[j].arg_type), '%',
-                            args[j].llvm
+                                  (j == 0) ? "" : ", ",
+                                  llvm_type (args[j].arg_type), '%',
+                                  args[j].llvm
                           );
                         }
 
@@ -598,6 +600,12 @@ llGenerate(FILE *output, Vector *pTree)
 
                   int j = 0;
                   PNode arg;
+                  if( GET(pTree, i).type == NODE_CLOSE && GET(pTree, i+1).type == NODE_BEGIN )
+                    {
+                      i += 1;
+                      goto only_open;
+                    }
+
                   for(; (arg = GET(pTree, j + i)).type != NODE_BEGIN; j++ )
                     {
                       switch(arg.type)
@@ -622,6 +630,8 @@ llGenerate(FILE *output, Vector *pTree)
                           } break;
                         }
                     }
+
+                  only_open: {}
                   int q = j;
 
                   fprintf (output, ") {\n");

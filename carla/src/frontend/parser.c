@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "../utils/vector.h"
 #include "../utils/symbols.h"
 #include "../utils/carla.h"
@@ -37,6 +38,22 @@
 #define BREAK                }
 
 void 
+trim_non_alphanumeric(char *str) 
+{
+  int i, j = 0;
+  
+  for(
+    i = 0;
+    str[i] != '\0'; 
+    i++
+  ) {
+      if (isalnum((unsigned char) str[i])) 
+        str[j++] = str[i];
+    }
+  str[j] = '\0'; 
+}
+
+void 
 tGenerate(Vector *tree, Vector *tks, Vector *libs) 
 {
   char lambda = 0;
@@ -58,8 +75,11 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                       if( result ) 
                         continue;
 
+                      char *lib = strdup (quoute.buffer);
+                      trim_non_alphanumeric (lib);
+
                       vector_push (libs, ((void*)&(Library) {
-                        .lib = strdup (quoute.buffer),
+                        .lib = lib,
                         .fn  = NULL,
                         .is  = 0 
                       }));
@@ -212,6 +232,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                             next.buffer[0] == ']' 
                             || next.buffer[0] == '}'
                             || next.buffer[0] == ')'
+                            || next.buffer[0] == ','
                           )
                          )
                     ) { 
