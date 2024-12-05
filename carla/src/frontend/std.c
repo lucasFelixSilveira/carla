@@ -2,7 +2,7 @@
 #include "parser.h"
 #include "std.h"
 
-#define FUNCTIONS_LENTGTH 6
+#define FUNCTIONS_LENTGTH 8
 StackFn functions[FUNCTIONS_LENTGTH] = {
   {
     .lib = "stdio",
@@ -55,6 +55,16 @@ StackFn functions[FUNCTIONS_LENTGTH] = {
     }
   },
   {
+    .lib = "stdheap",
+    .id  = "dump",
+    .fn  = {
+      .type = "void\0",
+      .lib  = "heap\0",
+      .id   = "dump",
+      .args = "[]any"
+    }
+  },
+  {
     .lib = "stdstring",
     .id  = "format",
     .fn  = {
@@ -62,6 +72,16 @@ StackFn functions[FUNCTIONS_LENTGTH] = {
       .lib  = "string",
       .id   = "format",
       .args = "[]byte []byte ..."
+    }
+  },
+  {
+    .lib = "stdstring",
+    .id  = "len",
+    .fn  = {
+      .type = "int32",
+      .lib  = "string",
+      .id   = "len",
+      .args = "[]byte"
     }
   },
 };

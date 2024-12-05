@@ -33,6 +33,7 @@ exponence(int x, int y)
 #define STATIC_TYPE_LENGTH 2
 
 unsigned int var = 0;
+int complement = 0;
 int tab = 0;
 
 ExprCache cache[1024];
@@ -42,6 +43,22 @@ struct ARG {
 } args[128];
 int alen;
 int clen;
+
+int
+comp_get(Vector *vec, char *content) {
+
+  for(
+    int i = 0; 
+    i < vec->length; 
+    i++
+  ) {
+      Complement comp = ((Complement*)vec->items)[i];
+      if( strcmp (comp.string, content) == 0 )
+        return comp.id;
+    }
+    
+  return -1;
+}
 
 void
 genT(char **tabs)
@@ -59,6 +76,10 @@ genT(char **tabs)
         }
     }
 }
+
+/*
+  LLVM util functions
+*/
 
 int
 llvm_sizeof (char *type)
@@ -117,6 +138,7 @@ llvm_type (char *type)
   if( strcmp (type, "void") == 0 )
     {
       memcpy (__type, type, strlen (type));
+      __type[4] = 0;
       return __type;
     }
   
@@ -326,9 +348,10 @@ void
 llGenerate(FILE *output, Vector *pTree)
 {
 
-  Vector vars     = vector_init (sizeof (Variable));
-  Vector scopes   = vector_init (sizeof (ScopeType));
-  Vector retStack = vector_init (sizeof (RetStack));
+  Vector vars        = vector_init (sizeof (Variable));
+  Vector scopes      = vector_init (sizeof (ScopeType));
+  Vector retStack    = vector_init (sizeof (RetStack));
+  Vector complements = vector_init (sizeof (Complement));
 
   int i = 0;
   for(; i < pTree->length; i++ )
@@ -401,6 +424,43 @@ llGenerate(FILE *output, Vector *pTree)
 
                                 }
                             } break;
+                          case NODE_TEXT: {
+                            switch (resolve.type)
+                              {
+                                case FUNCTION_CALL:
+                                  llvm_alloca_t (output, "[]byte");
+                                  break;
+                                default: break;
+                              }
+
+                            int already_exist = comp_get (&complements, next.data.single.data.value);
+                            if( already_exist == -1  )
+                              {
+                                vector_push (&complements, ((void*)(&(Complement) {
+                                  .id = complement,
+                                  .string = strdup (next.data.single.data.value),
+                                  .type = 0
+                                })));
+                                already_exist = (complement++);
+                              }
+                            
+                            char *tabs = (char*)malloc (1024);
+                            genT (&tabs);
+
+                            fprintf (output, "%s%c%d = getelementptr inbounds [%d x i8], ptr @.carla.static.str.%d, i32 0, i32 0\n", 
+                                    tabs, '%',
+                                    var++,
+                                    ((int)strlen (next.data.single.data.value) + 1),
+                                    already_exist
+                            );
+
+                            free (tabs);
+
+                            llvm_store (output, (PNode) {
+                              .data.definition.type = "[]byte"
+                            } , (var - 1), (var - 2));
+
+                          } break;
                           case NODE_ID:
                             {
                               Variable id = llvm_get (&vars, next.data.value);
@@ -454,12 +514,19 @@ llGenerate(FILE *output, Vector *pTree)
                                   llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64" });
                                 }
 
+                              if( next.data.single.type == NODE_TEXT )
+                                {
+                                  llvm_load (output, (Variable) { .llvm = (var-2), .type = "[]byte" });
+                                }
+
                               args[alen++] = (struct ARG) {
                                 .llvm = (var - 1),
                                 .arg_type = 
                                   (next.data.single.type == NODE_NUMBER) ? 
                                     "int64" :
-                                    llvm_get (&vars, next.data.single.data.value).type
+                                    (next.data.single.type == NODE_TEXT) ?
+                                      "[]byte" :
+                                      llvm_get (&vars, next.data.single.data.value).type
                               };
 
                               clen++;
@@ -763,6 +830,7 @@ llGenerate(FILE *output, Vector *pTree)
   }
   __ignore_error: {}
 
+
   int j = 0;
   for(; j < vars.length; j++ )
     {
@@ -770,6 +838,32 @@ llGenerate(FILE *output, Vector *pTree)
       free (GETNP(Variable, vars, j).id);
     }
   vector_free (&vars);
+  j = 0;
+  fprintf (output, "\n");
+  for(; j < complements.length; j++ )
+    {
+      const int t = GETNP(Complement, complements, j).type;
+      const int string = 0;
+      fprintf (output, "@.carla.static.%s.%d = ",
+              (t == string) ? "str" : "unknown",
+              j
+      );
+
+      switch (t)
+        {
+          case 0:
+            {
+              const char *content = GETNP(Complement, complements, j).string; 
+              fprintf (output, "private constant [%d x i8] c\"%s\\00\", align 1\n",
+                      ((int)strlen (content) + 1),
+                      content
+              );
+            } break;
+          default: break;
+        }
+
+      free (GETNP(Complement, complements, j).string);
+    }
   vector_free (&scopes);
   
 }

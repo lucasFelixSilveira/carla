@@ -55,6 +55,12 @@
     } info;
   } ExprCache;
 
+  typedef struct {
+    char *string;
+    int type;
+    int id;
+  } Complement;
+
   void llGenerate(FILE *output, Vector *pTree);
 
 #endif
