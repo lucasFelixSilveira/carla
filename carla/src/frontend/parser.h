@@ -9,6 +9,7 @@
     NODE_TEXT,
     NODE_OPERATION,
     NODE_INTERNAL,
+    NODE_INTERNAL_SUPER,
     NODE_DEFINITION,
     NODE_DEF_LIBC,
     NODE_SINGLE,
@@ -63,6 +64,7 @@
         char *function;
         char *lib;
       } internal;
+      char *super;
     } data;
   } PNode;
 

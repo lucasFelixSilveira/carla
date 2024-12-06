@@ -77,6 +77,39 @@ genT(char **tabs)
     }
 }
 
+Fn
+find_fn(PNode call, Vector *vars) 
+{
+  int result = 0;
+  if( call.type == NODE_INTERNAL )
+    return std_fn (call);
+
+  Variable var;
+  VECTOR_CONTAINS(Variable, vars, id, call.data.super, &result);
+  if( result )
+    {
+      VECTOR_FIND(Variable, vars, id, call.data.super, &var);
+
+      if( var.v_type != Function )
+        {
+          printf ("%s IT IS NOT A FUNCTION!", var.id);
+          exit(0);
+        }
+
+      return (Fn) {
+        .id = call.data.super,
+        .type = var.type,
+        .lib = "SUPER",
+        .args = "" 
+      };
+    } 
+  else 
+    {
+      printf ("%s NOT FOUND!", call.data.super);
+      exit(0);
+    }
+}
+
 /*
   LLVM util functions
 */
@@ -456,9 +489,12 @@ llGenerate(FILE *output, Vector *pTree)
 
                             free (tabs);
 
-                            llvm_store (output, (PNode) {
-                              .data.definition.type = "[]byte"
-                            } , (var - 1), (var - 2));
+                            if( resolve.type != RETURN_KEY )
+                              {
+                                llvm_store (output, (PNode) {
+                                  .data.definition.type = "[]byte"
+                                } , (var - 1), (var - 2));
+                              }
 
                           } break;
                           case NODE_ID:
@@ -541,12 +577,13 @@ llGenerate(FILE *output, Vector *pTree)
                     } break;
 
                   case NODE_INTERNAL:
+                  case NODE_INTERNAL_SUPER:
                     {
                       i++;
                       cache[clen++] = (ExprCache) {
                         .type = FUNCTION_CALL,
                         .info = {
-                          .fn_call = std_fn (next)
+                          .fn_call = find_fn (next, &vars)
                         }
                       };
                     } break;
@@ -571,11 +608,21 @@ llGenerate(FILE *output, Vector *pTree)
                         fprintf (output, "%s", tabs);
                       free (tabs);
 
-                      fprintf (output, "call %s @%s.%s(",
-                              llvm_type (resolve.info.fn_call.type), 
-                              resolve.info.fn_call.lib,
-                              resolve.info.fn_call.id
-                      );
+                      if( strcmp (resolve.info.fn_call.lib, "SUPER") == 0 )
+                        {
+                          fprintf (output, "call %s @%s(",
+                                  llvm_type (resolve.info.fn_call.type), 
+                                  resolve.info.fn_call.id
+                          );
+                        }
+                      else 
+                        {
+                          fprintf (output, "call %s @%s.%s(",
+                                  llvm_type (resolve.info.fn_call.type), 
+                                  resolve.info.fn_call.lib,
+                                  resolve.info.fn_call.id
+                          );
+                        }
 
                       int j = 0;
                       for(; j < alen; j++ )
@@ -816,6 +863,7 @@ llGenerate(FILE *output, Vector *pTree)
             } break;
 
           case NODE_INTERNAL:
+          case NODE_INTERNAL_SUPER:
             { 
               i--;
               goto wait_expr;

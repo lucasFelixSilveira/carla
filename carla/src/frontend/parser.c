@@ -176,9 +176,26 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
               Token next = GET(tks, i + 1);
               Token after = GET(tks, i + 2);
               Token parenthesis = GET(tks, i + 3);
-              if( first.type == Identifier && next.type == Quad && after.type == Identifier && parenthesis.type == Unknown && parenthesis.buffer[0] == '(' )
-                {
+              if(
+                (
+                  first.type == Identifier 
+                  || (
+                    first.type == Keyword
+                    && strcmp (first.buffer, "super") == 0
+                  ) 
+                ) 
+                && next.type == Quad && after.type == Identifier && parenthesis.type == Unknown && parenthesis.buffer[0] == '(' 
+              ) {
                   i += 3;
+
+                  if( strcmp (first.buffer, "super") == 0 )
+                    {
+                      vector_push (tree, ((void*)&(PNode) {
+                        .type = NODE_INTERNAL_SUPER,
+                        .data.super = after.buffer
+                      }));
+                      break;
+                    }
 
                   char *module = (char*)malloc (128);
                   sprintf (module, "std%s", first.buffer);
