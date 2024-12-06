@@ -827,16 +827,11 @@ llGenerate(FILE *output, Vector *pTree)
                 }              
               
               vector_remove (&scopes, index);
-
               
-              int last;
+              int last = (vars.length - 1);
               Variable *__var;
-              while( last < 0 && (__var = &GETNP(Variable, vars, (last = (vars.length - 1))))->tab > tab )
-                {
-                  free (__var->type);
-                  free (__var->id);
-                  vector_remove (&scopes, last);
-                }
+              while( last > 0 && GETNP(Variable, vars, last).v_type == Normal )
+                vector_remove (&vars, last--);
 
               free (tabs);
             } break;
