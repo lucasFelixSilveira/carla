@@ -9,12 +9,10 @@
 
 - [CARLA YT VIDEO](https://www.youtube.com/watch?v=G0_mBSvDEmE&t=199s)
 ```carla
-#include <stdio> 
+#include <stdio>
 
-int32 main = (int32 argc, []byte* argv) {
-  []byte msg = "Hello, World";
-  io::println(msg);
-
+int32 main = () {
+  io::println("Hello, world");
   return 0;
 }
 ```

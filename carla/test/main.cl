@@ -2,18 +2,17 @@
 #include <stdheap>
 #include <stdstring>
 
-byte* test = ([]byte name, int16 age) {
+byte* hello = ([]byte msg) {
   []byte buffer = heap::alloc(128);
   string::format(
-    buffer, "{s}! My name is {s} and I am {d} old", 
-    "Hello, World", name, age
+    buffer, "That is a '{s}' in Carla", 
+    msg 
   );
   return buffer;
 }
 
 int32 main = () {
-  int32 age = 15;
-  byte* msg = super::test("Lucas", age);
+  byte* msg = super::hello("Hello, world");
   io::println(msg);
   heap::dump(msg);
   return 0;

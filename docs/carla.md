@@ -7,7 +7,7 @@
 <div align="center">
 
 # Running carla
-<img src="https://imgur.com/kHoXfhS.png" height="500px">
+<img src="https://imgur.com/fYPOwrC.png" height="500px">
 
 </div>
 
@@ -31,10 +31,10 @@ int32 main = (int32 argv, []int8* args) {}
 
 ### Function call
 ```carla
-func(variable);
+super::func(arguments...);
 
 -- Or you can use (if the function has inside of a module):
-module::func(variable);
+module::func(arguments...);
 ```
 - Since the first identifier is the identifier of a function, you can enter other identifiers, where the arguments will be. When anything else, if not an identifier, is identified, the call is cut off and it is finally executed.
 

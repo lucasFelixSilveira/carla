@@ -29,6 +29,7 @@ exponence(int x, int y)
 }
 
 #define GET(vector, index) ((PNode*)vector->items)[index]
+#define GET_T(T, vector, index) ((T*)vector->items)[index]
 #define GETNP(type, vector, index) ((type*)vector.items)[index]
 #define STATIC_TYPE_LENGTH 2
 
@@ -52,7 +53,7 @@ comp_get(Vector *vec, char *content) {
     i < vec->length; 
     i++
   ) {
-      Complement comp = ((Complement*)vec->items)[i];
+      Complement comp = GET_T(Complement, vec, i);
       if( strcmp (comp.string, content) == 0 )
         return comp.id;
     }
