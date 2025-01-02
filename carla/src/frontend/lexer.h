@@ -5,6 +5,7 @@
 # include "../utils/vector.h"
 
   typedef enum {
+    _NO__,
     ComparationOP,
     Identifier,
     BinaryOP,

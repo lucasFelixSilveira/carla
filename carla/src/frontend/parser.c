@@ -239,7 +239,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
               // EXPRESSIONS
               if( 
                   ( first.type    == Integer || first.type == Identifier || first.type == Text    ) 
-                  && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown )
+                  && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown || next.type == Iter || next.type == BitsOP || next.type == ComparationOP )
               ) {
                   if(
                       ( next.type == Semi ) 
@@ -302,6 +302,25 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
 
                         break;
                       }
+                    else 
+                      if( 
+                           ( first.type == Integer || first.type == Identifier )
+                        && ( next.type  == MathOP  || next.type  == BitsOP || next.type == ComparationOP )
+                        && ( first.type == Integer || first.type == Identifier )
+                      ) 
+                        {
+                          i += 2;
+                          vector_push (tree, ((void*)&(PNode) {
+                            .type = NODE_OPERATION,
+                            .data = {
+                              .operation   = {
+                                .left      = first,
+                                .operation = next,
+                                .right     = after, 
+                              }
+                            }
+                          }));
+                        }
 
                 }
 

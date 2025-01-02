@@ -2,6 +2,7 @@
 # define PARSER_H
 # define DBG_PARSER 1
 # include "../utils/vector.h"
+# include "./lexer.h"
 
   typedef enum {
     NODE_NUMBER,
@@ -50,8 +51,9 @@
         char *type;
       } definition;
       struct {
-        struct PNode *left; 
-        struct PNode *right; 
+        Token left; 
+        Token operation; 
+        Token right; 
       } operation;
       struct {
         union {

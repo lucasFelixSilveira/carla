@@ -32,7 +32,23 @@ exponence(int x, int y)
 #define GET(vector, index) ((PNode*)vector->items)[index]
 #define GET_T(T, vector, index) ((T*)vector->items)[index]
 #define GETNP(T, vector, index) ((T*)vector.items)[index]
-#define STATIC_TYPE_LENGTH 2
+#define COMPOP(buffer, operator) strcmp (buffer, operator) == 0
+#define STATIC_TYPE_LENGTH 3
+
+#define BEGIN_SWITCH(str)    { char *_switch_str = str;
+#define CASE(val)            if( strcmp (_switch_str, (val)) == 0 ) {
+#define BREAK_CASE(val)      } else if( strcmp (_switch_str, (val)) == 0 ) {
+#define DEFAULT              } else {
+#define END_SWITCH           }
+#define BREAK                }
+
+#define COMP_PRECOMPILATION(output, comp) llvm_alloca_t (output, "bool"); \
+                                          llvm_store_l (output, 8, comp ? 1 : 0, (var - 1)); \
+                                          llvm_load_number (output, 8, (var-1));
+
+#define MATH_PRECOMPILATION(output, expr) llvm_alloca_t (output, "int64"); \
+                                          llvm_store_l (output, 64, expr, (var - 1)); \
+                                          llvm_load_number (output, 64, (var-1));
 
 unsigned int var = 0;
 int complement = 0;
@@ -182,6 +198,7 @@ llvm_type (char *type)
   
   char *matrix[STATIC_TYPE_LENGTH][16] = {
     { "ascii", "i8" },
+    { "bool", "i8" },
     { "byte",  "i8" }
   };
   
@@ -196,6 +213,21 @@ llvm_type (char *type)
     }
 
   return strdup ("void");
+}
+
+void 
+llvm_load_number(FILE *output, int bits, unsigned int to_load) 
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  fprintf (output, "%s%c%d = load i%d, ptr %c%d, align %d\n", 
+          tabs, '%',
+          var++,
+          bits, '%',
+          to_load,
+          (bits / 8)
+  );
+  free (tabs);
 }
 
 void
@@ -346,6 +378,31 @@ llvm_resize(FILE *output, unsigned int collect, char *type, Variable changable)
 
 }
 
+void
+llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  
+  fprintf (output, "%s%c%d = ", 
+          tabs, '%',
+          var++ 
+  );
+  free (tabs);
+
+  if( llvm_sizeof (llvm_type (type)) > llvm_sizeof (llvm_type (change)) )
+    fprintf (output, "sext ");
+  else 
+    fprintf (output, "trunc ");
+  
+  fprintf (output, "%s %c%d to %s\n", 
+          llvm_type (change), '%',
+          collect,
+          llvm_type (type)
+  );
+
+}
+
 void 
 llvm_load(FILE *output, Variable toLoad)
 {
@@ -429,7 +486,7 @@ llGenerate(FILE *output, Vector *pTree)
                   case NODE_INTERNAL_SUPER:
                     {
                       i++;
-                      fprintf (output, "; Function added in stack. %s\n", find_fn (next, &vars).id);
+                      fprintf (output, "; [CARLA DEBUG]: Function added to stack: %s.\n", find_fn (next, &vars).id);
                       cache[clen++] = (ExprCache) {
                         .type = FUNCTION_CALL,
                         .info = {
@@ -437,6 +494,72 @@ llGenerate(FILE *output, Vector *pTree)
                         }
                       };
                       calli++;
+                    } break;
+
+                  case NODE_OPERATION:
+                    {
+                      i++;
+
+                      Token left_data = next.data.operation.left;
+                      Token operator_data = next.data.operation.operation;
+                      Token right_data = next.data.operation.right;
+                      char left_int = left_data.type == Integer;
+                      char right_int = right_data.type == Integer;
+
+
+                      if( left_int && right_int ) 
+                        {
+                          int left = atoi (left_data.buffer);
+                          int right = atoi (right_data.buffer);
+
+                          int bytes = 0;
+
+                          BEGIN_SWITCH (operator_data.buffer)
+                            CASE("==") bytes = 1; COMP_PRECOMPILATION(output, left == right);
+                            BREAK_CASE("!=") bytes = 1; COMP_PRECOMPILATION(output, left != right);
+                            BREAK_CASE(">=") bytes = 1; COMP_PRECOMPILATION(output, left >= right);
+                            BREAK_CASE("<=") bytes = 1; COMP_PRECOMPILATION(output, left <= right);
+                            
+                            /* MATH precompilation */
+                            BREAK_CASE("+") bytes = 8; MATH_PRECOMPILATION(output, left + right);
+                            BREAK_CASE("-") bytes = 8; MATH_PRECOMPILATION(output, left - right);
+                            BREAK_CASE("/") bytes = 8; MATH_PRECOMPILATION(output, left / right);
+                            BREAK_CASE("*") bytes = 8; MATH_PRECOMPILATION(output, left * right);
+                            BREAK_CASE("%") bytes = 8; MATH_PRECOMPILATION(output, left % right);
+                            BREAK
+                          END_SWITCH
+
+                          fprintf (output, "; [CARLA DEBUG]: Pre-compiled obvious operation\n");
+                       
+                          if( clen > 0 )
+                            {
+                              ExprCache resolve = cache[clen - 1];
+
+                              char *type = (resolve.type == RETURN_KEY) ? 
+                                resolve.info.node.data.definition.type 
+                                : (resolve.type == VAR_DECLARATION) ?
+                                  resolve.info.var.node.data.definition.type
+                                  : "int64";
+
+                              char *buffer = (char*)malloc (16);
+                              sprintf (buffer, "int%d", bytes * 8);
+
+                              if( llvm_sizeof (llvm_type (type)) != bytes ) 
+                                llvm_resize_bits (output, (var-1), type, buffer);
+
+                              free (buffer);
+
+                              if( resolve.type == FUNCTION_CALL ) 
+                                {
+                                  args[alen++] = (struct ARG) {
+                                    .llvm = (var - 1),
+                                    .arg_type = type,
+                                    .index = calli
+                                  };
+                                }
+                            }
+                        }
+
                     } break;
 
                   case NODE_SINGLE:
@@ -602,6 +725,17 @@ llGenerate(FILE *output, Vector *pTree)
                           case RETURN_KEY:
                             { clen++; } break;
 
+                          case VAR_DECLARATION:
+                            { 
+                              if( next.type == NODE_OPERATION ) {
+                                int bits = 8;
+                                if( next.data.operation.operation.type != ComparationOP )
+                                  bits = 64;
+
+                                llvm_store_l (output, bits, (var-1), (var-3));
+                              }
+                            } break;
+
                           default: break;
                         }
 
@@ -669,7 +803,7 @@ llGenerate(FILE *output, Vector *pTree)
                           };
                         }
 
-                      fprintf (output, "; %d items remaining in the stack\n", alen);
+                      fprintf (output, "; [CARLA DEBUG]: %d items remaining in the stack.\n", alen);
                     } break;
                   
                   default: 

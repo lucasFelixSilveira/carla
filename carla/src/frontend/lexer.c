@@ -51,7 +51,7 @@ ismatch (char c1, char c2)
   else if( c1 == '.' && c2 == '.' ) 
     return Iter;
   else
-    return 0;
+    return -1;
 }
 
 char 
@@ -73,7 +73,7 @@ ishexa(char c)
 int
 validSingleOp(char c) 
 {
-  char *arithmetic = "*+-/";
+  char *arithmetic = "*+-/%";
   if( c == ';' )
     return Semi;
   for(
@@ -195,7 +195,7 @@ tkGenerate(Vector *lex, FILE *file)
         char c2 = getc (file);
         char t = 1;
         int id = ismatch (c, c2); 
-        if( id == 0 ) {
+        if( id == -1 ) {
           id = validSingleOp (c);
           ungetc (c2, file);
           buffer[0] = c;
