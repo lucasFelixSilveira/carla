@@ -77,6 +77,7 @@ pNodes (Vector *root)
               );
             } break;
           case NODE_INTERNAL:
+          case NODE_INTERNAL_SUPER:
             {
               printf ("|\t|-function: %s\n|\t|-library: %s\n", 
                      brench.data.internal.function,

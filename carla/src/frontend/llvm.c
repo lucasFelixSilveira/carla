@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
@@ -30,20 +31,23 @@ exponence(int x, int y)
 
 #define GET(vector, index) ((PNode*)vector->items)[index]
 #define GET_T(T, vector, index) ((T*)vector->items)[index]
-#define GETNP(type, vector, index) ((type*)vector.items)[index]
+#define GETNP(T, vector, index) ((T*)vector.items)[index]
 #define STATIC_TYPE_LENGTH 2
 
 unsigned int var = 0;
 int complement = 0;
 int tab = 0;
+int calli = 0;
+int debugid = 0;
 
 ExprCache cache[1024];
 struct ARG {
   unsigned int llvm;
   char *arg_type;
+  int index;
 } args[128];
-int alen;
-int clen;
+int alen = 0;
+int clen = 0;
 
 int
 comp_get(Vector *vec, char *content) {
@@ -421,6 +425,20 @@ llGenerate(FILE *output, Vector *pTree)
 
                     } break;
 
+                  case NODE_INTERNAL:
+                  case NODE_INTERNAL_SUPER:
+                    {
+                      i++;
+                      fprintf (output, "; Function added in stack. %s\n", find_fn (next, &vars).id);
+                      cache[clen++] = (ExprCache) {
+                        .type = FUNCTION_CALL,
+                        .info = {
+                          .fn_call = find_fn (next, &vars)
+                        }
+                      };
+                      calli++;
+                    } break;
+
                   case NODE_SINGLE:
                     {
                       i++;
@@ -541,7 +559,16 @@ llGenerate(FILE *output, Vector *pTree)
                           case ACCESS_EXPR:
                             {
                               llvm_getelementptr (output, resolve);
-                              llvm_load (output, (Variable) { .llvm = (var-1), .type = backPtr(resolve.info.access.type) });
+                              llvm_load (output, (Variable) { .llvm = (var-1), .type = backPtr (resolve.info.access.type) });
+                            
+                              if( clen > 0 && cache[clen - 1].type == FUNCTION_CALL )
+                                {
+                                  args[alen++] = (struct ARG) {
+                                    .llvm = (var - 1),
+                                    .arg_type = backPtr (resolve.info.access.type),
+                                    .index = calli
+                                  };
+                                }
                             } break;
 
                           case FUNCTION_CALL:
@@ -549,11 +576,13 @@ llGenerate(FILE *output, Vector *pTree)
                               if( next.data.single.type == NODE_NUMBER )
                                 {
                                   llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64" });
+                                  fprintf (output, "; eh um numero\n");
                                 }
 
                               if( next.data.single.type == NODE_TEXT )
                                 {
                                   llvm_load (output, (Variable) { .llvm = (var-2), .type = "[]byte" });
+                                  fprintf (output, "; eh um texto\n");
                                 }
 
                               args[alen++] = (struct ARG) {
@@ -563,7 +592,8 @@ llGenerate(FILE *output, Vector *pTree)
                                     "int64" :
                                     (next.data.single.type == NODE_TEXT) ?
                                       "[]byte" :
-                                      llvm_get (&vars, next.data.single.data.value).type
+                                      llvm_get (&vars, next.data.single.data.value).type,
+                                .index = calli
                               };
 
                               clen++;
@@ -575,18 +605,6 @@ llGenerate(FILE *output, Vector *pTree)
                           default: break;
                         }
 
-                    } break;
-
-                  case NODE_INTERNAL:
-                  case NODE_INTERNAL_SUPER:
-                    {
-                      i++;
-                      cache[clen++] = (ExprCache) {
-                        .type = FUNCTION_CALL,
-                        .info = {
-                          .fn_call = find_fn (next, &vars)
-                        }
-                      };
                     } break;
 
                   case NODE_CLOSE: 
@@ -626,18 +644,32 @@ llGenerate(FILE *output, Vector *pTree)
                         }
 
                       int j = 0;
-                      for(; j < alen; j++ )
+                      int cpy_alen = alen;
+                      for(; j < cpy_alen && args[j].index == calli; j++ )
                         {
                           fprintf (output, "%s%s %c%d", 
                                   (j == 0) ? "" : ", ",
                                   llvm_type (args[j].arg_type), '%',
                                   args[j].llvm
                           );
+                          alen--;
+                        }
+                      
+
+                      calli--;
+                      fprintf (output, ")\n");
+                    
+                      if( clen > 0 && cache[clen - 1].type == FUNCTION_CALL )
+                        {
+                          char *type = llvm_type (resolve.info.fn_call.type);
+                          args[alen++] = (struct ARG) {
+                            .llvm = (var - 1),
+                            .arg_type = resolve.info.fn_call.type,
+                            .index = calli
+                          };
                         }
 
-                      fprintf (output, ")\n");
-
-                      alen = 0;
+                      fprintf (output, "; %d items remaining in the stack\n", alen);
                     } break;
                   
                   default: 
