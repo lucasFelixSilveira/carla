@@ -18,7 +18,7 @@
     NODE_LAMBDA,
     NODE_BEGIN,
     NODE_TYPE,
-    NODE_CUT,
+    NODE_FOR,
     NODE_CLOSE,
     NODE_RET,
     NODE_END,
@@ -47,6 +47,7 @@
       char *value;
       struct {
         char  hopeful;
+        char  iter;
         char *id;
         char *type;
       } definition;

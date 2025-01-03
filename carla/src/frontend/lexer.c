@@ -131,7 +131,9 @@ tkGenerate(Vector *lex, FILE *file)
         ungetc (subt, file);
         subt = 0;
 
-        if( c == '<' ) 
+        char next_char = getc (file);
+        ungetc (next_char, file);
+        if( c == '<' && next_char != '=' ) 
           {
             char sbuff[128];
             int len = 0;

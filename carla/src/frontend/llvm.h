@@ -4,11 +4,19 @@
 # include "parser.h"
 # include "std.h"
 
-  typedef enum {
-    Lambda,
-    If,
-    Else,
-    For
+  typedef struct {
+    enum {
+      Lambda,
+      If,
+      Else,
+      For
+    } type;
+    unsigned int label_id;
+    struct {
+      unsigned int left;
+      char *operator;
+      unsigned int right;
+    } operation;
   } ScopeType;
 
   typedef struct {

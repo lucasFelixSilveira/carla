@@ -98,22 +98,21 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
           case Identifier:
             {
 
-              if( first.type == Keyword && strcmp (first.buffer, "end") == 0 )
-                {
-                  vector_push (tree, ((void*)&(PNode) {
-                    .type = NODE_CUT,
-                    .data = {
-                      .number = 0
-                    }
-                  }));
-                  lambda = 0;
-                  break;
-                }
-
               if( first.type == Keyword && strcmp (first.buffer, "return") == 0 )
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_RET,
+                    .data = {
+                      .number = 0
+                    }
+                  }));
+                  break;
+                }
+              
+              if( first.type == Keyword && strcmp (first.buffer, "for") == 0 )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_FOR,
                     .data = {
                       .number = 0
                     }
@@ -139,6 +138,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                       if(
                           strcmp (final, "=")    == 0 ||
                           strcmp (final, ";")    == 0 ||
+                          strcmp (final, ":")    == 0 ||
                           strcmp (final, "end")  == 0 ||
                           (
                             (strcmp (final, ",") == 0 || strcmp (final, ")") == 0) 
@@ -149,9 +149,10 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                               .type = (cache.buffer == NULL) ? NODE_DEFINITION : NODE_DEF_LIBC,
                               .data = {
                                 .definition = {
-                                  .hopeful = strcmp (final, "=") == 0,
-                                  .id      = id.buffer,
-                                  .type    = first.buffer
+                                  .hopeful  = strcmp (final, "=") == 0,
+                                  .iter     = strcmp (final, ":") == 0,
+                                  .type     = first.buffer,
+                                  .id       = id.buffer
                                 }
                               }
                             }));
@@ -305,7 +306,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     else 
                       if( 
                            ( first.type == Integer || first.type == Identifier )
-                        && ( next.type  == MathOP  || next.type  == BitsOP || next.type == ComparationOP )
+                        && ( next.type  == MathOP  || next.type  == BitsOP || next.type == ComparationOP || next.type == Iter )
                         && ( first.type == Integer || first.type == Identifier )
                       ) 
                         {
@@ -372,7 +373,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   }));
                 }
 
-              if( strcmp (first.buffer, "{") == 0 && lambda )
+              if( strcmp (first.buffer, "{") == 0 )
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_BEGIN,

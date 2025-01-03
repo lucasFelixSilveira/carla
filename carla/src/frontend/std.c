@@ -2,7 +2,7 @@
 #include "parser.h"
 #include "std.h"
 
-#define FUNCTIONS_LENTGTH 8
+#define FUNCTIONS_LENTGTH 9
 StackFn functions[FUNCTIONS_LENTGTH] = {
   {
     .lib = "stdio",
@@ -31,6 +31,16 @@ StackFn functions[FUNCTIONS_LENTGTH] = {
       .type = "int32",
       .lib  = "stdio",
       .id   = "putc",
+      .args = "i8"
+    }
+  },
+  {
+    .lib = "stdio",
+    .id  = "putb",
+    .fn  = {
+      .type = "int32",
+      .lib  = "stdio",
+      .id   = "putb",
       .args = "i8"
     }
   },

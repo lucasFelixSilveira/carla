@@ -11,7 +11,6 @@
 #include "std.h"
 
 /** 
-  TODO: Expressoes com mais de 1 NODE de expressão, exemlo: 1 + 2
   TODO: For loops, while loops, INTER operator e WALRUS (not :=) operator
   TODO: Auto-cast do resultado de uma expressão para o tipo correspondente ao da variável na qual é receptora
 */
@@ -51,6 +50,7 @@ exponence(int x, int y)
                                           llvm_load_number (output, 64, (var-1));
 
 unsigned int var = 0;
+unsigned int label_id = 0;
 int complement = 0;
 int tab = 0;
 int calli = 0;
@@ -357,6 +357,23 @@ llvm_get_i(Vector *vec, char *id)
   exit (0);
 }
 
+Variable
+llvm_get_f(Vector *vec, unsigned int id)
+{
+  for(
+    int i = 0; 
+    i < vec->length; 
+    i++
+  ) {
+      Variable var = ((Variable*)vec->items)[i];
+      if( var.llvm == id )
+        return var;
+    }
+  
+  printf ("%d NOT FOUND!", id);
+  exit (0);
+}
+
 void
 llvm_resize(FILE *output, unsigned int collect, char *type, Variable changable)
 {
@@ -409,6 +426,53 @@ llvm_operation(FILE *output, char *operator, unsigned int left, unsigned int rig
   );
 }
 
+void 
+llvm_label(FILE *output, char *name) 
+{
+  fprintf (output, ".l%d.carla.%s:\n", 
+          label_id++,
+          name
+  );
+}
+
+void 
+llvm_label_id(FILE *output, unsigned int id, char *name) 
+{
+  fprintf (output, ".l%d.carla.%s:\n", 
+          id,
+          name
+  );
+}
+
+void 
+llvm_br(FILE *output, unsigned int id, char *name) 
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  fprintf (output, "%sbr label %c.l%d.carla.%s\n",
+          tabs, '%', 
+          id,
+          name 
+  );
+  free (tabs);
+}
+
+void 
+llvm_icmpbr(FILE *output, unsigned int icmp, unsigned int general_id, char *true_name, char *false_name) 
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+  fprintf (output, "%sbr i1 %c%d, label %c.l%d.carla.%s, label %c.l%d.carla.%s\n",
+          tabs, '%', 
+          icmp, '%',
+          general_id,
+          true_name, '%',
+          general_id,
+          false_name 
+  );
+  free (tabs);
+}
+
 void
 llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
 {
@@ -438,7 +502,7 @@ llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
 }
 
 void
-llvm_comp(FILE *output, char *operator, unsigned int left, unsigned int right)
+llvm_comp_bits(FILE *output, char bits, char *operator, unsigned int left, unsigned int right, char resize)
 {
   char *tabs = (char*)malloc (1024);
   genT (&tabs);
@@ -458,13 +522,19 @@ llvm_comp(FILE *output, char *operator, unsigned int left, unsigned int right)
     BREAK
   END_SWITCH
 
-  fprintf (output, "i64 %c%d, %c%d\n", '%',
+  fprintf (output, "i%d %c%d, %c%d\n", 
+          bits,'%',
           left, '%',
           right
   );
 
-  llvm_resize_bits (output, (var-1), "int8", "llvm<bool>");
+  if( resize ) 
+    llvm_resize_bits (output, (var-1), "int8", "llvm<bool>");
 }
+
+void
+llvm_comp(FILE *output, char *operator, unsigned int left, unsigned int right)
+{ llvm_comp_bits (output, 64, operator, left, right, 1); }
 
 void 
 llvm_load(FILE *output, Variable toLoad)
@@ -683,13 +753,16 @@ llGenerate(FILE *output, Vector *pTree)
                             default: break;
                           }
 
-                          ExprCache resolve = cache[--clen];
+                          ExprCache resolve = cache[clen - 1];
                           if( resolve.type == VAR_DECLARATION )
                             {
                               llvm_store (output, (PNode) {
                                 .data.definition.type = resolve.info.var.node.data.definition.type
                               } , (var - 1), resolve.info.var.llvm);
                               break;
+
+                              if( GET(pTree, i).type == NODE_EEXPR  ) 
+                                clen--;
                             }
 
                           if( resolve.type == FUNCTION_CALL )
@@ -701,7 +774,6 @@ llGenerate(FILE *output, Vector *pTree)
                               };
                               break;
                             }
-                          
                         }
 
                     } break;
@@ -1087,7 +1159,9 @@ llGenerate(FILE *output, Vector *pTree)
                   free (type);
                   i += q;
 
-                  ScopeType stype = Lambda;
+                  ScopeType stype = (ScopeType) {
+                    .type = Lambda
+                  };
                   vector_push (&scopes, ((void*)&stype));
 
                   continue;
@@ -1121,19 +1195,47 @@ llGenerate(FILE *output, Vector *pTree)
 
           case NODE_END:
             {
-              tab--;
+              
+              int index = scopes.length - 1;
+              ScopeType scope = GETNP(ScopeType, scopes, index);
+              
+              tab -= (scope.type == For) ? 0 : 1;
               char *tabs = (char*)malloc (1024);
               genT (&tabs);
               if( tab == 0 )
                 var = 0;
 
-              int index = scopes.length - 1;
-              switch(GETNP(ScopeType, scopes, index))
+              switch(scope.type)
                 {
                   case Lambda:
                     {
                       fprintf (output, "}\n");
                     } break;
+                  case For:
+                    {
+                      fprintf (output, "; [CARLA DEBUG]: End of ID iteration %d\n", scope.label_id);
+                      
+                      llvm_alloca_t (output, "int64");
+                      llvm_store_l (output, 64, 1, (var-1));
+                      llvm_load_number (output, 64, (var-1));
+                      unsigned int right_llvm = (var-1);
+
+                      Variable left = llvm_get_f (&vars, scope.operation.left);
+                      fprintf (output, "; [CARLA DEBUG]: Found variable: %s\n", left.id);
+                      int bytes = llvm_sizeof (llvm_type (left.type));
+                      llvm_load_number (output, bytes * 8, scope.operation.left);
+                      if( bytes != 8 )
+                        llvm_resize_bits (output, (var-1), "int64", left.type); 
+
+                      llvm_operation (output, scope.operation.operator, (var-1), right_llvm);
+                      llvm_resize_bits (output, (var-1), left.type, "int64"); 
+                      llvm_store (output, (PNode) {
+                        .data.definition.type = left.type
+                      } , (var - 1), scope.operation.left);
+                      llvm_br (output, scope.label_id, "for_begin");
+                      llvm_label_id (output, scope.label_id, "for_end");
+                      var++;
+                    } break;    
                   default: break;
                 }              
               
@@ -1166,6 +1268,95 @@ llGenerate(FILE *output, Vector *pTree)
 
               goto wait_expr;
             
+            } break;
+
+          case NODE_FOR:
+            {
+              PNode definition = GET(pTree, i + 1);
+              if( definition.type == NODE_DEFINITION && definition.data.definition.iter ) 
+                {
+                  fprintf (output, "; [CARLA DEBUG]: For iteration\n");
+    
+                  PNode iterator = GET(pTree, i + 2);
+                  PNode open = GET(pTree, i + 3);
+                  if( 
+                    (
+                      (
+                        iterator.type == NODE_OPERATION 
+                        && iterator.data.operation.operation.type == Iter 
+                      ) || (
+                        iterator.type == NODE_SINGLE
+                        && iterator.data.single.type == NODE_ID
+                      )
+                    )
+                    && open.type == NODE_BEGIN 
+                  ) {
+                      i += 3;
+                      
+                      llvm_alloca (output, definition);
+                      unsigned int iteration = (var-1);
+                      vector_push (&vars, ((void*)&(Variable) {
+                        .v_type = Normal, 
+                        .type   = definition.data.definition.type,
+                        .llvm   = iteration,
+                        .tab    = tab,
+                        .id     = definition.data.definition.id
+                      }));
+
+                      switch(iterator.type)
+                        { case NODE_OPERATION: 
+                            {
+
+                              Token left = iterator.data.operation.left;
+                              Token right = iterator.data.operation.right;
+
+                              int left_isint = left.type == Integer; 
+                              int right_isint = right.type == Integer;
+
+                              if( left_isint && right_isint && types_int (definition.data.definition.type) )
+                                {
+                                  int left_v = atoi (left.buffer);
+                                  int right_v = atoi (right.buffer);
+                                
+                                  char *operator = (left_v < right_v) ? "<" : ">";
+
+                                  char bits = llvm_sizeof (llvm_type (definition.data.definition.type)) * 8;
+                                  llvm_alloca_t (output, definition.data.definition.type);
+                                  llvm_store_l (output, bits, right_v, (var-1));
+                                  llvm_load_number (output, bits, (var-1));
+                                  unsigned int right_llvm = (var-1);
+                                  
+                                  llvm_store_l (output, bits, left_v, iteration);
+                                  llvm_br (output, label_id, "for_begin");
+                                  
+                                  llvm_label (output, "for_begin");
+                                  var++;
+
+                                  llvm_load_number (output, bits, iteration);
+                                  llvm_comp_bits (output, bits, operator, (var-1), right_llvm, 0);
+                                  llvm_icmpbr (output, (var-1), (label_id - 1), "for_body", "for_end");
+
+                                  llvm_label_id (output, (label_id - 1), "for_body");
+                                  var++;
+
+                                  ScopeType stype = (ScopeType) {
+                                    .type = For,
+                                    .label_id = (label_id - 1),
+                                    .operation.left = iteration,
+                                    .operation.operator = (left_v < right_v) ? "+" : "-"
+                                  }; 
+
+                                  vector_push (&scopes, ((void*)&stype));
+                                } 
+                            } break;
+                          // case NODE_SINGLE:
+                            // {
+
+                            // } break;
+                          default: break;
+                        }
+                    }
+                }
             } break;
 
           case NODE_INTERNAL:
@@ -1204,8 +1395,7 @@ llGenerate(FILE *output, Vector *pTree)
       );
 
       switch (t)
-        {
-          case 0:
+        { case 0:
             {
               const char *content = GETNP(Complement, complements, j).string; 
               fprintf (output, "private constant [%d x i8] c\"%s\\00\", align 1\n",

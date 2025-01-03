@@ -92,25 +92,17 @@ int32 main = (int32 argv) {
 ```
 
 # For loop
-- Our forum has a slightly different structure from the others. Having some operators:
-  - Ascending order (0, 1, 2, 3...)
-```carla
-for i..2 {}
-```
-  - Descending order (...3, 2, 1, 0)
-```carla
-for 2..i {}
-```
-  - Specific range (2, 3, 4 / 4, 3, 2)
+### Our forum has a slightly different structure from the others. Having some operators:
+- Specific range (2, 3, 4 / 4, 3, 2)
 ```carla
 int8 x = 2;
 int8 y = 4;
 -- For loops
-for i : 2..4 {}
-for i : 4..2 {}
-for i : 4..x {}
-for i : x..4 {}
-for i : x..y {}
+for int32 i : 2..4 {}
+for int32 i : 4..2 {}
+for int32 i : 4..x {}
+for int32 i : x..4 {}
+for int32 i : x..y {}
 ```
 
 ```carla

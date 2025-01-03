@@ -6,9 +6,10 @@
 const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
   = { 
     /* keywords */
-    { .len = 6, .val = "extern" },
     { .len = 6, .val = "return" },
     { .len = 3, .val = "end" },
+    { .len = 3, .val = "for" },
+    { .len = 5, .val = "while" },
     /* macros */
     { .len = 8, .val = "#include" },
     /* types */
