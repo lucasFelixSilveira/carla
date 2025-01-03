@@ -84,6 +84,17 @@ pNodes (Vector *root)
                      brench.data.internal.lib
               );
             } break;
+
+          case NODE_OPERATION:
+            {
+              printf ("|\t|-left: %s<%s>\n|\t|-operator: %s\n|\t|-right: %s<%s>\n", 
+                     brench.data.operation.left.buffer,
+                     brench.data.operation.left.type == Integer ? "INT" : "ID",
+                     brench.data.operation.operation.buffer,
+                     brench.data.operation.right.buffer,
+                     brench.data.operation.right.type == Integer ? "INT" : "ID"
+              );
+            } break;
           
           default: break;
         }

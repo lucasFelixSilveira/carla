@@ -2,8 +2,8 @@
 # define SYMBOLS_H
 # define KEYWORDS_LENGTH 3
 # define MACROS_LENGTH 1
-# define TYPES_LENGTH 17
-# define INTEGER_TYPES_LENGTH 12
+# define TYPES_LENGTH 18
+# define INTEGER_TYPES_LENGTH 14
 # define TOTAL KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH 
 
   typedef struct { char len; char *val; } Key;

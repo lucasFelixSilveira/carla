@@ -33,7 +33,7 @@ exponence(int x, int y)
 #define GET_T(T, vector, index) ((T*)vector->items)[index]
 #define GETNP(T, vector, index) ((T*)vector.items)[index]
 #define COMPOP(buffer, operator) strcmp (buffer, operator) == 0
-#define STATIC_TYPE_LENGTH 3
+#define STATIC_TYPE_LENGTH 4
 
 #define BEGIN_SWITCH(str)    { char *_switch_str = str;
 #define CASE(val)            if( strcmp (_switch_str, (val)) == 0 ) {
@@ -154,6 +154,9 @@ llvm_sizeof (char *type)
 char *
 llvm_type (char *type) 
 {
+  if( strcmp (type, "llvm<bool>") == 0 )
+    return "i1";
+
   const char ptrsufix = '*';
   if( type[strlen (type) - 1] == ptrsufix )
     return "ptr";
@@ -199,6 +202,7 @@ llvm_type (char *type)
   char *matrix[STATIC_TYPE_LENGTH][16] = {
     { "ascii", "i8" },
     { "bool", "i8" },
+    { "char", "i8" },
     { "byte",  "i8" }
   };
   
@@ -379,6 +383,33 @@ llvm_resize(FILE *output, unsigned int collect, char *type, Variable changable)
 }
 
 void
+llvm_operation(FILE *output, char *operator, unsigned int left, unsigned int right)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+
+  fprintf (output, "%s%c%d = ",
+          tabs, '%',
+          var++
+  );
+
+  BEGIN_SWITCH(operator)
+    CASE("+") fprintf (output, "add nsw ");
+    BREAK_CASE("-") fprintf (output, "sub nsw ");
+    BREAK_CASE("*") fprintf (output, "mul nsw ");
+
+    BREAK_CASE("%") fprintf (output, "srem ");
+    BREAK_CASE("/") fprintf (output, "sdiv ");
+    BREAK
+  END_SWITCH
+
+  fprintf (output, "i64 %c%d, %c%d\n", '%',
+          left, '%',
+          right
+  );
+}
+
+void
 llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
 {
   char *tabs = (char*)malloc (1024);
@@ -390,7 +421,10 @@ llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
   );
   free (tabs);
 
-  if( llvm_sizeof (llvm_type (type)) > llvm_sizeof (llvm_type (change)) )
+  if( 
+    ( llvm_sizeof (llvm_type (type)) > llvm_sizeof (llvm_type (change)) )
+    || strcmp (change, "llvm<bool>") == 0
+  )
     fprintf (output, "sext ");
   else 
     fprintf (output, "trunc ");
@@ -401,6 +435,35 @@ llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
           llvm_type (type)
   );
 
+}
+
+void
+llvm_comp(FILE *output, char *operator, unsigned int left, unsigned int right)
+{
+  char *tabs = (char*)malloc (1024);
+  genT (&tabs);
+
+  fprintf (output, "%s%c%d = icmp ",
+          tabs, '%',
+          var++
+  );
+
+  BEGIN_SWITCH(operator)
+    CASE("==") fprintf (output, "eq ");
+    BREAK_CASE("!=") fprintf (output, "ne ");
+    BREAK_CASE(">=") fprintf (output, "gle ");
+    BREAK_CASE("<=") fprintf (output, "sle ");
+    BREAK_CASE("<") fprintf (output, "slt ");
+    BREAK_CASE(">") fprintf (output, "sgt ");
+    BREAK
+  END_SWITCH
+
+  fprintf (output, "i64 %c%d, %c%d\n", '%',
+          left, '%',
+          right
+  );
+
+  llvm_resize_bits (output, (var-1), "int8", "llvm<bool>");
 }
 
 void 
@@ -505,6 +568,8 @@ llGenerate(FILE *output, Vector *pTree)
                       Token right_data = next.data.operation.right;
                       char left_int = left_data.type == Integer;
                       char right_int = right_data.type == Integer;
+                      char left_identifier = left_data.type == Identifier;
+                      char right_identifier = right_data.type == Identifier;
 
 
                       if( left_int && right_int ) 
@@ -514,7 +579,7 @@ llGenerate(FILE *output, Vector *pTree)
 
                           int bytes = 0;
 
-                          BEGIN_SWITCH (operator_data.buffer)
+                          BEGIN_SWITCH(operator_data.buffer)
                             CASE("==") bytes = 1; COMP_PRECOMPILATION(output, left == right);
                             BREAK_CASE("!=") bytes = 1; COMP_PRECOMPILATION(output, left != right);
                             BREAK_CASE(">=") bytes = 1; COMP_PRECOMPILATION(output, left >= right);
@@ -558,6 +623,77 @@ llGenerate(FILE *output, Vector *pTree)
                                   };
                                 }
                             }
+                        }
+                      else
+                        {
+                          if( left_identifier ) 
+                            {
+                              Variable id = llvm_get (&vars, left_data.buffer);
+                              llvm_load (output, id);
+                              if( llvm_sizeof (id.type) != 8 ) 
+                                llvm_resize_bits (output, (var-1), "int64", id.type);
+                            }
+                          else if( left_int )
+                            {
+                              int left = atoi (left_data.buffer);
+                              llvm_alloca_t (output, "int64");
+                              llvm_store_l (output, 64, left, (var-1));
+                              llvm_load_number (output, 64, (var-1));
+                            } 
+                          
+                          unsigned int left_var = (var-1);
+                            
+                          if( right_identifier ) 
+                            {
+                              Variable id = llvm_get (&vars, right_data.buffer);
+                              llvm_load (output, id);
+                              if( llvm_sizeof (id.type) != 8 ) 
+                                llvm_resize_bits (output, (var-1), "int64", id.type);
+                            }
+                          else if( right_int )
+                            {
+                              int right = atoi (right_data.buffer);
+                              llvm_alloca_t (output, "int64");
+                              llvm_store_l (output, 64, right, (var-1));
+                              llvm_load_number (output, 64, (var-1));
+                            } 
+
+                          unsigned int right_var = (var-1);
+                          
+                          /* 
+                            Separa os valores de resultados de contas
+                            matematicas, e os valores de operações de comparação 
+                          */
+
+                         switch(operator_data.type)
+                          { case MathOP: 
+                              {
+                                llvm_alloca_t (output, "int64");
+                                llvm_operation (output, operator_data.buffer, left_var, right_var);
+                                llvm_store (output, (PNode) {
+                                  .data.definition.type = "int64"
+                                } , (var - 1), (var - 2));
+                                llvm_load_number (output, 64, (var-2));
+                              } break;
+
+                            case ComparationOP: 
+                              {
+                                llvm_alloca_t (output, "bool");
+                                llvm_comp (output, operator_data.buffer, left_var, right_var);
+                                llvm_store (output, (PNode) {
+                                  .data.definition.type = "bool"
+                                } , (var - 1), (var - 3));
+                                llvm_load_number (output, 8, (var-3));
+                              } break;
+                            default: break;
+                          }
+
+                          args[alen++] = (struct ARG) {
+                            .llvm = (var - 1),
+                            .arg_type = (operator_data.type == MathOP) ? "int64" : "bool",
+                            .index = calli
+                          };
+
                         }
 
                     } break;
@@ -699,13 +835,13 @@ llGenerate(FILE *output, Vector *pTree)
                               if( next.data.single.type == NODE_NUMBER )
                                 {
                                   llvm_load (output, (Variable) { .llvm = (var-1), .type = "int64" });
-                                  fprintf (output, "; eh um numero\n");
+                                  fprintf (output, "; [CARLA DEBUG]: The argument is a number\n");
                                 }
 
                               if( next.data.single.type == NODE_TEXT )
                                 {
                                   llvm_load (output, (Variable) { .llvm = (var-2), .type = "[]byte" });
-                                  fprintf (output, "; eh um texto\n");
+                                  fprintf (output, "; [CARLA DEBUG]: The argument is a text\n");
                                 }
 
                               args[alen++] = (struct ARG) {

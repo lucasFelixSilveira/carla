@@ -13,10 +13,11 @@ const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
     { .len = 8, .val = "#include" },
     /* types */
     { .len = 3, .val = "any" },
-    { .len = 4, .val = "bool" },
     { .len = 4, .val = "void" },
     { .len = 5, .val = "float" },
     { .len = 7, .val = "float64" },
+    { .len = 4, .val = "char" },
+    { .len = 4, .val = "bool" },
     { .len = 4, .val = "byte" },
     { .len = 5, .val = "ascii" },
     { .len = 4, .val = "int8" },
