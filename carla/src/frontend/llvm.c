@@ -451,7 +451,7 @@ llvm_comp(FILE *output, char *operator, unsigned int left, unsigned int right)
   BEGIN_SWITCH(operator)
     CASE("==") fprintf (output, "eq ");
     BREAK_CASE("!=") fprintf (output, "ne ");
-    BREAK_CASE(">=") fprintf (output, "gle ");
+    BREAK_CASE(">=") fprintf (output, "sge ");
     BREAK_CASE("<=") fprintf (output, "sle ");
     BREAK_CASE("<") fprintf (output, "slt ");
     BREAK_CASE(">") fprintf (output, "sgt ");
@@ -660,11 +660,6 @@ llGenerate(FILE *output, Vector *pTree)
 
                           unsigned int right_var = (var-1);
                           
-                          /* 
-                            Separa os valores de resultados de contas
-                            matematicas, e os valores de operações de comparação 
-                          */
-
                          switch(operator_data.type)
                           { case MathOP: 
                               {
@@ -688,12 +683,25 @@ llGenerate(FILE *output, Vector *pTree)
                             default: break;
                           }
 
-                          args[alen++] = (struct ARG) {
-                            .llvm = (var - 1),
-                            .arg_type = (operator_data.type == MathOP) ? "int64" : "bool",
-                            .index = calli
-                          };
+                          ExprCache resolve = cache[--clen];
+                          if( resolve.type == VAR_DECLARATION )
+                            {
+                              llvm_store (output, (PNode) {
+                                .data.definition.type = resolve.info.var.node.data.definition.type
+                              } , (var - 1), resolve.info.var.llvm);
+                              break;
+                            }
 
+                          if( resolve.type == FUNCTION_CALL )
+                            {
+                              args[alen++] = (struct ARG) {
+                                .llvm = (var - 1),
+                                .arg_type = (operator_data.type == MathOP) ? "int64" : "bool",
+                                .index = calli
+                              };
+                              break;
+                            }
+                          
                         }
 
                     } break;
