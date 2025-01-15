@@ -57,6 +57,8 @@ void
 tGenerate(Vector *tree, Vector *tks, Vector *libs) 
 {
   char lambda = 0;
+  char impl = 0;
+  char elements = 0;
   int i = 0;
   for(; i < tks->length; i++ ) 
     {
@@ -102,9 +104,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_RET,
-                    .data = {
-                      .number = 0
-                    }
+                    .data.number = 0
                   }));
                   break;
                 }
@@ -113,18 +113,41 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_FOR,
-                    .data = {
-                      .number = 0
-                    }
+                    .data.number = 0
                   }));
                   break;
                 }
 
-              Token cache = { .buffer = NULL };
-              if( first.type == Keyword && strcmp (first.buffer, "extern") == 0 )
+              if( first.type == Keyword && strcmp (first.buffer, "struct") == 0 )
                 {
-                  cache = GET(tks, i);
-                  first = GET(tks, ++i);
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_STRUCT,
+                    .data.number = 0
+                  }));
+
+                  i++;
+                  Token open[2] = { GET(tks, i), GET(tks, i + 1) };
+                  if( open[0].buffer[0] == '(' && open[0].buffer[0] == '{' ) {
+                    i += 2;
+                    impl = 1;
+                    
+                    vector_push (tree, ((void*)&(PNode) {
+                      .type = NODE_BEGIN_IMPLMENT,
+                      .data.number = 0
+                    }));
+
+                  } else if( open[0].buffer[0] == '(' && open[0].buffer[0] == ')' ) {
+                    i+= 2;
+                    Token open_elements = GET(tks, i);
+                    if(! (open_elements.type == Unknown && open_elements.buffer[0] == '{') )
+                      goto __cancel_parse__;
+                    
+                    i++;
+                    vector_push (tree, ((void*)&(PNode) {
+                      .type = NODE_BEGIN,
+                      .data.number = 0
+                    }));
+                  }
                 }
 
               if( first.type == Type || isType (first.buffer) )
@@ -146,7 +169,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                           ) 
                         ) {
                             vector_push (tree, ((void*)&(PNode) {
-                              .type = (cache.buffer == NULL) ? NODE_DEFINITION : NODE_DEF_LIBC,
+                              .type = NODE_DEFINITION,
                               .data = {
                                 .definition = {
                                   .hopeful  = strcmp (final, "=") == 0,
@@ -164,10 +187,8 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     {
                       vector_push (tree, ((void*)&(PNode) {
                         .type = NODE_TYPE,
-                        .data = {
-                          .value = first.buffer
-                        }
-                    }));
+                        .data.value = first.buffer
+                      }));
                     }
                   break;
                 }
@@ -260,9 +281,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                             .data = {
                               .single = {
                                 .type = NODE_ID,
-                                .data = {
-                                  .value = first.buffer
-                                }
+                                .data.value = first.buffer
                               }
                             }
                           }));
@@ -273,9 +292,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                             .data = {
                               .single = {
                                 .type = NODE_TEXT,
-                                .data = {
-                                  .value = first.buffer
-                                }
+                                .data.value = first.buffer
                               }
                             }
                           }));
@@ -286,9 +303,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                             .data = {
                               .single = {
                                 .type = NODE_NUMBER,
-                                .data = {
-                                  .number = atoi (first.buffer)
-                                }
+                                .data.number = atoi (first.buffer)
                               }
                             }
                           }));
@@ -296,9 +311,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                         if( next.type == Semi )
                           vector_push (tree, ((void*)&(PNode) {
                             .type = NODE_EEXPR,
-                            .data = {
-                              .number = 0
-                            }
+                            .data.number = 0
                           }));
 
                         break;
@@ -333,9 +346,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                 ) {
                     vector_push (tree, ((void*)&(PNode) {
                       .type = NODE_ACCESS,
-                      .data = {
-                        .value = first.buffer
-                      }
+                      .data.value = first.buffer
                     }));
                     break;
                   }
@@ -345,9 +356,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
             {
               vector_push (tree, ((void*)&(PNode) {
                 .type = NODE_EEXPR,
-                .data = {
-                  .number = 0
-                }
+                .data.number = 0
               }));
             }
 
@@ -355,21 +364,42 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
             {
               if( strcmp (first.buffer, "}") == 0 )
                 {
-                  vector_push (tree, ((void*)&(PNode) {
-                    .type = NODE_END,
-                    .data = {
-                      .number = 0
+                  char is_impl_close = strcmp (GET(tks, i).buffer, "impl") == 0;
+                  char begin = 0;
+
+                  if( is_impl_close ) 
+                    {
+                      i++;
+                      Token open[2] = { GET(tks, i), GET(tks, i + 1) };
+
+                      if( (open[0].buffer[0] == ')' && open[1].buffer[0] == '{') )
+                        goto __cancel_parse__;
+
+                      i += 2;
+                      begin = 1;
                     }
+
+                  vector_push (tree, ((void*)&(PNode) {
+                    .data.number = 0,
+                    .type = (is_impl_close) 
+                              ? NODE_END_IMPLEMENT 
+                              : NODE_END,
                   }));
+
+                  if( begin ) 
+                    {
+                      vector_push (tree, ((void*)&(PNode) {
+                        .type = NODE_BEGIN,
+                        .data.number = 0
+                      }));
+                    }
                 }
 
               if( strcmp (first.buffer, ")") == 0 )
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_CLOSE,
-                    .data = {
-                      .number = 0
-                    }
+                    .data.number = 0
                   }));
                 }
 
@@ -377,9 +407,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                 {
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_BEGIN,
-                    .data = {
-                      .number = 0
-                    }
+                    .data.number = 0
                   }));
                   lambda = 0;
                 }
@@ -392,9 +420,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     {
                       vector_push (tree, ((void*)&(PNode) {
                         .type = NODE_LAMBDA,
-                        .data = {
-                          .number = 0
-                        }
+                        .data.number = 0
                       }));
                       lambda = 1;
                       break;

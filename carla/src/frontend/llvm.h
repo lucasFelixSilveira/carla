@@ -9,14 +9,19 @@
       Lambda,
       If,
       Else,
-      For
+      For,
+      For_complex
     } type;
     unsigned int label_id;
     struct {
       unsigned int left;
       char *operator;
-      unsigned int right;
     } operation;
+    struct {
+      unsigned int left;
+      unsigned int comp;     
+      char *type;  
+    } complex;
   } ScopeType;
 
   typedef struct {

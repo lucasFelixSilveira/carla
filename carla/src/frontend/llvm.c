@@ -86,16 +86,8 @@ genT(char **tabs)
 {
   if( tab == 0 )
     (*tabs)[0] = 0x0;
-  else 
-    {
-      int i = 0;
-      for(; i < (tab * 2); i += 2)
-        {
-          (*tabs)[i]   = 0x20;
-          (*tabs)[i+1] = 0x20;
-          (*tabs)[i+2] =  0x0;
-        }
-    }
+  else if( tab >= 1 )
+    sprintf (*tabs, "  ");
 }
 
 Fn
@@ -1073,6 +1065,8 @@ llGenerate(FILE *output, Vector *pTree)
               if( GET(pTree, i+1).type == NODE_LAMBDA && tab == 0 )
                 {
                   i += 2;
+
+                  tab++;
                   char *type = llvm_type (branch.data.definition.type);
                   char *tabs = (char*)malloc (1024);
                   genT (&tabs);
@@ -1199,7 +1193,10 @@ llGenerate(FILE *output, Vector *pTree)
               int index = scopes.length - 1;
               ScopeType scope = GETNP(ScopeType, scopes, index);
               
-              tab -= (scope.type == For) ? 0 : 1;
+              tab -= (
+                  scope.type    == For 
+                  || scope.type == For_complex
+                ) ? 0 : 1;
               char *tabs = (char*)malloc (1024);
               genT (&tabs);
               if( tab == 0 )
@@ -1228,14 +1225,67 @@ llGenerate(FILE *output, Vector *pTree)
                         llvm_resize_bits (output, (var-1), "int64", left.type); 
 
                       llvm_operation (output, scope.operation.operator, (var-1), right_llvm);
-                      llvm_resize_bits (output, (var-1), left.type, "int64"); 
+                      
+                      if( bytes != 8 )
+                        llvm_resize_bits (output, (var-1), left.type, "int64"); 
+                     
                       llvm_store (output, (PNode) {
                         .data.definition.type = left.type
                       } , (var - 1), scope.operation.left);
                       llvm_br (output, scope.label_id, "for_begin");
                       llvm_label_id (output, scope.label_id, "for_end");
                       var++;
-                    } break;    
+
+                      tab--;
+                    } break; 
+                  case For_complex:
+                    {
+                      
+                      fprintf (output, "; [CARLA DEBUG]: End of ID iteration %d\n", scope.label_id);
+
+                      char bits = llvm_sizeof (llvm_type (scope.complex.type)) * 8;
+
+                      llvm_alloca_t (output, "int64");
+                      llvm_store_l (output, 64, 1, (var-1));
+                      llvm_load_number (output, 64, (var-1));
+                      unsigned int one = (var-1);
+
+                      llvm_load_number (output, bits, scope.complex.left);
+                      if( bits != 64 )
+                        llvm_resize_bits (output, (var-1), "int64", scope.complex.type); 
+
+                      unsigned int iter = (var-1);  
+
+                      llvm_icmpbr (output, scope.complex.comp, scope.label_id, "for_decrement", "for_increment");
+
+                      llvm_label_id (output, scope.label_id, "for_decrement");
+                      llvm_operation (output, "-", iter, one);
+                     
+                      if ( bits != 64 )  
+                        llvm_resize_bits (output, (var-1), scope.complex.type, "int64"); 
+                      
+                      llvm_store (output, (PNode) {
+                        .data.definition.type = scope.complex.type
+                      } , (var-1), scope.complex.left);           
+                      
+                      llvm_br (output, scope.label_id, "for_begin");
+
+                      llvm_label_id (output, scope.label_id, "for_increment");
+                      llvm_operation (output, "+", iter, one);
+
+                      if ( bits != 64 )  
+                        llvm_resize_bits (output, (var-1), scope.complex.type, "int64"); 
+                      
+                      llvm_store (output, (PNode) {
+                        .data.definition.type = scope.complex.type
+                      } , (var-1), scope.complex.left);           
+                      
+                      llvm_br (output, scope.label_id, "for_begin");
+                      llvm_label_id (output, scope.label_id, "for_end");
+                      var++;
+
+                      tab--;
+                    } break;  
                   default: break;
                 }              
               
@@ -1299,7 +1349,7 @@ llGenerate(FILE *output, Vector *pTree)
                         .v_type = Normal, 
                         .type   = definition.data.definition.type,
                         .llvm   = iteration,
-                        .tab    = tab,
+                        .tab    = ++tab,
                         .id     = definition.data.definition.id
                       }));
 
@@ -1311,7 +1361,11 @@ llGenerate(FILE *output, Vector *pTree)
                               Token right = iterator.data.operation.right;
 
                               int left_isint = left.type == Integer; 
+                              int left_identifier = left.type == Identifier; 
                               int right_isint = right.type == Integer;
+                              int right_identifier = right.type == Identifier; 
+
+                              char bits = llvm_sizeof (llvm_type (definition.data.definition.type)) * 8;
 
                               if( left_isint && right_isint && types_int (definition.data.definition.type) )
                                 {
@@ -1319,8 +1373,7 @@ llGenerate(FILE *output, Vector *pTree)
                                   int right_v = atoi (right.buffer);
                                 
                                   char *operator = (left_v < right_v) ? "<" : ">";
-
-                                  char bits = llvm_sizeof (llvm_type (definition.data.definition.type)) * 8;
+                                 
                                   llvm_alloca_t (output, definition.data.definition.type);
                                   llvm_store_l (output, bits, right_v, (var-1));
                                   llvm_load_number (output, bits, (var-1));
@@ -1348,11 +1401,86 @@ llGenerate(FILE *output, Vector *pTree)
 
                                   vector_push (&scopes, ((void*)&stype));
                                 } 
-                            } break;
-                          // case NODE_SINGLE:
-                            // {
+                              else 
+                                {
+                                  if( left_identifier ) 
+                                    {
+                                      Variable id = llvm_get (&vars, left.buffer);
+                                      llvm_load (output, id);
+                                      if( llvm_sizeof (llvm_type (id.type)) * 8 != bits ) 
+                                        llvm_resize_bits (output, (var-1), definition.data.definition.type, id.type);
+                                    }
+                                  else if( left_isint )
+                                    {
+                                      int _left = atoi (left.buffer);
+                                      llvm_alloca_t (output, definition.data.definition.type);
+                                      llvm_store_l (output, bits, _left, (var-1));
+                                      llvm_load_number (output, bits, (var-1));
+                                    } 
+                                  
+                                  unsigned int left_var = (var-1);
+                                    
+                                  if( right_identifier ) 
+                                    {
+                                      Variable id = llvm_get (&vars, right.buffer);
+                                      llvm_load (output, id);
+                                      if( llvm_sizeof (llvm_type (id.type)) * 8 != bits ) 
+                                        llvm_resize_bits (output, (var-1), definition.data.definition.type, id.type);
+                                    }
+                                  else if( right_isint )
+                                    {
+                                      int _right = atoi (right.buffer);
+                                      llvm_alloca_t (output, definition.data.definition.type);
+                                      llvm_store_l (output, bits, _right, (var-1));
+                                      llvm_load_number (output, bits, (var-1));
+                                    } 
 
-                            // } break;
+                                  unsigned int right_var = (var-1);
+
+                                  llvm_comp_bits (output, bits, ">", left_var, right_var, 0); 
+                                  unsigned int comp = (var-1);
+
+                                  llvm_store (output, (PNode) {
+                                    .data.definition.type = definition.data.definition.type
+                                  }, left_var, iteration);
+
+                                  llvm_br (output, label_id, "for_begin");
+                                  llvm_label (output, "for_begin");
+                                  var++;
+
+                                  unsigned int begin = (label_id - 1);
+
+                                  llvm_load_number (output, bits, iteration);
+                                  unsigned int iter = (var-1);
+
+                                  llvm_icmpbr (output, comp, begin, "for_check.grant", "for_check.less"); 
+                                  
+                                  /* left > right = LEFT IS GRANT THAN RIGHT*/
+                                  llvm_label_id (output, begin, "for_check.grant");
+
+                                  llvm_comp_bits (output, bits, ">", iter, right_var, 0);
+                                  llvm_icmpbr (output, (var-1), begin, "for_body", "for_end");
+
+                                  /* !(left > right) = LEFT IS LESS THAN RIGHT*/
+                                  llvm_label_id (output, begin, "for_check.less");
+
+                                  llvm_comp_bits (output, bits, "<", iter, right_var, 0);
+                                  llvm_icmpbr (output, (var-1), begin, "for_body", "for_end");
+
+                                  llvm_label_id (output, begin, "for_body");
+                                  var++;
+
+                                  ScopeType stype = (ScopeType) {
+                                    .type = For_complex,
+                                    .label_id = begin,
+                                    .complex.left = iteration,
+                                    .complex.comp = comp,
+                                    .complex.type = definition.data.definition.type
+                                  }; 
+
+                                  vector_push (&scopes, ((void*)&stype));
+                                }
+                            } break;
                           default: break;
                         }
                     }

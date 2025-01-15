@@ -21,12 +21,15 @@ char *TType[] = {
   "NODE_ACCESS",
   "NODE_LAMBDA",
   "NODE_BEGIN",
+  "NODE_BEGIN_IMPLMENT",
   "NODE_TYPE",
-  "NODE_CUT",
+  "NODE_FOR",
+  "NODE_STRUCT",
   "NODE_CLOSE",
   "NODE_RET",
   "NODE_END",
-  "NODE_EEXPR"
+  "NODE_END_IMPLEMENT",
+  "NODE_EEXP"
 };
 
 void

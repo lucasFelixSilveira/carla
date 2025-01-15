@@ -25,7 +25,7 @@
 int
 isCarla(char *__file__)
 {
-  char sufix[3] = { 'l', 'c', '.' }; // .CL
+  char sufix[6] = { 'a', 'l', 'r', 'a', 'c', '.' }; // .CARLA
   size_t length = strlen (__file__);
   int i = 0;
   for(; i < sizeof (sufix); i++ ) 

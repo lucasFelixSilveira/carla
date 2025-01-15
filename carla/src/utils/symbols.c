@@ -9,11 +9,14 @@ const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
     { .len = 6, .val = "return" },
     { .len = 3, .val = "end" },
     { .len = 3, .val = "for" },
-    { .len = 5, .val = "while" },
+    { .len = 4, .val = "impl" },
+    { .len = 6, .val = "struct" },
+    { .len = 6, .val = "public" },
+    { .len = 7, .val = "private" },
     /* macros */
     { .len = 8, .val = "#include" },
     /* types */
-    { .len = 3, .val = "any" },
+    { .len = 1, .val = "T" },
     { .len = 4, .val = "void" },
     { .len = 5, .val = "float" },
     { .len = 7, .val = "float64" },
