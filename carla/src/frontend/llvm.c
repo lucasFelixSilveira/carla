@@ -555,7 +555,7 @@ llvm_getelementptr(FILE *output, ExprCache vec)
           tabs, '%',
           var,
           type, 
-          llvm_type (vec.info.access.type), '%',
+          type, '%',
           vec.info.access.load_vec, '%',
           (var-1)
   );
@@ -755,6 +755,17 @@ llGenerate(FILE *output, Vector *pTree)
 
                               if( GET(pTree, i).type == NODE_EEXPR  ) 
                                 clen--;
+                            }
+
+                          if( resolve.type == ACCESS_EXPR )
+                            {
+                              llvm_getelementptr (output, resolve);
+                              llvm_load (output, (Variable) {
+                                .llvm = (var-1),
+                                .type = resolve.info.access.type
+                              });
+                              clen--;
+                              break;
                             }
 
                           if( resolve.type == FUNCTION_CALL )

@@ -3,24 +3,24 @@
 #include <stdstring>
 
 int32 main = (int16 argc, []byte* argv) {
-  -- Faz a coleta os argumentos 1 e 2
+  -- Collect arguments 1 and 2
   []byte first = argv[1];
   []byte second = argv[2];
   []byte msg = "Hello, world!"; 
 
-  -- Aloca 128 bytes como destino da junção dos valores dos argumentos 1 e 2
+  -- Allocates 128 bytes as the destination for joining the values ​​of arguments 1 and 2
   []byte buffer = heap::alloc(128);
 
-  -- Junta a string do argumento 1 com a do 2 (Caso a 1 tenha placeholders).
+  -- Join the string of argument 1 with that of 2 (If 1 has placeholders).
   string::format(buffer, first, second);
 
-  -- Printa os argumentos já juntos de acordo com as placeholders
+  -- Print the arguments already together according to the placeholders
   io::println(buffer);
   
-  -- Limpa a memória reservada para o buffer
+  -- Clears the memory reserved for the buffer
   heap::dump(buffer);
 
-  -- Printa o conteúdo após a limpeza (Conteudo perdido)
+  -- Prints the content after cleaning (Lost content)
   io::println(buffer);
   
   return 0;

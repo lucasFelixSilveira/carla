@@ -1,0 +1,20 @@
+#include "stdio"
+#include "stdheap"
+#include "stdstring"
+
+int32 main = (int32 argc, []byte* argv) {
+  []byte buffer = heap::alloc(1024);
+
+  for int32 i : 0..argc {
+    string::format(buffer, "{d} Argumento [{d}]: {s}",
+      i + 1,
+      i,
+      argv[i] 
+    );
+    io::println(buffer);
+  }
+
+  heap::dump(buffer);
+
+  return 0;
+}

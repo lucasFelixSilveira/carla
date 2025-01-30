@@ -5,7 +5,10 @@ cd test
 
 read -p "Press any key to run file"
 clear
-./carla main.cl
+cp main.crl main.cl
+sleep 1
+./carla.exe main.cl
+rm main.cl
 
 sleep 1
 clang ./target/out/ir.ll -o ./target/out/out
