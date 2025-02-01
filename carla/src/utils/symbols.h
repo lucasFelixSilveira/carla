@@ -1,6 +1,6 @@
 #ifndef SYMBOLS_H
 # define SYMBOLS_H
-# define KEYWORDS_LENGTH 7
+# define KEYWORDS_LENGTH 8
 # define MACROS_LENGTH 1
 # define TYPES_LENGTH 18
 # define INTEGER_TYPES_LENGTH 14

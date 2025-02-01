@@ -21,7 +21,7 @@
         {
             "name": "keyword.control.example",
             "font-style": "italic",
-            "match": "\\b(for|return|if|then|include)\\b"
+            "match": "\\b(for|return|if|include|else)\\b"
         },
         {
             "name": "entity.name.function.example",

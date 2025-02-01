@@ -11,8 +11,9 @@ const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
     { .len = 3, .val = "for" },
     { .len = 4, .val = "impl" },
     { .len = 6, .val = "struct" },
-    { .len = 6, .val = "public" },
-    { .len = 7, .val = "private" },
+    { .len = 2, .val = "if" },
+    { .len = 4, .val = "else" },
+    { .len = 3, .val = "our" },
     /* macros */
     { .len = 8, .val = "#include" },
     /* types */

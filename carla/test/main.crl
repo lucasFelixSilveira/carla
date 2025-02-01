@@ -6,9 +6,17 @@ int32 main = (int32 argc, []byte* argv) {
   []byte buffer = heap::alloc(1024);
 
   for int32 i : 0..argc {
+
+    if i == 0 {
+      io::println("First argument!");
+    } else if i == 1 {
+      io::println("Second argument!");
+    } else {
+      io::println("Is not the first argument and not the second argument.");
+    }
+
     string::format(buffer, "{d} Argumento [{d}]: {s}",
-      i + 1,
-      i,
+      i + 1, i,
       argv[i] 
     );
     io::println(buffer);

@@ -4,14 +4,19 @@
 # include "parser.h"
 # include "std.h"
 
+  typedef enum {
+    Lambda,
+    If,
+    Else,
+    For,
+    For_complex,
+    Else_scope,
+    If_scope,
+    Elif_scope
+  } scope_t;
+
   typedef struct {
-    enum {
-      Lambda,
-      If,
-      Else,
-      For,
-      For_complex
-    } type;
+    scope_t type;
     unsigned int label_id;
     struct {
       unsigned int left;
@@ -22,6 +27,9 @@
       unsigned int comp;     
       char *type;  
     } complex;
+    struct {
+      unsigned int false;  
+    } _if;
   } ScopeType;
 
   typedef struct {
@@ -46,6 +54,8 @@
     ACCESS_EXPR,
     FUNCTION_CALL,
     RETURN_KEY,
+    IF_KEY,
+    ELIF_KEY,
     VAR_DECLARATION
   } eExprCache;
 

@@ -34,63 +34,140 @@ entry:
   %17 = icmp slt i32 %15, %12
   br i1 %17, label %.l0.carla.for_body, label %.l0.carla.for_end
 .l0.carla.for_body:
-; [CARLA DEBUG]: Function added to stack: format.
-  %19 = load ptr, ptr %5, align 8
-  %20 = alloca ptr, align 8
-  %21 = getelementptr inbounds [25 x i8], ptr @.carla.static.str.0, i32 0, i32 0
-  store ptr %21, ptr %20, align 8
-  %22 = load ptr, ptr %20, align 8
-; [CARLA DEBUG]: The argument is a text
-  %23 = load i32, ptr %9, align 4
-  %24 = sext i32 %23 to i64
-  %25 = alloca i64, align 8
-  store i64 1, ptr %25, align 8
-  %26 = load i64, ptr %25, align 8
-  %27 = alloca i64, align 8
-  %28 = add nsw i64 %24, %26
-  store i64 %28, ptr %27, align 8
-  %29 = load i64, ptr %27, align 8
-  %30 = load i32, ptr %9, align 4
-  %31 = load ptr, ptr %4, align 8
-  %32 = load i32, ptr %9, align 4
-  %33 = sext i32 %32 to i64
-  %34 = getelementptr inbounds ptr, ptr %31, i64 %33
-  %35 = load ptr, ptr %34, align 8
-  %36 = call i32 @string.format(ptr %19, ptr %22, i64 %29, i32 %30, ptr %35)
-; [CARLA DEBUG]: 0 items remaining in the stack.
+; [CARLA DEBUG]: If begin
+  %19 = alloca i8, align 1
+  %20 = load i32, ptr %9, align 4
+  %21 = sext i32 %20 to i64
+  %22 = alloca i64, align 8
+  store i64 0, ptr %22, align 8
+  %23 = load i64, ptr %22, align 8
+  %24 = alloca i8, align 1
+  %25 = icmp eq i64 %21, %23
+  %26 = sext i1 %25 to i8
+  store i8 %26, ptr %24, align 1
+  %27 = load i8, ptr %24, align 1
+  store i8 %27, ptr %19, align 1
+  %28 = load i8, ptr %19, align 1
+  %29 = alloca i8, align 1
+  store i8 0, ptr %29, align 1
+  %30 = load i8, ptr %29, align 1
+  %31 = icmp ne i8 %28, %30
+  br i1 %31, label %.l1.carla.that, label %.l1.carla.else
+.l1.carla.that:
 ; [CARLA DEBUG]: Function added to stack: println.
-  %37 = load ptr, ptr %5, align 8
-  %38 = call i32 @stdio.println(ptr %37)
+  %32 = alloca ptr, align 8
+  %33 = getelementptr inbounds [16 x i8], ptr @.carla.static.str.0, i32 0, i32 0
+  store ptr %33, ptr %32, align 8
+  %34 = load ptr, ptr %32, align 8
+; [CARLA DEBUG]: The argument is a text
+  %35 = call i32 @stdio.println(ptr %34)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
-; [CARLA DEBUG]: End of ID iteration 0
+; [CARLA DEBUG]: End of ID if statement 1
+  br label %.l1.carla.end_root
+.l1.carla.else:
+; [CARLA DEBUG]: Added to root vector 1
+; [CARLA DEBUG]: Else if begin
+  %36 = alloca i8, align 1
+  %37 = load i32, ptr %9, align 4
+  %38 = sext i32 %37 to i64
   %39 = alloca i64, align 8
   store i64 1, ptr %39, align 8
   %40 = load i64, ptr %39, align 8
-  %41 = load i32, ptr %9, align 4
-  %42 = sext i32 %41 to i64
+  %41 = alloca i8, align 1
+  %42 = icmp eq i64 %38, %40
+  %43 = sext i1 %42 to i8
+  store i8 %43, ptr %41, align 1
+  %44 = load i8, ptr %41, align 1
+  store i8 %44, ptr %36, align 1
+  %45 = load i8, ptr %36, align 1
+  %46 = alloca i8, align 1
+  store i8 0, ptr %46, align 1
+  %47 = load i8, ptr %46, align 1
+  %48 = icmp ne i8 %45, %47
+  br i1 %48, label %.l2.carla.that, label %.l2.carla.else
+.l2.carla.that:
+; [CARLA DEBUG]: Function added to stack: println.
+  %49 = alloca ptr, align 8
+  %50 = getelementptr inbounds [17 x i8], ptr @.carla.static.str.1, i32 0, i32 0
+  store ptr %50, ptr %49, align 8
+  %51 = load ptr, ptr %49, align 8
+; [CARLA DEBUG]: The argument is a text
+  %52 = call i32 @stdio.println(ptr %51)
+; [CARLA DEBUG]: 0 items remaining in the stack.
+; [CARLA DEBUG]: End of ID if statement 2
+  br label %.l1.carla.end_root
+.l2.carla.else:
+; [CARLA DEBUG]: Function added to stack: println.
+  %53 = alloca ptr, align 8
+  %54 = getelementptr inbounds [55 x i8], ptr @.carla.static.str.2, i32 0, i32 0
+  store ptr %54, ptr %53, align 8
+  %55 = load ptr, ptr %53, align 8
+; [CARLA DEBUG]: The argument is a text
+  %56 = call i32 @stdio.println(ptr %55)
+; [CARLA DEBUG]: 0 items remaining in the stack.
+; [CARLA DEBUG]: End of ID else statement 1
+  br label %.l1.carla.end_root
+.l1.carla.end_root:
+; [CARLA DEBUG]: Function added to stack: format.
+  %57 = load ptr, ptr %5, align 8
+  %58 = alloca ptr, align 8
+  %59 = getelementptr inbounds [25 x i8], ptr @.carla.static.str.3, i32 0, i32 0
+  store ptr %59, ptr %58, align 8
+  %60 = load ptr, ptr %58, align 8
+; [CARLA DEBUG]: The argument is a text
+  %61 = load i32, ptr %9, align 4
+  %62 = sext i32 %61 to i64
+  %63 = alloca i64, align 8
+  store i64 1, ptr %63, align 8
+  %64 = load i64, ptr %63, align 8
+  %65 = alloca i64, align 8
+  %66 = add nsw i64 %62, %64
+  store i64 %66, ptr %65, align 8
+  %67 = load i64, ptr %65, align 8
+  %68 = load i32, ptr %9, align 4
+  %69 = load ptr, ptr %4, align 8
+  %70 = load i32, ptr %9, align 4
+  %71 = sext i32 %70 to i64
+  %72 = getelementptr inbounds ptr, ptr %69, i64 %71
+  %73 = load ptr, ptr %72, align 8
+  %74 = call i32 @string.format(ptr %57, ptr %60, i64 %67, i32 %68, ptr %73)
+; [CARLA DEBUG]: 0 items remaining in the stack.
+; [CARLA DEBUG]: Function added to stack: println.
+  %75 = load ptr, ptr %5, align 8
+  %76 = call i32 @stdio.println(ptr %75)
+; [CARLA DEBUG]: 0 items remaining in the stack.
+; [CARLA DEBUG]: End of ID iteration 0
+  %77 = alloca i64, align 8
+  store i64 1, ptr %77, align 8
+  %78 = load i64, ptr %77, align 8
+  %79 = load i32, ptr %9, align 4
+  %80 = sext i32 %79 to i64
   br i1 %13, label %.l0.carla.for_decrement, label %.l0.carla.for_increment
 .l0.carla.for_decrement:
-  %43 = sub nsw i64 %42, %40
-  %44 = trunc i64 %43 to i32
-  store i32 %44, ptr %9, align 4
+  %81 = sub nsw i64 %80, %78
+  %82 = trunc i64 %81 to i32
+  store i32 %82, ptr %9, align 4
   br label %.l0.carla.for_begin
 .l0.carla.for_increment:
-  %45 = add nsw i64 %42, %40
-  %46 = trunc i64 %45 to i32
-  store i32 %46, ptr %9, align 4
+  %83 = add nsw i64 %80, %78
+  %84 = trunc i64 %83 to i32
+  store i32 %84, ptr %9, align 4
   br label %.l0.carla.for_begin
 .l0.carla.for_end:
 ; [CARLA DEBUG]: Function added to stack: dump.
-  %48 = load ptr, ptr %5, align 8
-  call void @heap.dump(ptr %48)
+  %86 = load ptr, ptr %5, align 8
+  call void @heap.dump(ptr %86)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
-  %49 = alloca i32, align 4
-  store i32 0, ptr %49, align 4
-  %50 = load i32, ptr %49, align 4
-  ret i32 %50
+  %87 = alloca i32, align 4
+  store i32 0, ptr %87, align 4
+  %88 = load i32, ptr %87, align 4
+  ret i32 %88
 }
 
-@.carla.static.str.0 = private constant [25 x i8] c"{d} Argumento [{d}]: {s}\00", align 1
+@.carla.static.str.0 = private constant [16 x i8] c"First argument!\00", align 1
+@.carla.static.str.1 = private constant [17 x i8] c"Second argument!\00", align 1
+@.carla.static.str.2 = private constant [55 x i8] c"Is not the first argument and not the second argument.\00", align 1
+@.carla.static.str.3 = private constant [25 x i8] c"{d} Argumento [{d}]: {s}\00", align 1
 
 ; Extern functions
 declare i32 @puts(ptr)
@@ -109,6 +186,34 @@ define ptr @heap.alloc(i64 %0) {
   %5 = call ptr @malloc(i64 %3)
   ret ptr %5
 }
+define void @stdio.println(ptr %0) {
+entry:
+  %2 = alloca ptr, align 8
+  %3 = alloca i32, align 4
+  store ptr %0, ptr %2, align 8
+  store i32 0, ptr %3, align 4
+  %4 = load ptr, ptr %2, align 8
+  br label %PRINTLNLOOP
+
+PRINTLNLOOP: ; Início do loop
+  %5 = load i32, ptr %3, align 4
+  %6 = getelementptr inbounds i8, ptr %4, i32 %5
+  %7 = load i8, ptr %6, align 1
+  %8 = icmp eq i8 %7, 0
+  br i1 %8, label %PRINTLN.END, label %PRINTLN.BODY
+
+PRINTLN.BODY: ; Corpo do loop
+  %9 = sext i8 %7 to i32
+  %10 = call i32 @putchar(i32 %9)
+  %11 = add i32 %5, 1 ; Incrementa o índice
+  store i32 %11, ptr %3, align 4
+  br label %PRINTLNLOOP ; Volta para o início do loop
+
+PRINTLN.END: ; Fim do loop
+  call i32 @putchar(i32 10) ; Imprime uma nova linha
+  ret void
+}
+
 define void @carla.replace_placeholders(ptr %output, ptr %input) {
   ; Aloca variáveis para controle
   %read_pos = alloca i32, align 4       ; Posição de leitura no input
@@ -358,34 +463,6 @@ attributes #1 = { nocallback nofree nosync nounwind willreturn }
 attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
 
-
-define void @stdio.println(ptr %0) {
-entry:
-  %2 = alloca ptr, align 8
-  %3 = alloca i32, align 4
-  store ptr %0, ptr %2, align 8
-  store i32 0, ptr %3, align 4
-  %4 = load ptr, ptr %2, align 8
-  br label %PRINTLNLOOP
-
-PRINTLNLOOP: ; Início do loop
-  %5 = load i32, ptr %3, align 4
-  %6 = getelementptr inbounds i8, ptr %4, i32 %5
-  %7 = load i8, ptr %6, align 1
-  %8 = icmp eq i8 %7, 0
-  br i1 %8, label %PRINTLN.END, label %PRINTLN.BODY
-
-PRINTLN.BODY: ; Corpo do loop
-  %9 = sext i8 %7 to i32
-  %10 = call i32 @putchar(i32 %9)
-  %11 = add i32 %5, 1 ; Incrementa o índice
-  store i32 %11, ptr %3, align 4
-  br label %PRINTLNLOOP ; Volta para o início do loop
-
-PRINTLN.END: ; Fim do loop
-  call i32 @putchar(i32 10) ; Imprime uma nova linha
-  ret void
-}
 
 define void @heap.dump(ptr %0) {
   call ptr @free(ptr %0)

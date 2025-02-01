@@ -118,36 +118,31 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   break;
                 }
 
-              if( first.type == Keyword && strcmp (first.buffer, "struct") == 0 )
+              if( first.type == Keyword && strcmp (first.buffer, "if") == 0 )
                 {
                   vector_push (tree, ((void*)&(PNode) {
-                    .type = NODE_STRUCT,
+                    .type = NODE_IF,
                     .data.number = 0
                   }));
+                  break;
+                }
 
-                  i++;
-                  Token open[2] = { GET(tks, i), GET(tks, i + 1) };
-                  if( open[0].buffer[0] == '(' && open[0].buffer[0] == '{' ) {
-                    i += 2;
-                    impl = 1;
-                    
-                    vector_push (tree, ((void*)&(PNode) {
-                      .type = NODE_BEGIN_IMPLMENT,
-                      .data.number = 0
-                    }));
+              if( first.type == Keyword && strcmp (first.buffer, "else") == 0 )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_ELSE,
+                    .data.number = 0
+                  }));
+                  break;
+                }
 
-                  } else if( open[0].buffer[0] == '(' && open[0].buffer[0] == ')' ) {
-                    i+= 2;
-                    Token open_elements = GET(tks, i);
-                    if(! (open_elements.type == Unknown && open_elements.buffer[0] == '{') )
-                      goto __cancel_parse__;
-                    
-                    i++;
-                    vector_push (tree, ((void*)&(PNode) {
-                      .type = NODE_BEGIN,
-                      .data.number = 0
-                    }));
-                  }
+              if( first.type == Keyword && strcmp (first.buffer, "then") == 0 )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_THEN,
+                    .data.number = 0
+                  }));
+                  break;
                 }
 
               if( first.type == Type || isType (first.buffer) )
@@ -261,10 +256,11 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
               // EXPRESSIONS
               if( 
                   ( first.type    == Integer || first.type == Identifier || first.type == Text    ) 
-                  && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown || next.type == Iter || next.type == BitsOP || next.type == ComparationOP )
+                  && ( next.type  == MathOP  || next.type  == Semi       || next.type  == Unknown || next.type == Iter || next.type == BitsOP || next.type == ComparationOP || next.type == Keyword )
               ) {
                   if(
                       ( next.type == Semi ) 
+                      || ( next.type == Keyword ) 
                       || (
                           next.type == Unknown 
                           && (
