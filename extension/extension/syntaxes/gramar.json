@@ -7,7 +7,7 @@
     "patterns": [
         {
             "name": "support.class",
-            "match": "([u]?int(8|16|32|64|128)|char|byte|ascii|bool)",
+            "match": "([u]?int(8|16|32|64|128)|char|byte|ascii|bool|void|(\\w|\\d)*_t)",
             "captures": {
                 "0": {
                     "name": "support.function.example"
@@ -21,7 +21,7 @@
         {
             "name": "keyword.control.example",
             "font-style": "italic",
-            "match": "\\b(for|return|if|include|else)\\b"
+            "match": "\\b(for|return|if|include|else|self|our|struct|impl|enum|const)\\b"
         },
         {
             "name": "entity.name.function.example",

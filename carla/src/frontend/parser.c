@@ -53,9 +53,19 @@ trim_non_alphanumeric(char *str)
   str[j] = '\0'; 
 }
 
+char 
+isStruct(char *buffer, Vector *strucies) 
+{
+  char result = 0;
+  VECTOR_CONTAINS (CacheStructs, strucies, identifier, buffer, &result);
+
+  return result;
+}
+
 void 
 tGenerate(Vector *tree, Vector *tks, Vector *libs) 
 {
+  Vector structs = vector_init (sizeof (CacheStructs));
   char lambda = 0;
   char impl = 0;
   char elements = 0;
@@ -135,17 +145,33 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   }));
                   break;
                 }
-
-              if( first.type == Keyword && strcmp (first.buffer, "then") == 0 )
+              
+              if( first.type == Keyword && strcmp (first.buffer, "our") == 0 )
                 {
                   vector_push (tree, ((void*)&(PNode) {
-                    .type = NODE_THEN,
+                    .type = NODE_OUR,
                     .data.number = 0
                   }));
                   break;
                 }
 
-              if( first.type == Type || isType (first.buffer) )
+              if( first.type == Keyword && strcmp (first.buffer, "struct") == 0 )
+                {
+                  i++;
+                  char *id = GET(tks, i++).buffer;
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_STRUCT,
+                    .data.value = id
+                  }));
+
+                  vector_push (&structs, ((void*)&(CacheStructs) {
+                    .identifier = id
+                  }));
+
+                  continue;
+                }
+
+              if( first.type == Type || isType (first.buffer) || (isStruct(first.buffer, &structs) && strcmp (GET(tks, i + 1).buffer, "::") != 0 ) )
                 {
                   i++;
                   Token id = GET(tks, i);
@@ -214,9 +240,20 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                       break;
                     }
 
+                  if( isStruct(first.buffer, &structs) )
+                    {
+                      vector_push (tree, ((void*)&(PNode) {
+                        .type = NODE_INTERNAL_STRUCT,
+                        .data.internal_struct.__struct = first.buffer,
+                        .data.internal_struct.fn = after.buffer
+                      }));
+                      
+                      break;
+                    }
+
+                  int result = 0;
                   char *module = (char*)malloc (128);
                   sprintf (module, "std%s", first.buffer);
-                  int result;
                   VECTOR_CONTAINS(Library, libs, lib, module, &result);
 
                   if( result )
@@ -360,20 +397,8 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
             {
               if( strcmp (first.buffer, "}") == 0 )
                 {
-                  char is_impl_close = strcmp (GET(tks, i).buffer, "impl") == 0;
+                  char is_impl_close = strcmp (GET(tks, i + 1).buffer, "impl") == 0;
                   char begin = 0;
-
-                  if( is_impl_close ) 
-                    {
-                      i++;
-                      Token open[2] = { GET(tks, i), GET(tks, i + 1) };
-
-                      if( (open[0].buffer[0] == ')' && open[1].buffer[0] == '{') )
-                        goto __cancel_parse__;
-
-                      i += 2;
-                      begin = 1;
-                    }
 
                   vector_push (tree, ((void*)&(PNode) {
                     .data.number = 0,
@@ -382,13 +407,6 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                               : NODE_END,
                   }));
 
-                  if( begin ) 
-                    {
-                      vector_push (tree, ((void*)&(PNode) {
-                        .type = NODE_BEGIN,
-                        .data.number = 0
-                      }));
-                    }
                 }
 
               if( strcmp (first.buffer, ")") == 0 )
@@ -412,11 +430,18 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                 {
                   int j = i + 1;
                   while( strcmp (GET(tks, j++).buffer, ")") != 0 );
-                  if( strcmp (GET(tks, j).buffer, "{") == 0 )
+                  if( strcmp (GET(tks, j).buffer, "{") == 0 || (
+                    strcmp (GET(tks, j).buffer, "our") == 0 
+                    && strcmp (GET(tks, j + 1).buffer, "{") == 0
+                  ))
                     {
+                      if( strcmp (GET(tks, j).buffer, "our") == 0 ) {
+                        i += 2;
+                      }
+
                       vector_push (tree, ((void*)&(PNode) {
                         .type = NODE_LAMBDA,
-                        .data.number = 0
+                        .data.our = (strcmp (GET(tks, j).buffer, "our") == 0)
                       }));
                       lambda = 1;
                       break;

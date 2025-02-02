@@ -28,9 +28,9 @@ exponence(int x, int y)
   return result;
 }
 
-#define GET(vector, index) ((PNode*)vector->items)[index]
-#define GET_T(T, vector, index) ((T*)vector->items)[index]
-#define GETNP(T, vector, index) ((T*)vector.items)[index]
+#define GET(vector, index)       ((PNode*)vector->items)[index]
+#define GET_T(T, vector, index)  ((T*)vector->items)[index]
+#define GETNP(T, vector, index)  ((T*)vector.items)[index]
 #define COMPOP(buffer, operator) strcmp (buffer, operator) == 0
 #define STATIC_TYPE_LENGTH 4
 
@@ -51,10 +51,14 @@ exponence(int x, int y)
 
 unsigned int var = 0;
 unsigned int label_id = 0;
+unsigned int carla_id = 0;
+unsigned int class = 0;
 int complement = 0;
 int tab = 0;
 int calli = 0;
 int debugid = 0;
+
+Vector structies;
 
 ExprCache cache[1024];
 struct ARG {
@@ -117,11 +121,18 @@ find_fn(PNode call, Vector *vars)
   if( call.type == NODE_INTERNAL )
     return std_fn (call);
 
+  char *to_find = call.data.super;
+  if( call.type == NODE_INTERNAL_STRUCT )
+    {
+      to_find = (char*)malloc (128);
+      sprintf (to_find, "%s.%s", call.data.internal_struct.__struct,  call.data.internal_struct.fn);
+    }
+
   Variable var;
-  VECTOR_CONTAINS(Variable, vars, id, call.data.super, &result);
+  VECTOR_CONTAINS(Variable, vars, id, to_find, &result);
   if( result )
     {
-      VECTOR_FIND(Variable, vars, id, call.data.super, &var);
+      VECTOR_FIND(Variable, vars, id, to_find, &var);
 
       if( var.v_type != Function )
         {
@@ -130,15 +141,15 @@ find_fn(PNode call, Vector *vars)
         }
 
       return (Fn) {
-        .id = call.data.super,
+        .id = (call.type == NODE_INTERNAL_STRUCT) ? call.data.internal_struct.fn : call.data.super,
         .type = var.type,
-        .lib = "SUPER",
+        .lib = (call.type == NODE_INTERNAL_STRUCT) ? call.data.internal_struct.__struct : "SUPER",
         .args = ""
       };
     }
   else
     {
-      printf ("%s NOT FOUND!", call.data.super);
+      printf ("%s NOT FOUND!", to_find);
       exit(0);
     }
 }
@@ -160,12 +171,27 @@ llvm_sizeof (char *type)
   if( strcmp (type, "ptr") == 0 )
     return 8;
 
-  return 0;
+  return 8;
 }
 
 char *
 llvm_type (char *type)
 {
+
+  char result = 0;
+  VECTOR_CONTAINS (Structies, &structies, struct_id, type, &result);
+
+  if( result )
+    {
+      Structies __struct;
+      VECTOR_FIND (Structies, &structies, struct_id, type, &__struct);
+      char *prefix = "%.carla.struct.";
+      char *buffer = malloc (strlen (prefix) + 5);
+      sprintf (buffer, "%s%d", prefix, __struct.carla_id);
+      free (prefix);
+      return buffer;
+    }
+
   if( strcmp (type, "llvm<bool>") == 0 )
     return "i1";
 
@@ -593,6 +619,13 @@ llGenerate(FILE *output, Vector *pTree)
   Vector retStack          = vector_init (sizeof (RetStack));
   Vector complements       = vector_init (sizeof (Complement));
   Vector ifstatements_root = vector_init (sizeof (IfStatement));
+  
+  structies                = vector_init (sizeof (Structies));
+
+  char in_struct = 0;
+  char in_struct_fields = 0;
+  char *struct_name;
+  int struct_fields_len = 0;
 
   int i = 0;
   for(; i < pTree->length; i++ )
@@ -630,6 +663,7 @@ llGenerate(FILE *output, Vector *pTree)
 
                   case NODE_INTERNAL:
                   case NODE_INTERNAL_SUPER:
+                  case NODE_INTERNAL_STRUCT:
                     {
                       i++;
                       fprintf (output, "; [CARLA DEBUG]: Function added to stack: %s.\n", find_fn (next, &vars).id);
@@ -646,12 +680,12 @@ llGenerate(FILE *output, Vector *pTree)
                     {
                       i++;
 
-                      Token left_data = next.data.operation.left;
-                      Token operator_data = next.data.operation.operation;
-                      Token right_data = next.data.operation.right;
-                      char left_int = left_data.type == Integer;
-                      char right_int = right_data.type == Integer;
-                      char left_identifier = left_data.type == Identifier;
+                      Token left_data       = next.data.operation.left;
+                      Token operator_data   = next.data.operation.operation;
+                      Token right_data      = next.data.operation.right;
+                      char left_int         = left_data.type  == Integer;
+                      char left_identifier  = left_data.type  == Identifier;
+                      char right_int        = right_data.type == Integer;
                       char right_identifier = right_data.type == Identifier;
 
 
@@ -996,6 +1030,7 @@ llGenerate(FILE *output, Vector *pTree)
                       if( resolve.type != FUNCTION_CALL )
                         goto __llvm_gen_error__;
 
+                      printf("Caiu aq %s", resolve.info.fn_call.lib);
                       char *tabs = (char*)malloc (1024);
                       genT (&tabs);
                       if( strcmp (resolve.info.fn_call.type, "void") != 0 )
@@ -1126,7 +1161,7 @@ llGenerate(FILE *output, Vector *pTree)
                               vector_push (&scopes, ((void*)&stype));
 
                             } break;
-                          case NODE_THEN: break;
+                          // case NODE_THEN: break;
                           default: break;
                         }
                       } break;
@@ -1144,27 +1179,42 @@ llGenerate(FILE *output, Vector *pTree)
           case NODE_DEFINITION:
             {
 
-              if( GET(pTree, i+1).type == NODE_LAMBDA && tab == 0 )
+              if( GET(pTree, i+1).type == NODE_LAMBDA )
                 {
                   i += 2;
 
-                  tab++;
                   char *type = llvm_type (branch.data.definition.type);
                   char *tabs = (char*)malloc (1024);
                   genT (&tabs);
-                  fprintf (output, "\n%sdefine %s @%s(",
+                  tab++;
+
+                  char *prefix = (char*)malloc (128);
+                  prefix[0] = 0;
+                  if( in_struct )
+                    sprintf (prefix, "%s.", struct_name);
+
+                  fprintf (output, "\n%sdefine %s @%s%s(",
                           tabs,
                           type,
+                          prefix,
                           branch.data.definition.id
                   );
                   free (tabs);
+
+                  char *name = branch.data.definition.id;
+
+                  if( in_struct ) 
+                    {
+                      name = (char*)malloc (128);
+                      sprintf (name, "%s.%s", struct_name, branch.data.definition.id);
+                    }
 
                   vector_push (&vars, ((void*)&(Variable) {
                     .v_type = Function,
                     .type   = branch.data.definition.type,
                     .llvm   = 0,
                     .tab    = tab,
-                    .id     = branch.data.definition.id
+                    .id     = name
                   }));
 
                   vector_push (&retStack, ((void*)&(RetStack) {
@@ -1243,34 +1293,58 @@ llGenerate(FILE *output, Vector *pTree)
                   continue;
                 }
 
-              vector_push (&vars, ((void*)&(Variable) {
-                .v_type = Normal,
-                .type   = branch.data.definition.type,
-                .llvm   = var,
-                .tab    = tab,
-                .id     = branch.data.definition.id
-              }));
+              if(! in_struct_fields ) 
+                {
+                  vector_push (&vars, ((void*)&(Variable) {
+                    .v_type = Normal,
+                    .type   = branch.data.definition.type,
+                    .llvm   = var,
+                    .tab    = tab,
+                    .id     = branch.data.definition.id
+                  }));
 
-              llvm_alloca (output, branch);
-              if(! branch.data.definition.hopeful )
-                continue;
+                  llvm_alloca (output, branch);
+                  if(! branch.data.definition.hopeful )
+                    continue;
 
-              cache[clen++] = (ExprCache) {
-                .type = VAR_DECLARATION,
-                .info = {
-                  .var = {
-                    .llvm = (var - 1),
-                    .node = branch
-                  }
+                  cache[clen++] = (ExprCache) {
+                    .type = VAR_DECLARATION,
+                    .info = {
+                      .var = {
+                        .llvm = (var - 1),
+                        .node = branch
+                      }
+                    }
+                  };
+
+                  goto wait_expr;
                 }
-              };
 
-              goto wait_expr;
+              fprintf (output, "%s%s", 
+                      (struct_fields_len > 0) ? ", " : "",
+                      llvm_type (branch.data.definition.type)
+              );
+
+              struct_fields_len++;
+
+              vector_push (&vars, ((void*)&(Variable) {
+                .__struct = strdup (struct_name),
+                .v_type   = StructField,
+                .type     = branch.data.definition.type,
+                .id       = branch.data.definition.id
+              }));
 
             } break;
 
           case NODE_END:
             {
+
+              if( in_struct_fields )
+                {
+                  in_struct_fields = !in_struct_fields;
+                  fprintf (output, " } ; Struct %s field types\n", struct_name);
+                  continue;
+                }
 
               int index = scopes.length - 1;
               ScopeType scope = GETNP(ScopeType, scopes, index);
@@ -1290,6 +1364,8 @@ llGenerate(FILE *output, Vector *pTree)
                   case Lambda:
                     {
                       fprintf (output, "}\n");
+                      if( tab != 0 ) 
+                        tab = 0;
                     } break;
 
                   case Elif_scope:
@@ -1310,6 +1386,14 @@ llGenerate(FILE *output, Vector *pTree)
                       PNode _else = GET(pTree, i + 1);
 
                       llvm_label_id (output, scope.label_id, "else");
+                      var++;
+
+                      if( scope.type == If_scope )
+                        {
+                          fprintf (output, "; [CARLA DEBUG]: Added to root vector %d\n", scope.label_id);
+                          vector_push (&ifstatements_root, ((void*)&(IfStatement) { .root = scope.label_id }));
+                          last++;
+                        }
 
                       if( _else.type != NODE_ELSE )
                         {
@@ -1319,6 +1403,7 @@ llGenerate(FILE *output, Vector *pTree)
 
                           llvm_br (output, root_id, "end_root");
                           llvm_label_id (output, root_id, "end_root");
+                          var++;
                           break;
                         }
 
@@ -1329,12 +1414,6 @@ llGenerate(FILE *output, Vector *pTree)
                       if( _else_if.type == NODE_IF )
                         {
                           i++;
-
-                          if( scope.type == If_scope )
-                            {
-                              fprintf (output, "; [CARLA DEBUG]: Added to root vector %d\n", scope.label_id);
-                              vector_push (&ifstatements_root, ((void*)&(IfStatement) { .root = scope.label_id }));
-                            }
 
                           fprintf (output, "; [CARLA DEBUG]: Else if begin\n");
                           llvm_alloca_t (output, "bool");
@@ -1373,6 +1452,7 @@ llGenerate(FILE *output, Vector *pTree)
 
                       llvm_br (output, root_id, "end_root");
                       llvm_label_id (output, root_id, "end_root");
+                      var++;
 
                       vector_remove (&ifstatements_root, last);
 
@@ -1494,8 +1574,7 @@ llGenerate(FILE *output, Vector *pTree)
             } break;
 
           case NODE_IF:
-            {
-              fprintf (output, "; [CARLA DEBUG]: If begin\n");
+            { fprintf (output, "; [CARLA DEBUG]: If begin\n");
               llvm_alloca_t (output, "bool");
 
               cache[clen++] = (ExprCache) {
@@ -1510,9 +1589,51 @@ llGenerate(FILE *output, Vector *pTree)
               goto wait_expr;
             } break;
 
+          case NODE_STRUCT:
+            { fprintf (output, "; [CARLA DEBUG]: Struct %s\n", branch.data.value);
+
+              in_struct = 1;
+              struct_name = branch.data.value;
+            } break;
+
+          case NODE_END_IMPLEMENT:
+            { in_struct = 0;
+              PNode our_or_fields = GET(pTree, i + 1);
+              i++;
+
+              switch(our_or_fields.type)
+                { case NODE_OUR:
+                    { PNode fields = GET(pTree, i + 1);
+                      i++;
+                      if( fields.type != NODE_BEGIN )
+                        goto __llvm_gen_error__;
+
+                      fprintf (output, "%c.carla.struct.%d = type { ", '%', carla_id);
+                      vector_push (&structies, ((void*)&(Structies) {
+                        .carla_id = carla_id++,
+                        .struct_id = struct_name
+                      }));
+                      in_struct_fields = 1;
+                    } break;
+                  
+                  case NODE_BEGIN:
+                    { in_struct_fields = 1;
+                      fprintf (output, "%c.carla.struct.%d = type { ", '%', carla_id);
+                      vector_push (&structies, ((void*)&(Structies) {
+                        .carla_id = carla_id++,
+                        .struct_id = struct_name
+                      }));
+                      continue;
+                    } break;
+
+                  case NODE_EEXPR: continue;
+                  default: goto __llvm_gen_error__;
+                }
+
+            } break;
+
           case NODE_FOR:
-            {
-              PNode definition = GET(pTree, i + 1);
+            { PNode definition = GET(pTree, i + 1);
               if( definition.type == NODE_DEFINITION && definition.data.definition.iter )
                 {
                   fprintf (output, "; [CARLA DEBUG]: For iteration\n");
@@ -1679,6 +1800,7 @@ llGenerate(FILE *output, Vector *pTree)
 
           case NODE_INTERNAL:
           case NODE_INTERNAL_SUPER:
+          case NODE_INTERNAL_STRUCT:
             {
               i--;
               goto wait_expr;
@@ -1686,7 +1808,7 @@ llGenerate(FILE *output, Vector *pTree)
           default: break;
         }
     }
-
+  
   goto __ignore_error;
   __llvm_gen_error__: {
     printf ("Fail to generate the LLVM code\n");

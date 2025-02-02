@@ -1,7 +1,8 @@
 {
   "files.associations": {
     "inttypes.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "parser.h": "c"
   },
   "sarif-viewer.connectToGithubCodeScanning": "off"
 }

@@ -39,11 +39,13 @@
   typedef enum {
     Normal,
     Function,
-    Callback
+    Callback,
+    StructField
   } VarType;
 
   typedef struct {
     VarType v_type;
+    char *__struct;
     int tab;
     unsigned int llvm;
     char *type;
@@ -83,6 +85,11 @@
     int type;
     int id;
   } Complement;
+
+  typedef struct {
+    char *struct_id;
+    unsigned int carla_id; 
+  } Structies;
 
   void llGenerate(FILE *output, Vector *pTree);
 

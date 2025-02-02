@@ -1,28 +1,20 @@
 #include "stdio"
-#include "stdheap"
-#include "stdstring"
 
-int32 main = (int32 argc, []byte* argv) {
-  []byte buffer = heap::alloc(1024);
+struct person_t {
+  int8 new = ([]byte name) {
+    return 0;
+  } 
 
-  for int32 i : 0..argc {
-
-    if i == 0 {
-      io::println("First argument!");
-    } else if i == 1 {
-      io::println("Second argument!");
-    } else {
-      io::println("Is not the first argument and not the second argument.");
-    }
-
-    string::format(buffer, "{d} Argumento [{d}]: {s}",
-      i + 1, i,
-      argv[i] 
-    );
-    io::println(buffer);
+  int8 say = ([]byte to_say) {
+    io::println(to_say);
+    return 0;
   }
+} impl {
+  []char name;
+  uint8 age;
+};
 
-  heap::dump(buffer);
-
+int32 main = () {
+  person_t::say("Hello, world");
   return 0;
 }

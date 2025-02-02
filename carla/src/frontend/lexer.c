@@ -107,7 +107,7 @@ tkGenerate(Vector *lex, FILE *file)
       else 
         /*->*/ ungetc (j, file);
 
-      if(! isalnum (c) && c != '#' ) {
+      if(! isalnum (c) && c != '#' && c != '_' ) {
         if( len > 0 ) {
           vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (buffer), 

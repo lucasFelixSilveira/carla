@@ -14,6 +14,7 @@ const Key staticSymbols[KEYWORDS_LENGTH + MACROS_LENGTH + TYPES_LENGTH]
     { .len = 2, .val = "if" },
     { .len = 4, .val = "else" },
     { .len = 3, .val = "our" },
+    { .len = 5, .val = "super" },
     /* macros */
     { .len = 8, .val = "#include" },
     /* types */
@@ -66,7 +67,7 @@ isIdentifier (char buffer[])
   if( strlen (buffer) > 32 ) 
     return 0;
   char first = buffer[0];
-  if( first != '@' && !isalpha (first) ) 
+  if( first != '_' && !isalpha (first) ) 
     return 0;
   
   for(
@@ -74,7 +75,7 @@ isIdentifier (char buffer[])
     i < (strlen (buffer) - 1);
     i++
   ) {
-      if(! isalnum (buffer[i]) )
+      if(! isalnum (buffer[i]) && buffer[i] != '_' )
         return 0;
     }
 

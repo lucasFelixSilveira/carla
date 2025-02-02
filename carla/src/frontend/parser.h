@@ -4,6 +4,10 @@
 # include "../utils/vector.h"
 # include "./lexer.h"
 
+  typedef struct {
+    char *identifier;
+  } CacheStructs;
+
   typedef enum {
     NODE_NUMBER,
     NODE_ID,
@@ -22,12 +26,13 @@
     NODE_FOR,
     NODE_IF,
     NODE_ELSE,
-    NODE_THEN,
+    NODE_OUR,
     NODE_STRUCT,
     NODE_CLOSE,
     NODE_RET,
     NODE_END,
     NODE_END_IMPLEMENT,
+    NODE_INTERNAL_STRUCT,
     NODE_EEXPR
   } NodeType;
 
@@ -49,6 +54,7 @@
   typedef struct PNode {
     NodeType type;
     union {
+      char  our;
       int   number;
       char *value;
       struct {
@@ -73,6 +79,10 @@
         char *function;
         char *lib;
       } internal;
+      struct {
+        char *__struct;
+        char *fn;
+      } internal_struct;
       char *super;
     } data;
   } PNode;

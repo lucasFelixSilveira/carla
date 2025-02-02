@@ -26,12 +26,13 @@ char *TType[] = {
   "NODE_FOR",
   "NODE_IF",
   "NODE_ELSE",
-  "NODE_THEN",
+  "NODE_OUR",
   "NODE_STRUCT",
   "NODE_CLOSE",
   "NODE_RET",
   "NODE_END",
   "NODE_END_IMPLEMENT",
+  "NODE_INTERNAL_STRUCT",
   "NODE_EEXP"
 };
 
@@ -79,6 +80,18 @@ pNodes (Vector *root)
           case NODE_TYPE:
             {
               printf ("|\t|-type: %s\n", 
+                     brench.data.value
+              );
+            } break;
+          case NODE_LAMBDA:
+            {
+              printf ("|\t|-our: %s\n", 
+                     (brench.data.our) ? "true" : "false"
+              );
+            } break;
+          case NODE_STRUCT:
+            {
+              printf ("|\t|-name: %s\n", 
                      brench.data.value
               );
             } break;
