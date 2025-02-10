@@ -104,6 +104,16 @@ tkGenerate(Vector *lex, FILE *file)
             {}
           continue;
         }
+      if( c == '-' && j == '#' )
+        {
+          _while__to_wait_comment_end: {};
+          while(getc (file) != '#') 
+            {};
+
+          if( getc (file) != '-' ) 
+            goto _while__to_wait_comment_end;
+          continue;
+        }
       else 
         /*->*/ ungetc (j, file);
 

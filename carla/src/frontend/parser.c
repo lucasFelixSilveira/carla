@@ -171,6 +171,29 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   continue;
                 }
 
+              if( first.type == Identifier && strcmp (GET(tks, i + 1).buffer, ".") == 0 ) 
+                {
+                  i += 2;
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_FIELD_ACCESS,
+                    .data.value = first.buffer
+                  }));
+                 
+                  continue;
+                }
+
+              if( first.type == Identifier && strcmp (GET(tks, i + 1).buffer, "=") == 0 ) 
+                {
+                  i += 2;
+                  
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_ASSIGNMENT,
+                    .data.value = first.buffer
+                  }));
+                 
+                  continue;
+                }
+
               if( first.type == Type || isType (first.buffer) || (isStruct(first.buffer, &structs) && strcmp (GET(tks, i + 1).buffer, "::") != 0 ) )
                 {
                   i++;

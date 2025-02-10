@@ -105,15 +105,45 @@ for int32 i : x..4 {}
 for int32 i : x..y {}
 ```
 
+- Printing Hello World a few times with the number of times it was printed on the left
 ```carla
-#include <stdio>
-int32 main = () {
+#include "stdio"
+#include "stdheap"
+#include "stdstring"
 
-  []int8 msg = "Hello, world!";
-  for i..2 {
-    io::println(msg);
+int32 main = () {
+  []byte buffer = heap::alloc(128);
+  
+  for int32 i : 0..60 {
+    string::format(buffer, "{d}. Hello, world", i);
+    io::println(buffer);
+  }
+  
+  heap::dump(buffer);
+  return 0;
+}
+```
+
+- Printing the arguments received when executing the process.
+```carla
+#include "stdio"
+#include "stdheap"
+#include "stdstring"
+
+int32 main = (int64 argc, []char* argv) {
+  []byte buffer = heap::alloc(128);
+  
+  if argc == 0 {
+    io::println("no arguments received.");
+    return 0;
   }
 
+  for int32 i : 1..argc {
+    string::format(buffer, "{d}. {s}", i, argv[i]);
+    io::println(buffer);
+  }
+  
+  heap::dump(buffer);
   return 0;
 }
 ```

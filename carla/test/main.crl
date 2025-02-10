@@ -1,20 +1,21 @@
 #include "stdio"
+#include "stdheap"
+#include "stdstring"
 
-struct person_t {
-  int8 new = ([]byte name) {
-    return 0;
-  } 
-
-  int8 say = ([]byte to_say) {
-    io::println(to_say);
+struct output {
+  int8 print = ([]ascii msg) {
+    []byte buffer = heap::alloc(128); 
+    string::format(buffer, "The argument is: {s}", msg);
+    io::println(buffer);
+    heap::dump(buffer);
     return 0;
   }
-} impl {
-  []char name;
-  uint8 age;
-};
+} impl;
 
-int32 main = () {
-  person_t::say("Hello, world");
-  return 0;
+int32 main = (int32 argc, []char* argv) {
+  for int32 i : 0..argc {
+    char* arg = argv[i];
+    output::print(arg);
+  }
+  return 1;
 }

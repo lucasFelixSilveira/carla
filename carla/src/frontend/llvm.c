@@ -57,6 +57,8 @@ int complement = 0;
 int tab = 0;
 int calli = 0;
 int debugid = 0;
+int lambda_counter = 0;
+char *lambda_name;
 
 Vector structies;
 
@@ -93,12 +95,12 @@ char
 is_comp(char *operator)
 {
    BEGIN_SWITCH(operator)
-    CASE("==") return 1;
+    CASE("==")       return 1;
     BREAK_CASE("!=") return 1;
     BREAK_CASE(">=") return 1;
     BREAK_CASE("<=") return 1;
-    BREAK_CASE("<") return 1;
-    BREAK_CASE(">") return 1;
+    BREAK_CASE("<")  return 1;
+    BREAK_CASE(">")  return 1;
     BREAK
   END_SWITCH
 
@@ -141,9 +143,13 @@ find_fn(PNode call, Vector *vars)
         }
 
       return (Fn) {
-        .id = (call.type == NODE_INTERNAL_STRUCT) ? call.data.internal_struct.fn : call.data.super,
+        .id  = (call.type == NODE_INTERNAL_STRUCT) 
+               ? call.data.internal_struct.fn 
+               : call.data.super,
+        .lib = (call.type == NODE_INTERNAL_STRUCT) 
+               ? call.data.internal_struct.__struct 
+               : "SUPER",
         .type = var.type,
-        .lib = (call.type == NODE_INTERNAL_STRUCT) ? call.data.internal_struct.__struct : "SUPER",
         .args = ""
       };
     }
@@ -1217,6 +1223,8 @@ llGenerate(FILE *output, Vector *pTree)
                     .id     = name
                   }));
 
+                  lambda_counter += 1;
+                  lambda_name = branch.data.definition.id;
                   vector_push (&retStack, ((void*)&(RetStack) {
                     .type = branch.data.definition.type
                   }));
@@ -1363,7 +1371,27 @@ llGenerate(FILE *output, Vector *pTree)
                 {
                   case Lambda:
                     {
-                      fprintf (output, "}\n");
+                      if( lambda_counter > 0 ) 
+                        {
+                          int last = retStack.length - 1;
+                          BEGIN_SWITCH(lambda_name)
+                            CASE("main")
+                              char *type = GETNP(RetStack, retStack, last).type;
+                              fprintf (output, "; [CARLA DEBUG]: Default success return, in case the return is not done manually.\n  ret %s 0\n", llvm_type (type));
+                              vector_remove (&retStack, last);
+                            DEFAULT
+                              char *type = GETNP(RetStack, retStack, last).type;
+                              if( strcmp (type, "void") == 0 ) 
+                                {
+                                  fprintf (output, "ret void\n");
+                                }
+                              vector_remove (&retStack, last);
+                            BREAK
+                          END_SWITCH
+                          lambda_counter--;
+                        }
+
+                      fprintf (output, "}\n; [CARLA DEBUG]: Tab n: %d", tab);
                       if( tab != 0 ) 
                         tab = 0;
                     } break;
@@ -1554,13 +1582,47 @@ llGenerate(FILE *output, Vector *pTree)
 
           case NODE_RET:
             {
+
+              char remove = 0;
+              unsigned int j = i + 1;
+              int extra_begin = 0;
+              int counter = 0;
+              PNode arg;
+              while(1)
+                {
+                  arg = GET(pTree, j++);
+
+                  if( arg.type == NODE_BEGIN )
+                    extra_begin++;
+
+                  if( arg.type == NODE_END )
+                    {
+                      if( extra_begin == 0 )
+                        break;
+                      
+                      extra_begin--;
+                    }
+                  
+                  if( arg.type == NODE_RET ) 
+                    counter++;
+                };
+
+              unsigned int last = retStack.length - 1;
+              remove = counter == 0;
+              
               PNode node = {
                 .data = {
                   .definition = {
-                    .type = GETNP(RetStack, retStack, (retStack.length - 1)).type
+                    .type = GETNP(RetStack, retStack, last).type
                   }
                 }
               };
+
+              if( remove && tab == 2)
+                {
+                  vector_remove(&retStack, last);
+                  lambda_counter--;
+                }
 
               cache[clen++] = (ExprCache) {
                 .type = RETURN_KEY,
@@ -1629,6 +1691,7 @@ llGenerate(FILE *output, Vector *pTree)
                   case NODE_EEXPR: continue;
                   default: goto __llvm_gen_error__;
                 }
+
 
             } break;
 
