@@ -3,12 +3,11 @@
 #include "stdstring"
 
 struct output {
-  int8 print = ([]ascii msg) {
+  void print = (char* msg) our {
     []byte buffer = heap::alloc(128); 
     string::format(buffer, "The argument is: {s}", msg);
     io::println(buffer);
     heap::dump(buffer);
-    return 0;
   }
 } impl;
 
@@ -17,5 +16,5 @@ int32 main = (int32 argc, []char* argv) {
     char* arg = argv[i];
     output::print(arg);
   }
-  return 1;
+  return 0;
 }

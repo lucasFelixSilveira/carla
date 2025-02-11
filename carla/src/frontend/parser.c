@@ -145,15 +145,6 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   }));
                   break;
                 }
-              
-              if( first.type == Keyword && strcmp (first.buffer, "our") == 0 )
-                {
-                  vector_push (tree, ((void*)&(PNode) {
-                    .type = NODE_OUR,
-                    .data.number = 0
-                  }));
-                  break;
-                }
 
               if( first.type == Keyword && strcmp (first.buffer, "struct") == 0 )
                 {
@@ -458,9 +449,6 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     && strcmp (GET(tks, j + 1).buffer, "{") == 0
                   ))
                     {
-                      if( strcmp (GET(tks, j).buffer, "our") == 0 ) {
-                        i += 2;
-                      }
 
                       vector_push (tree, ((void*)&(PNode) {
                         .type = NODE_LAMBDA,

@@ -50,6 +50,7 @@
     unsigned int llvm;
     char *type;
     char *id;
+    char public;
   } Variable;
 
   typedef enum {

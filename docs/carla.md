@@ -14,8 +14,36 @@
 # Language structure
 
 ### Comments
-```lua
+```Carla
 -- That's a comment on Carla!
+
+-# 
+  That's a multi-line
+  comment on Carla!
+#-
+```
+
+### Structs
+
+Structure of a struct:  
+===============================================================
+  * {} contains the members (methods and fields, respectively).  
+  * `impl` represents the implementation of the struct.  
+  * `our` defines visibility (public or private).  
+
+```carla
+struct person {  
+  void say = () our {  
+    io::println("Hello!");  
+  }  
+} impl our {  
+  char* name;  
+};    
+```
+
+- Struct without additional content, clean.
+```carla
+struct name {} impl our;  
 ```
 
 ### Functions
@@ -29,12 +57,37 @@ int32 main = () {}
 int32 main = (int32 argv, []int8* args) {}
 ```
 
+# Code Exemples
+## Print all arguments
+```carla
+#include "stdio"
+#include "stdheap"
+#include "stdstring"
+
+struct output {
+  void print = (char* msg) our {
+    []byte buffer = heap::alloc(128); 
+    string::format(buffer, "The argument is: {s}", msg);
+    io::println(buffer);
+    heap::dump(buffer);
+  }
+} impl;
+
+int32 main = (int32 argc, []char* argv) {
+  for int32 i : 0..argc {
+    char* arg = argv[i];
+    output::print(arg);
+  }
+  return 0;
+}
+```
+
 ### Function call
 ```carla
 super::func(arguments...);
 
--- Or you can use (if the function has inside of a module):
-module::func(arguments...);
+-- Or you can use (if the function has inside of a module / struct implementation):
+id::func(arguments...);
 ```
 - Since the first identifier is the identifier of a function, you can enter other identifiers, where the arguments will be. When anything else, if not an identifier, is identified, the call is cut off and it is finally executed.
 
@@ -48,7 +101,7 @@ int32 status = 0;
 # Code Exemples
 ## Hello World (using process arguments)
 ```carla
-#include <stdio>
+#include "stdio"
 int32 main = (int32 argv, []int8* args) {
   []int8 arg = args[1];
   io::println(arg);
@@ -62,7 +115,7 @@ int32 main = (int32 argv, []int8* args) {
 
 ## Hello world using variables
 ```carla
-#include <stdio>
+#include "stdio"
 int32 main = () {
   []int8 msg = "Hello, world!";
   io::println(msg);

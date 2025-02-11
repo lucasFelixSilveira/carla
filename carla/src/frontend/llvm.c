@@ -117,12 +117,14 @@ genT(char **tabs)
 }
 
 Fn
-find_fn(PNode call, Vector *vars)
+find_fn(PNode call, Vector *vars, char *__struct)
 {
   int result = 0;
   if( call.type == NODE_INTERNAL )
     return std_fn (call);
-
+    
+  char in = strcmp (__struct, call.data.internal_struct.__struct) == 0;
+  
   char *to_find = call.data.super;
   if( call.type == NODE_INTERNAL_STRUCT )
     {
@@ -139,6 +141,12 @@ find_fn(PNode call, Vector *vars)
       if( var.v_type != Function )
         {
           printf ("%s IT IS NOT A FUNCTION!", var.id);
+          exit(0);
+        }
+
+      if(! (var.public || in) )
+        {
+          printf ("%s IT IS A PRIVATE METHOD!", var.id);
           exit(0);
         }
 
@@ -672,11 +680,11 @@ llGenerate(FILE *output, Vector *pTree)
                   case NODE_INTERNAL_STRUCT:
                     {
                       i++;
-                      fprintf (output, "; [CARLA DEBUG]: Function added to stack: %s.\n", find_fn (next, &vars).id);
+                      fprintf (output, "; [CARLA DEBUG]: Function added to stack: %s.\n", find_fn (next, &vars, struct_name).id);
                       cache[clen++] = (ExprCache) {
                         .type = FUNCTION_CALL,
                         .info = {
-                          .fn_call = find_fn (next, &vars)
+                          .fn_call = find_fn (next, &vars, struct_name)
                         }
                       };
                       calli++;
@@ -1036,7 +1044,6 @@ llGenerate(FILE *output, Vector *pTree)
                       if( resolve.type != FUNCTION_CALL )
                         goto __llvm_gen_error__;
 
-                      printf("Caiu aq %s", resolve.info.fn_call.lib);
                       char *tabs = (char*)malloc (1024);
                       genT (&tabs);
                       if( strcmp (resolve.info.fn_call.type, "void") != 0 )
@@ -1185,7 +1192,8 @@ llGenerate(FILE *output, Vector *pTree)
           case NODE_DEFINITION:
             {
 
-              if( GET(pTree, i+1).type == NODE_LAMBDA )
+              PNode lamb;
+              if( (lamb = GET(pTree, i+1)).type == NODE_LAMBDA )
                 {
                   i += 2;
 
@@ -1218,6 +1226,7 @@ llGenerate(FILE *output, Vector *pTree)
                   vector_push (&vars, ((void*)&(Variable) {
                     .v_type = Function,
                     .type   = branch.data.definition.type,
+                    .public = (! in_struct ) ? 1 : lamb.data.our,
                     .llvm   = 0,
                     .tab    = tab,
                     .id     = name
@@ -1351,6 +1360,7 @@ llGenerate(FILE *output, Vector *pTree)
                 {
                   in_struct_fields = !in_struct_fields;
                   fprintf (output, " } ; Struct %s field types\n", struct_name);
+                  struct_name = "";
                   continue;
                 }
 
@@ -1383,7 +1393,7 @@ llGenerate(FILE *output, Vector *pTree)
                               char *type = GETNP(RetStack, retStack, last).type;
                               if( strcmp (type, "void") == 0 ) 
                                 {
-                                  fprintf (output, "ret void\n");
+                                  fprintf (output, "  ret void\n");
                                 }
                               vector_remove (&retStack, last);
                             BREAK
@@ -1688,7 +1698,10 @@ llGenerate(FILE *output, Vector *pTree)
                       continue;
                     } break;
 
-                  case NODE_EEXPR: continue;
+                  case NODE_EEXPR: {
+                    struct_name = "";
+                    continue;
+                  }
                   default: goto __llvm_gen_error__;
                 }
 

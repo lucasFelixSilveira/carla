@@ -6,14 +6,14 @@
 	.globl	@feat.00
 .set @feat.00, 0
 	.file	"ir.ll"
-	.def	person_t.falar;
+	.def	output.print;
 	.scl	2;
 	.type	32;
 	.endef
-	.globl	person_t.falar                  # -- Begin function person_t.falar
+	.globl	output.print                    # -- Begin function output.print
 	.p2align	4, 0x90
-person_t.falar:                         # @person_t.falar
-.seh_proc person_t.falar
+output.print:                           # @output.print
+.seh_proc output.print
 # %bb.0:
 	subq	$72, %rsp
 	.seh_stackalloc 72
@@ -33,8 +33,7 @@ person_t.falar:                         # @person_t.falar
 	callq	stdio.println
 	movq	56(%rsp), %rcx
 	callq	heap.dump
-	movb	$0, 39(%rsp)
-	movb	39(%rsp), %al
+	nop
 	addq	$72, %rsp
 	retq
 	.seh_endproc
@@ -50,56 +49,92 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	pushq	%rbp
 	.seh_pushreg %rbp
-	subq	$32, %rsp
-	.seh_stackalloc 32
-	leaq	32(%rsp), %rbp
-	.seh_setframe %rbp, 32
+	subq	$64, %rsp
+	.seh_stackalloc 64
+	leaq	64(%rsp), %rbp
+	.seh_setframe %rbp, 64
 	.seh_endprologue
 	movl	%ecx, -4(%rbp)
-	movq	$1, -16(%rbp)
-	movq	-16(%rbp), %rax
-	movslq	-4(%rbp), %rcx
-	cmpq	%rcx, %rax
-	sete	%al
-	andb	$1, %al
-	negb	%al
-	movb	%al, -17(%rbp)
-	movb	-17(%rbp), %al
-	movb	%al, -5(%rbp)
-	movb	-5(%rbp), %al
-	movb	$0, -18(%rbp)
-	cmpb	-18(%rbp), %al
-	je	.LBB1_2
-# %bb.1:                                # %.l0.carla.that
-	movl	$16, %eax
-	callq	__chkstk
-	subq	%rax, %rsp
-	movq	%rsp, %rax
-	movl	$2, (%rax)
-	movl	(%rax), %eax
-	movq	%rbp, %rsp
-	popq	%rbp
-	retq
-.LBB1_2:                                # %.l0.carla.else
+	movq	%rdx, -16(%rbp)
+	movl	$0, -24(%rbp)
+	movl	-24(%rbp), %eax
+	movl	-4(%rbp), %ecx
+	movl	%ecx, -32(%rbp)                 # 4-byte Spill
+	cmpl	%ecx, %eax
+	setg	%cl
+	movb	%cl, -25(%rbp)                  # 1-byte Spill
+	movl	%eax, -20(%rbp)
+.LBB1_1:                                # %.l0.carla.for_begin
+                                        # =>This Inner Loop Header: Depth=1
+	movb	-25(%rbp), %al                  # 1-byte Reload
+	movl	-20(%rbp), %ecx
+	movl	%ecx, -36(%rbp)                 # 4-byte Spill
+	testb	$1, %al
+	jne	.LBB1_2
 	jmp	.LBB1_3
-.LBB1_3:                                # %.l0.carla.end_root
+.LBB1_2:                                # %.l0.carla.for_check.grant
+                                        #   in Loop: Header=BB1_1 Depth=1
+	movl	-36(%rbp), %eax                 # 4-byte Reload
+	movl	-32(%rbp), %ecx                 # 4-byte Reload
+	cmpl	%ecx, %eax
+	jg	.LBB1_4
+	jmp	.LBB1_7
+.LBB1_3:                                # %.l0.carla.for_check.less
+                                        #   in Loop: Header=BB1_1 Depth=1
+	movl	-36(%rbp), %eax                 # 4-byte Reload
+	movl	-32(%rbp), %ecx                 # 4-byte Reload
+	cmpl	%ecx, %eax
+	jge	.LBB1_7
+.LBB1_4:                                # %.l0.carla.for_body
+                                        #   in Loop: Header=BB1_1 Depth=1
 	movl	$16, %eax
-	movq	%rax, -32(%rbp)                 # 8-byte Spill
+	movq	%rax, -64(%rbp)                 # 8-byte Spill
 	callq	__chkstk
 	subq	%rax, %rsp
 	movq	%rsp, %rax
-	leaq	.L.carla.static.str.1(%rip), %rcx
+	movq	-16(%rbp), %rcx
+	movslq	-20(%rbp), %rdx
+	movq	(%rcx,%rdx,8), %rcx
 	movq	%rcx, (%rax)
 	movq	(%rax), %rcx
 	subq	$32, %rsp
-	callq	person_t.falar
+	callq	output.print
+	movq	-64(%rbp), %rax                 # 8-byte Reload
 	addq	$32, %rsp
-                                        # kill: def $cl killed $al
-	movq	-32(%rbp), %rax                 # 8-byte Reload
+	callq	__chkstk
+	subq	%rax, %rsp
+	movb	-25(%rbp), %al                  # 1-byte Reload
+	movq	%rsp, %rcx
+	movq	$1, (%rcx)
+	movq	(%rcx), %rcx
+	movq	%rcx, -56(%rbp)                 # 8-byte Spill
+	movslq	-20(%rbp), %rcx
+	movq	%rcx, -48(%rbp)                 # 8-byte Spill
+	testb	$1, %al
+	jne	.LBB1_5
+	jmp	.LBB1_6
+.LBB1_5:                                # %.l0.carla.for_decrement
+                                        #   in Loop: Header=BB1_1 Depth=1
+	movq	-56(%rbp), %rcx                 # 8-byte Reload
+	movq	-48(%rbp), %rax                 # 8-byte Reload
+	subq	%rcx, %rax
+                                        # kill: def $eax killed $eax killed $rax
+	movl	%eax, -20(%rbp)
+	jmp	.LBB1_1
+.LBB1_6:                                # %.l0.carla.for_increment
+                                        #   in Loop: Header=BB1_1 Depth=1
+	movq	-56(%rbp), %rcx                 # 8-byte Reload
+	movq	-48(%rbp), %rax                 # 8-byte Reload
+	addq	%rcx, %rax
+                                        # kill: def $eax killed $eax killed $rax
+	movl	%eax, -20(%rbp)
+	jmp	.LBB1_1
+.LBB1_7:                                # %.l0.carla.for_end
+	movl	$16, %eax
 	callq	__chkstk
 	subq	%rax, %rsp
 	movq	%rsp, %rax
-	movl	$1, (%rax)
+	movl	$0, (%rax)
 	movl	(%rax), %eax
 	movq	%rbp, %rsp
 	popq	%rbp
@@ -539,14 +574,11 @@ heap.dump:                              # @heap.dump
                                         # -- End function
 	.section	.rdata,"dr"
 .L.carla.static.str.0:                  # @.carla.static.str.0
-	.asciz	"A pessoa esta falando: {s}"
-
-.L.carla.static.str.1:                  # @.carla.static.str.1
-	.asciz	"ola"
+	.asciz	"The argument is: {s}"
 
 	.lcomm	__local_stdio_printf_options._OptionsStorage,8,8 # @__local_stdio_printf_options._OptionsStorage
 	.addrsig
-	.addrsig_sym person_t.falar
+	.addrsig_sym output.print
 	.addrsig_sym putchar
 	.addrsig_sym malloc
 	.addrsig_sym free
@@ -562,5 +594,4 @@ heap.dump:                              # @heap.dump
 	.addrsig_sym stdio.println
 	.addrsig_sym heap.dump
 	.addrsig_sym .L.carla.static.str.0
-	.addrsig_sym .L.carla.static.str.1
 	.addrsig_sym __local_stdio_printf_options._OptionsStorage
