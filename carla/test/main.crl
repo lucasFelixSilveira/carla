@@ -1,20 +1,13 @@
 #include "stdio"
-#include "stdheap"
-#include "stdstring"
 
-struct output {
-  void print = (char* msg) our {
-    []byte buffer = heap::alloc(128); 
-    string::format(buffer, "The argument is: {s}", msg);
-    io::println(buffer);
-    heap::dump(buffer);
-  }
-} impl;
+struct person_t {} impl {
+  []ascii name;
+  []ascii name2;
+}
 
-int32 main = (int32 argc, []char* argv) {
-  for int32 i : 0..argc {
-    char* arg = argv[i];
-    output::print(arg);
-  }
-  return 0;
+int32 main = () {
+  person_t opa;
+  opa.name = "Lucas";
+  []ascii dawd = opa.name;
+  io::println(dawd);
 }

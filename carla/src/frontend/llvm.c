@@ -11,8 +11,11 @@
 #include "std.h"
 
 /**
-  TODO: For loops, while loops, INTER operator e WALRUS (not :=) operator
-  TODO: Auto-cast do resultado de uma expressão para o tipo correspondente ao da variável na qual é receptora
+  IMPORTANT: Auto-cast do resultado de uma expressão para o tipo correspondente ao da variável na qual é receptora
+    - tipo: int64 x = msg[0] ;
+      sendo msg []ascii
+    
+  TODO: Implement ASSIGNMENT_FIELD to NUMBERS and IDENTIFIERS in the expression place
 */
 
 int
@@ -59,6 +62,7 @@ int calli = 0;
 int debugid = 0;
 int lambda_counter = 0;
 char *lambda_name;
+int struct_i = 0;
 
 Vector structies;
 
@@ -274,7 +278,7 @@ llvm_type (char *type)
 void
 llvm_load_number(FILE *output, int bits, unsigned int to_load)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   fprintf (output, "%s%c%d = load i%d, ptr %c%d, align %d\n",
           tabs, '%',
@@ -289,7 +293,7 @@ llvm_load_number(FILE *output, int bits, unsigned int to_load)
 void
 llvm_alloca(FILE *output, PNode node)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   char *type = llvm_type (node.data.definition.type);
   fprintf (output, "%s%c%d = alloca %s, align %d\n",
@@ -305,7 +309,7 @@ llvm_alloca(FILE *output, PNode node)
 void
 llvm_alloca_t(FILE *output, char *__type)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   char *type = llvm_type (__type);
   fprintf (output, "%s%c%d = alloca %s, align %d\n",
@@ -342,7 +346,7 @@ backPtr(char *type)
 void
 llvm_store(FILE *output, PNode node, int __src_var__, int __dst_var__)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   char *type = llvm_type (node.data.definition.type);
   fprintf (output, "%sstore %s %c%d, ptr %c%d, align %d\n",
@@ -363,7 +367,7 @@ llvm_store_l(FILE *output, int bits, int original, uint32_t dist)
   if( original > (exponence(2, bits) / 2) - 1 )
     number = -(((exponence(2, bits) / 2)) - (number - ((exponence(2, bits) / 2))));
 
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   fprintf (output, "%sstore i%d %d, ptr %c%d, align %d\n",
           tabs,
@@ -429,7 +433,7 @@ llvm_get_f(Vector *vec, unsigned int id)
 void
 llvm_resize(FILE *output, unsigned int collect, char *type, Variable changable)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
 
   fprintf (output, "%s%c%d = ",
@@ -454,7 +458,7 @@ llvm_resize(FILE *output, unsigned int collect, char *type, Variable changable)
 void
 llvm_operation(FILE *output, char *operator, unsigned int left, unsigned int right)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
 
   fprintf (output, "%s%c%d = ",
@@ -499,7 +503,7 @@ llvm_label_id(FILE *output, unsigned int id, char *name)
 void
 llvm_br(FILE *output, unsigned int id, char *name)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   fprintf (output, "%sbr label %c.l%d.carla.%s\n",
           tabs, '%',
@@ -512,7 +516,7 @@ llvm_br(FILE *output, unsigned int id, char *name)
 void
 llvm_icmpbr(FILE *output, unsigned int icmp, unsigned int general_id, char *true_name, char *false_name)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
   fprintf (output, "%sbr i1 %c%d, label %c.l%d.carla.%s, label %c.l%d.carla.%s\n",
           tabs, '%',
@@ -528,7 +532,7 @@ llvm_icmpbr(FILE *output, unsigned int icmp, unsigned int general_id, char *true
 void
 llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
 
   fprintf (output, "%s%c%d = ",
@@ -556,7 +560,7 @@ llvm_resize_bits(FILE *output, unsigned int collect, char *type, char *change)
 void
 llvm_comp_bits(FILE *output, char bits, char *operator, unsigned int left, unsigned int right, char resize)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   genT (&tabs);
 
   fprintf (output, "%s%c%d = icmp ",
@@ -591,7 +595,7 @@ llvm_comp(FILE *output, char *operator, unsigned int left, unsigned int right)
 void
 llvm_load(FILE *output, Variable toLoad)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   char *type = llvm_type (toLoad.type);
   genT (&tabs);
   fprintf (output, "%s%c%d = load %s, ptr %c%d, align %d\n",
@@ -608,7 +612,7 @@ llvm_load(FILE *output, Variable toLoad)
 void
 llvm_getelementptr(FILE *output, ExprCache vec)
 {
-  char *tabs = (char*)malloc (1024);
+  char *tabs = (char*)malloc (8);
   char *type = llvm_type (vec.info.access.type);
   genT (&tabs);
   fprintf (output, "%s%c%d = getelementptr inbounds %s, %s %c%d, i64 %c%d\n",
@@ -621,6 +625,37 @@ llvm_getelementptr(FILE *output, ExprCache vec)
   );
   var++;
   free (type);
+  free (tabs);
+}
+
+void 
+llvm_access_field(FILE *output, unsigned int struct_id, unsigned int struct_ptr, int field)
+{
+  char *tabs = (char*)malloc (8);
+  genT (&tabs);
+  fprintf (output, "%s%c%d = getelementptr %c.carla.struct.%d, ptr %c%d, i32 0, i32 %d\n",
+          tabs, '%',
+          var, '%',
+          struct_id, '%', 
+          struct_ptr, 
+          field
+  );
+  var++;
+  free (tabs);
+}
+
+void
+llvm_load_field(FILE *output, Variable field, unsigned int access) 
+{
+  char *tabs = (char*)malloc (8);
+  genT (&tabs);
+  fprintf (output, "%s%c%d = load %s, ptr %c%d, align %d\n", 
+          tabs, '%', 
+          var++,
+          llvm_type (field.type), '%',
+          access, 
+          llvm_sizeof (llvm_type (field.type))
+  );
   free (tabs);
 }
 
@@ -655,6 +690,57 @@ llGenerate(FILE *output, Vector *pTree)
 
               switch (next.type)
                 {
+                  case NODE_FIELD_ACCESS:
+                    { i++;
+                      Variable str;
+                      VECTOR_FIND (Variable, &vars, id, next.data.value, &str);
+
+                      Structies result;
+                      VECTOR_FIND (Structies, &structies, struct_id, str.type, &result);
+
+                      PNode next_n = GET(pTree, i + 1);
+                      i++;
+
+                      switch(next_n.type)
+                        {
+                          case NODE_SINGLE:
+                            { Variable field;
+                              VECTOR_FIND_AND (Variable, &vars, id, next_n.data.single.data.value, __struct, str.type, &field);
+                              llvm_access_field (output, result.carla_id, str.llvm, field.struct_i); 
+                              llvm_load_field (output, field, (var-1));
+
+                              ExprCache resolve = cache[--clen];
+                              switch(resolve.type)
+                                {
+                                  case VAR_DECLARATION:
+                                    {
+                                      llvm_store (output, (PNode) {
+                                        .data.definition.type = field.type
+                                      }, (var-1), resolve.info.var.llvm);
+                                      goto finish;
+                                    } break;
+                                  default: break;
+                                }
+
+                            } break;
+
+                          case NODE_ASSIGNMENT:
+                            { Variable field;
+                              VECTOR_FIND_AND (Variable, &vars, id, next_n.data.value, __struct, str.type, &field);
+                              llvm_access_field (output, result.carla_id, str.llvm, field.struct_i); 
+                            
+                              cache[clen++] = (ExprCache) {
+                                .type       = ASSIGNMENT_FIELD,
+                                .info.llvm  = (var-1)
+                              };
+
+                              continue;
+                            } break;
+
+                          default: break;
+                        }
+                    } break;
+
                   case NODE_ACCESS:
                     {
                       i++;
@@ -915,7 +1001,7 @@ llGenerate(FILE *output, Vector *pTree)
                                 already_exist = (complement++);
                               }
 
-                            char *tabs = (char*)malloc (1024);
+                            char *tabs = (char*)malloc (8);
                             genT (&tabs);
 
                             fprintf (output, "%s%c%d = getelementptr inbounds [%d x i8], ptr @.carla.static.str.%d, i32 0, i32 0\n",
@@ -1044,7 +1130,7 @@ llGenerate(FILE *output, Vector *pTree)
                       if( resolve.type != FUNCTION_CALL )
                         goto __llvm_gen_error__;
 
-                      char *tabs = (char*)malloc (1024);
+                      char *tabs = (char*)malloc (8);
                       genT (&tabs);
                       if( strcmp (resolve.info.fn_call.type, "void") != 0 )
                         {
@@ -1119,7 +1205,7 @@ llGenerate(FILE *output, Vector *pTree)
                       {
                         clen--;
 
-                        char *tabs = (char*)malloc (1024);
+                        char *tabs = (char*)malloc (8);
                         genT (&tabs);
                         fprintf (output, "%sret %s %c%d\n",
                                 tabs,
@@ -1198,7 +1284,7 @@ llGenerate(FILE *output, Vector *pTree)
                   i += 2;
 
                   char *type = llvm_type (branch.data.definition.type);
-                  char *tabs = (char*)malloc (1024);
+                  char *tabs = (char*)malloc (8);
                   genT (&tabs);
                   tab++;
 
@@ -1346,7 +1432,9 @@ llGenerate(FILE *output, Vector *pTree)
 
               vector_push (&vars, ((void*)&(Variable) {
                 .__struct = strdup (struct_name),
+                .tab      = -1,
                 .v_type   = StructField,
+                .struct_i = struct_i++,
                 .type     = branch.data.definition.type,
                 .id       = branch.data.definition.id
               }));
@@ -1361,6 +1449,7 @@ llGenerate(FILE *output, Vector *pTree)
                   in_struct_fields = !in_struct_fields;
                   fprintf (output, " } ; Struct %s field types\n", struct_name);
                   struct_name = "";
+                  struct_i = 0;
                   continue;
                 }
 
@@ -1372,7 +1461,7 @@ llGenerate(FILE *output, Vector *pTree)
                   scope.type    == For
                   || scope.type == For_complex
                 ) ? 0 : 1;
-              char *tabs = (char*)malloc (1024);
+              char *tabs = (char*)malloc (8);
               genT (&tabs);
               if( tab == 0 )
                 var = 0;
@@ -1404,6 +1493,8 @@ llGenerate(FILE *output, Vector *pTree)
                       fprintf (output, "}\n; [CARLA DEBUG]: Tab n: %d", tab);
                       if( tab != 0 ) 
                         tab = 0;
+
+                      var = 0;
                     } break;
 
                   case Elif_scope:
@@ -1582,7 +1673,8 @@ llGenerate(FILE *output, Vector *pTree)
               int last = (vars.length - 1);
               Variable __var;
               while( last > 0 && (__var = GETNP(Variable, vars, last)).v_type == Normal && __var.tab > tab )
-                vector_remove (&vars, last--);
+                if( __var.v_type != StructField )
+                  vector_remove (&vars, last--);
 
               free (tabs);
 
@@ -1666,6 +1758,10 @@ llGenerate(FILE *output, Vector *pTree)
 
               in_struct = 1;
               struct_name = branch.data.value;
+              vector_push (&structies, ((void*)&(Structies) {
+                .carla_id = carla_id++,
+                .struct_id = struct_name
+              }));
             } break;
 
           case NODE_END_IMPLEMENT:
@@ -1680,21 +1776,13 @@ llGenerate(FILE *output, Vector *pTree)
                       if( fields.type != NODE_BEGIN )
                         goto __llvm_gen_error__;
 
-                      fprintf (output, "%c.carla.struct.%d = type { ", '%', carla_id);
-                      vector_push (&structies, ((void*)&(Structies) {
-                        .carla_id = carla_id++,
-                        .struct_id = struct_name
-                      }));
+                      fprintf (output, "\n%c.carla.struct.%d = type { ", '%', (carla_id-1));
                       in_struct_fields = 1;
                     } break;
                   
                   case NODE_BEGIN:
                     { in_struct_fields = 1;
-                      fprintf (output, "%c.carla.struct.%d = type { ", '%', carla_id);
-                      vector_push (&structies, ((void*)&(Structies) {
-                        .carla_id = carla_id++,
-                        .struct_id = struct_name
-                      }));
+                      fprintf (output, "\n%c.carla.struct.%d = type { ", '%', (carla_id-1));
                       continue;
                     } break;
 
@@ -1874,6 +1962,7 @@ llGenerate(FILE *output, Vector *pTree)
                 }
             } break;
 
+          case NODE_FIELD_ACCESS:
           case NODE_INTERNAL:
           case NODE_INTERNAL_SUPER:
           case NODE_INTERNAL_STRUCT:

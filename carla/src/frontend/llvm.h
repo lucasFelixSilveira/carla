@@ -51,6 +51,7 @@
     char *type;
     char *id;
     char public;
+    long struct_i;
   } Variable;
 
   typedef enum {
@@ -59,12 +60,14 @@
     RETURN_KEY,
     IF_KEY,
     ELIF_KEY,
-    VAR_DECLARATION
+    VAR_DECLARATION,
+    ASSIGNMENT_FIELD
   } eExprCache;
 
   typedef struct {
     eExprCache type;
     union {
+      unsigned int llvm;
       char nothing;
       PNode node;
       struct {

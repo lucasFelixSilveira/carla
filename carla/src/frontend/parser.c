@@ -164,7 +164,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
 
               if( first.type == Identifier && strcmp (GET(tks, i + 1).buffer, ".") == 0 ) 
                 {
-                  i += 2;
+                  i += 1;
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_FIELD_ACCESS,
                     .data.value = first.buffer
@@ -175,7 +175,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
 
               if( first.type == Identifier && strcmp (GET(tks, i + 1).buffer, "=") == 0 ) 
                 {
-                  i += 2;
+                  i += 1;
                   
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_ASSIGNMENT,

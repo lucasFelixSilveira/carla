@@ -1,4 +1,4 @@
-./target/out/out.exe 
+time ./target/out/out.exe 
 status=$?;
 echo
-read -p "LLVM: ---- Status code: $status"
+echo "LLVM: ---- Status code: $status"
