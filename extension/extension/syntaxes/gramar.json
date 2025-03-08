@@ -21,7 +21,12 @@
         {
             "name": "keyword.control.example",
             "font-style": "italic",
-            "match": "\\b(for|return|if|include|else|self|our|struct|impl|enum|const)\\b"
+            "match": "\\b(for|return|if|include|else|self|our|struct|impl|enum|const|bound|carla)\\b"
+        },
+        {
+            "name": "keyword.control.example",
+            "font-style": "italic",
+            "match": "carla[?][:](sizeof|typeof)"
         },
         {
             "name": "entity.name.function.example",

@@ -67,10 +67,11 @@ pNodes (Vector *root)
           case NODE_DEF_LIBC:
           case NODE_DEFINITION:
             {
-              printf ("|\t|-hopeful: %s\n|\t|-type: %s\n|\t|-id: %s\n", 
+              printf ("|\t|-hopeful: %s\n|\t|-type: %s\n|\t|-id: %s\n|\t|-bound: %s\n", 
                      (brench.data.definition.hopeful) ? "true" : "false",
                      brench.data.definition.type,
-                     brench.data.definition.id
+                     brench.data.definition.id,
+                     (brench.data.definition.is_bound) ? "true" : "false"
               );
             } break;
           case NODE_ACCESS:
@@ -89,6 +90,18 @@ pNodes (Vector *root)
             {
               printf ("|\t|-our: %s\n", 
                      (brench.data.our) ? "true" : "false"
+              );
+            } break;
+          case NODE_FIELD_ACCESS:
+            {
+              printf ("|\t|-access: %s\n", 
+                brench.data.value
+              );
+            } break;
+          case NODE_ASSIGNMENT:
+            {
+              printf ("|\t|-assignment: %s\n", 
+                brench.data.value
               );
             } break;
           case NODE_STRUCT:

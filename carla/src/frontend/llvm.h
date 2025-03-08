@@ -51,6 +51,7 @@
     char *type;
     char *id;
     char public;
+    char bounded;
     long struct_i;
   } Variable;
 

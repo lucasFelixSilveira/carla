@@ -68,6 +68,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
   Vector structs = vector_init (sizeof (CacheStructs));
   char lambda = 0;
   char impl = 0;
+  char is_bound = 0;
   char elements = 0;
   int i = 0;
   for(; i < tks->length; i++ ) 
@@ -109,6 +110,12 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
           case Keyword:
           case Identifier:
             {
+
+              if( first.type == Keyword && strcmp (first.buffer, "bound") == 0 )
+                {
+                  is_bound = 1;
+                  break;
+                }
 
               if( first.type == Keyword && strcmp (first.buffer, "return") == 0 )
                 {
@@ -207,6 +214,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                               .type = NODE_DEFINITION,
                               .data = {
                                 .definition = {
+                                  .is_bound = is_bound,
                                   .hopeful  = strcmp (final, "=") == 0,
                                   .iter     = strcmp (final, ":") == 0,
                                   .type     = first.buffer,
@@ -214,6 +222,8 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                                 }
                               }
                             }));
+                            
+                            is_bound = 0;
                           }
                       else
                         goto __cancel_parse__;

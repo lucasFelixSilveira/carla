@@ -40,6 +40,18 @@
       }                                                                        \
     }                                                                          \
   } while (0)
+# define VECTOR_FIND_GET_INDEX(type, pVector, field, value, pResult, pResultG)                     \
+  do {                                                                         \
+    size_t i = 0;                                                              \
+    for(; i < (pVector)->length; i++ ) {                                       \
+      char *current = ((type*)(pVector)->items)[i].field;                      \
+      if( strcmp (current, (value)) == 0 ) {                                   \
+        *(pResult) = ((type*)(pVector)->items)[i];                             \
+        *(pResultG) = i;                                                       \
+        break;                                                                 \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
 # define VECTOR_FIND_AND(type, pVector, field, value, field2, value2, pResult) \
   do {                                                                         \
     size_t i = 0;                                                              \

@@ -63,6 +63,7 @@ int debugid = 0;
 int lambda_counter = 0;
 char *lambda_name;
 int struct_i = 0;
+char *last_load;
 
 Vector structies;
 
@@ -78,6 +79,11 @@ int clen = 0;
 typedef struct {
   unsigned int root;
 } IfStatement;
+
+typedef struct {
+  char *name;
+  char *type;
+} BoundedField;
 
 int
 comp_get(Vector *vec, char *content) {
@@ -189,7 +195,7 @@ llvm_sizeof (char *type)
   if( strcmp (type, "ptr") == 0 )
     return 8;
 
-  return 8;
+  return startsWith(type, "%.carla.struct.") ? 8 : 0;
 }
 
 char *
@@ -596,6 +602,7 @@ void
 llvm_load(FILE *output, Variable toLoad)
 {
   char *tabs = (char*)malloc (8);
+  last_load = toLoad.type;
   char *type = llvm_type (toLoad.type);
   genT (&tabs);
   fprintf (output, "%s%c%d = load %s, ptr %c%d, align %d\n",
@@ -668,8 +675,12 @@ llGenerate(FILE *output, Vector *pTree)
   Vector retStack          = vector_init (sizeof (RetStack));
   Vector complements       = vector_init (sizeof (Complement));
   Vector ifstatements_root = vector_init (sizeof (IfStatement));
+  Vector bounded_vec       = vector_init (sizeof (BoundedField));
   
   structies                = vector_init (sizeof (Structies));
+  char *struct_type        = (char*)malloc (1024);
+  struct_type[0] = 0x0;
+
 
   char in_struct = 0;
   char in_struct_fields = 0;
@@ -700,45 +711,60 @@ llGenerate(FILE *output, Vector *pTree)
 
                       PNode next_n = GET(pTree, i + 1);
                       i++;
-
+                      
                       switch(next_n.type)
                         {
                           case NODE_SINGLE:
-                            { Variable field;
-                              VECTOR_FIND_AND (Variable, &vars, id, next_n.data.single.data.value, __struct, str.type, &field);
-                              llvm_access_field (output, result.carla_id, str.llvm, field.struct_i); 
-                              llvm_load_field (output, field, (var-1));
-
+                            { 
+                              printf ("\n\n; [CARLA DEBUG]: %s\n\n", "");
+                              Variable field;
+                              BoundedField bound;
+                              char _result = 0;
+                              VECTOR_CONTAINS (Variable, &vars, id, next_n.data.single.data.value, &_result);
+                              if( _result ) 
+                                {
+                                  VECTOR_FIND_AND (Variable, &vars, id, next_n.data.single.data.value, __struct, struct_name, &field);
+                                  llvm_access_field (output, result.carla_id, str.llvm, field.struct_i); 
+                                  llvm_load_field (output, field, (var-1));
+                                }
+                              else
+                                { 
+                                  int resultG = 0;
+                                  VECTOR_FIND_GET_INDEX (BoundedField, &bounded_vec, name, next_n.data.single.data.value, &bound, &resultG);
+                                  llvm_access_field (output, result.carla_id, str.llvm, resultG); 
+                                  llvm_load_field (output, (Variable) {
+                                    .type = bound.type
+                                  }, (var-1));
+                                }
                               ExprCache resolve = cache[--clen];
                               switch(resolve.type)
                                 {
                                   case VAR_DECLARATION:
                                     {
                                       llvm_store (output, (PNode) {
-                                        .data.definition.type = field.type
+                                        .data.definition.type = (_result) ? field.type : bound.type,
                                       }, (var-1), resolve.info.var.llvm);
                                       goto finish;
                                     } break;
                                   default: break;
                                 }
-
                             } break;
 
-                          case NODE_ASSIGNMENT:
-                            { Variable field;
-                              VECTOR_FIND_AND (Variable, &vars, id, next_n.data.value, __struct, str.type, &field);
-                              llvm_access_field (output, result.carla_id, str.llvm, field.struct_i); 
-                            
-                              cache[clen++] = (ExprCache) {
-                                .type       = ASSIGNMENT_FIELD,
-                                .info.llvm  = (var-1)
-                              };
+                            case NODE_ASSIGNMENT:
+                              { Variable field;
+                                VECTOR_FIND_AND (Variable, &vars, id, next_n.data.value, __struct, str.type, &field);
+                                llvm_access_field (output, result.carla_id, str.llvm, field.struct_i); 
+                              
+                                cache[clen++] = (ExprCache) {
+                                  .type       = ASSIGNMENT_FIELD,
+                                  .info.llvm  = (var-1)
+                                };
 
-                              continue;
-                            } break;
+                                continue;
+                              } break;
 
-                          default: break;
-                        }
+                            default: break;
+                          }
                     } break;
 
                   case NODE_ACCESS:
@@ -797,7 +823,7 @@ llGenerate(FILE *output, Vector *pTree)
                           int bytes = 0;
 
                           BEGIN_SWITCH(operator_data.buffer)
-                            CASE("==") bytes = 1; COMP_PRECOMPILATION(output, left == right);
+                            CASE("==")       bytes = 1; COMP_PRECOMPILATION(output, left == right);
                             BREAK_CASE("!=") bytes = 1; COMP_PRECOMPILATION(output, left != right);
                             BREAK_CASE(">=") bytes = 1; COMP_PRECOMPILATION(output, left >= right);
                             BREAK_CASE("<=") bytes = 1; COMP_PRECOMPILATION(output, left <= right);
@@ -847,7 +873,7 @@ llGenerate(FILE *output, Vector *pTree)
                             {
                               Variable id = llvm_get (&vars, left_data.buffer);
                               llvm_load (output, id);
-                              if( llvm_sizeof (id.type) != 8 )
+                              if( llvm_sizeof (llvm_type (id.type)) != 8 )
                                 llvm_resize_bits (output, (var-1), "int64", id.type);
                             }
                           else if( left_int )
@@ -864,7 +890,7 @@ llGenerate(FILE *output, Vector *pTree)
                             {
                               Variable id = llvm_get (&vars, right_data.buffer);
                               llvm_load (output, id);
-                              if( llvm_sizeof (id.type) != 8 )
+                              if( llvm_sizeof (llvm_type (id.type)) != 8 )
                                 llvm_resize_bits (output, (var-1), "int64", id.type);
                             }
                           else if( right_int )
@@ -890,6 +916,7 @@ llGenerate(FILE *output, Vector *pTree)
 
                             case ComparationOP:
                               {
+                                fprintf (output, "; where\n");
                                 llvm_alloca_t (output, "bool");
                                 llvm_comp (output, operator_data.buffer, left_var, right_var);
                                 llvm_store (output, (PNode) {
@@ -1232,6 +1259,7 @@ llGenerate(FILE *output, Vector *pTree)
                         {
                           case NODE_BEGIN:
                             { llvm_load_number (output, 8, resolve.info.var.llvm);
+
                               unsigned int __carla_boolean = (var-1);
 
                               llvm_alloca_t (output, "bool");
@@ -1398,15 +1426,26 @@ llGenerate(FILE *output, Vector *pTree)
 
               if(! in_struct_fields ) 
                 {
-                  vector_push (&vars, ((void*)&(Variable) {
-                    .v_type = Normal,
-                    .type   = branch.data.definition.type,
-                    .llvm   = var,
-                    .tab    = tab,
-                    .id     = branch.data.definition.id
-                  }));
+                  if(! branch.data.definition.is_bound ) 
+                    vector_push (&vars, ((void*)&(Variable) {
+                      .v_type  = Normal,
+                      .bounded = branch.data.definition.is_bound,
+                      .type    = branch.data.definition.type,
+                      .llvm    = var,
+                      .tab     = tab,
+                      .id      = branch.data.definition.id
+                    }));
 
-                  llvm_alloca (output, branch);
+                  if(! branch.data.definition.is_bound ) 
+                    llvm_alloca (output, branch);
+                  else 
+                    {
+                      vector_push (&bounded_vec, ((void*)&(BoundedField) {
+                        .name = branch.data.definition.id,
+                        .type = branch.data.definition.type
+                      }));
+                    }
+
                   if(! branch.data.definition.hopeful )
                     continue;
 
@@ -1423,11 +1462,13 @@ llGenerate(FILE *output, Vector *pTree)
                   goto wait_expr;
                 }
 
-              fprintf (output, "%s%s", 
+                int first = 1;
+
+              sprintf (struct_type, "%s%s%s", 
+                      struct_type,
                       (struct_fields_len > 0) ? ", " : "",
                       llvm_type (branch.data.definition.type)
               );
-
               struct_fields_len++;
 
               vector_push (&vars, ((void*)&(Variable) {
@@ -1447,7 +1488,8 @@ llGenerate(FILE *output, Vector *pTree)
               if( in_struct_fields )
                 {
                   in_struct_fields = !in_struct_fields;
-                  fprintf (output, " } ; Struct %s field types\n", struct_name);
+                  fprintf_start (output, struct_type);
+                  free (struct_type);
                   struct_name = "";
                   struct_i = 0;
                   continue;
@@ -1776,13 +1818,65 @@ llGenerate(FILE *output, Vector *pTree)
                       if( fields.type != NODE_BEGIN )
                         goto __llvm_gen_error__;
 
-                      fprintf (output, "\n%c.carla.struct.%d = type { ", '%', (carla_id-1));
+                      sprintf (struct_type, "\n%c.carla.struct.%d = type { ", '%', (carla_id-1));
+                      int iteration = 0;
+                      for(; iteration < bounded_vec.length; iteration++) 
+                        {
+                          BoundedField field = GETNP(BoundedField, bounded_vec, iteration);
+                          char result = 0; 
+                          VECTOR_CONTAINS (Variable, &vars, id, field.name, &result);
+
+                          if( result )
+                            continue;
+                            
+                          sprintf (struct_type, "%s%s%s", 
+                                  struct_type,
+                                  (struct_i == 0) ? "" : ", ",
+                                  llvm_type (field.type)
+                          );
+
+                          vector_push (&vars, ((void*)&(Variable) {
+                            .__struct = strdup (struct_name),
+                            .tab      = -1,
+                            .v_type   = StructField,
+                            .struct_i = struct_i++,
+                            .type     = field.type,
+                            .id       = field.name
+                          }));
+                          
+                        }
                       in_struct_fields = 1;
                     } break;
                   
                   case NODE_BEGIN:
                     { in_struct_fields = 1;
-                      fprintf (output, "\n%c.carla.struct.%d = type { ", '%', (carla_id-1));
+                      sprintf (struct_type, "\n%c.carla.struct.%d = type { ", '%', (carla_id-1));
+                      int iteration = 0;
+                      for(; iteration < bounded_vec.length; iteration++) 
+                        {
+                          BoundedField field = GETNP(BoundedField, bounded_vec, iteration);
+                          char result = 0; 
+                          VECTOR_CONTAINS (Variable, &vars, id, field.name, &result);
+
+                          if( result )
+                            continue;
+                            
+                          sprintf (struct_type, "%s%s%s", 
+                                  struct_type,
+                                  (struct_i == 0) ? "" : ", ",
+                                  llvm_type (field.type)
+                          );
+
+                          vector_push (&vars, ((void*)&(Variable) {
+                            .__struct = strdup (struct_name),
+                            .tab      = -1,
+                            .v_type   = StructField,
+                            .struct_i = struct_i++,
+                            .type     = field.type,
+                            .id       = field.name
+                          }));
+                          
+                        }
                       continue;
                     } break;
 

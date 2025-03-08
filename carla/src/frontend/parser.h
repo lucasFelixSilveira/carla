@@ -61,6 +61,7 @@
       char *value;
       struct {
         char  hopeful;
+        char  is_bound;
         char  iter;
         char *id;
         char *type;

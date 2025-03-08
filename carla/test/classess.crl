@@ -19,6 +19,6 @@ struct person_t {
 
 int32 main = () {
   person_t x;
-  x.name = "Lucas Silveira";
-  person_t::say(x, "Hello, world");
+  x.name = "Rebecca my love";
+  person_t::say(x, "Hello, world <3");
 }
