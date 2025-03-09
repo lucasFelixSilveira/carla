@@ -5,12 +5,12 @@
 struct person_t {
   bound []char name;
 
-  void say = (person_t self, []char msg) our {
-    []char person_name = self.name;
+  void say = (self, []char message) our {
     []char buffer = heap::alloc(128);
-    string::format(buffer, "{s} said: {s} - Made on Carla",
-      person_name,
-      msg
+    []char person_name = self.name; 
+    string::format(buffer, "{s}, Hello! U wanna say: {s}?", 
+                  person_name, 
+                  message
     );
     io::println(buffer);
     heap::dump(buffer);
@@ -18,7 +18,7 @@ struct person_t {
 } impl {};
 
 int32 main = () {
-  person_t x;
-  x.name = "Rebecca my love";
-  person_t::say(x, "Hello, world <3");
+  person_t pessoa;
+  pessoa.name = "Lucas";
+  pessoa:.say("I love coding in carla");
 }

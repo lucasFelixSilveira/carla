@@ -129,6 +129,7 @@ genT(char **tabs)
 Fn
 find_fn(PNode call, Vector *vars, char *__struct)
 {
+  char *instance = call.data.internal_struct.instance_id;
   int result = 0;
   if( call.type == NODE_INTERNAL )
     return std_fn (call);
@@ -168,6 +169,7 @@ find_fn(PNode call, Vector *vars, char *__struct)
                ? call.data.internal_struct.__struct 
                : "SUPER",
         .type = var.type,
+        .instance = instance,
         .args = ""
       };
     }
@@ -1159,6 +1161,14 @@ llGenerate(FILE *output, Vector *pTree)
 
                       char *tabs = (char*)malloc (8);
                       genT (&tabs);
+
+                      Variable _var;
+                      if( resolve.info.fn_call.instance != NULL )
+                        {
+                          VECTOR_FIND (Variable, &vars, id, resolve.info.fn_call.instance, &_var);
+                          llvm_load (output, _var);
+                        }
+
                       if( strcmp (resolve.info.fn_call.type, "void") != 0 )
                         {
                           fprintf (output, "%s%c%d = ",
@@ -1170,6 +1180,7 @@ llGenerate(FILE *output, Vector *pTree)
                         fprintf (output, "%s", tabs);
                       free (tabs);
 
+                      char o = 0;
                       if( strcmp (resolve.info.fn_call.lib, "SUPER") == 0 )
                         {
                           fprintf (output, "call %s @%s(",
@@ -1179,11 +1190,21 @@ llGenerate(FILE *output, Vector *pTree)
                         }
                       else
                         {
+
                           fprintf (output, "call %s @%s.%s(",
                                   llvm_type (resolve.info.fn_call.type),
                                   resolve.info.fn_call.lib,
                                   resolve.info.fn_call.id
                           );
+
+                          if( resolve.info.fn_call.instance != NULL ) 
+                            {
+                              fprintf(output, "%s %c%d",
+                                llvm_type (_var.type), '%',
+                                (strcmp (resolve.info.fn_call.type, "void") == 0) ? (var - 1) : (var - 2)
+                              );
+                              o = 1;
+                            } 
                         }
 
                       int j = 0;
@@ -1191,7 +1212,7 @@ llGenerate(FILE *output, Vector *pTree)
                       for(; j < cpy_alen && args[j].index == calli; j++ )
                         {
                           fprintf (output, "%s%s %c%d",
-                                  (j == 0) ? "" : ", ",
+                                  (!j) ? (o) ? ", " : "" : ", ",
                                   llvm_type (args[j].arg_type), '%',
                                   args[j].llvm
                           );

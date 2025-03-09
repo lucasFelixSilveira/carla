@@ -35,6 +35,7 @@ char *TType[] = {
   "NODE_INTERNAL_STRUCT",
   "NODE_FIELD_ACCESS",
   "NODE_ASSIGNMENT",
+  "NODE_METHOD",
   "NODE_EEXP"
 };
 

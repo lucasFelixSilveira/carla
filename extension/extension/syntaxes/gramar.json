@@ -25,6 +25,10 @@
         },
         {
             "name": "keyword.control.example",
+            "match": "[:][.]"
+        },
+        {
+            "name": "keyword.control.example",
             "font-style": "italic",
             "match": "carla[?][:](sizeof|typeof)"
         },

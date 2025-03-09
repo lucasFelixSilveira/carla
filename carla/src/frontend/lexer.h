@@ -7,6 +7,7 @@
   typedef enum {
     _NO__,
     ComparationOP,
+    MethodAccess,
     Identifier,
     BinaryOP,
     Keyword,

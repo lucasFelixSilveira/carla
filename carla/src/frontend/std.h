@@ -3,6 +3,7 @@
 # include "parser.h"
 
   typedef struct {
+    char *instance;
     char *type;
     char *lib;
     char *args;

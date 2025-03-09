@@ -6,6 +6,7 @@
 
   typedef struct {
     char *identifier;
+    char *_type;
   } CacheStructs;
 
   typedef enum {
@@ -35,6 +36,7 @@
     NODE_INTERNAL_STRUCT,
     NODE_FIELD_ACCESS,
     NODE_ASSIGNMENT,
+    NODE_METHOD,
     NODE_EEXPR
   } NodeType;
 
@@ -83,8 +85,10 @@
         char *lib;
       } internal;
       struct {
+        char *instance_id;
         char *__struct;
         char *fn;
+        char need_pass_the_instance;
       } internal_struct;
       char *super;
     } data;

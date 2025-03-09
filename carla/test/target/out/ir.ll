@@ -9,35 +9,35 @@ define void @person_t.say(%.carla.struct.0 %0, ptr %1) {
   store %.carla.struct.0 %0, ptr %3, align 8
   store ptr %1, ptr %4, align 8
   %5 = alloca ptr, align 8
-  %6 = getelementptr %.carla.struct.0, ptr %3, i32 0, i32 0
-  %7 = load ptr, ptr %6, align 8
-  store ptr %7, ptr %5, align 8
-  %8 = alloca ptr, align 8
 ; [CARLA DEBUG]: Function added to stack: alloc.
-  %9 = alloca i64, align 8
-  store i64 128, ptr %9, align 8
-  %10 = load i64, ptr %9, align 8
+  %6 = alloca i64, align 8
+  store i64 128, ptr %6, align 8
+  %7 = load i64, ptr %6, align 8
 ; [CARLA DEBUG]: The argument is a number
-  %11 = call ptr @heap.alloc(i64 %10)
+  %8 = call ptr @heap.alloc(i64 %7)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
-  store ptr %11, ptr %8, align 8
+  store ptr %8, ptr %5, align 8
+  %9 = alloca ptr, align 8
+  %10 = getelementptr %.carla.struct.0, ptr %3, i32 0, i32 0
+  %11 = load ptr, ptr %10, align 8
+  store ptr %11, ptr %9, align 8
 ; [CARLA DEBUG]: Function added to stack: format.
-  %12 = load ptr, ptr %8, align 8
+  %12 = load ptr, ptr %5, align 8
   %13 = alloca ptr, align 8
-  %14 = getelementptr inbounds [30 x i8], ptr @.carla.static.str.0, i32 0, i32 0
+  %14 = getelementptr inbounds [29 x i8], ptr @.carla.static.str.0, i32 0, i32 0
   store ptr %14, ptr %13, align 8
   %15 = load ptr, ptr %13, align 8
 ; [CARLA DEBUG]: The argument is a text
-  %16 = load ptr, ptr %5, align 8
+  %16 = load ptr, ptr %9, align 8
   %17 = load ptr, ptr %4, align 8
   %18 = call i32 @string.format(ptr %12, ptr %15, ptr %16, ptr %17)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
 ; [CARLA DEBUG]: Function added to stack: println.
-  %19 = load ptr, ptr %8, align 8
+  %19 = load ptr, ptr %5, align 8
   %20 = call i32 @stdio.println(ptr %19)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
 ; [CARLA DEBUG]: Function added to stack: dump.
-  %21 = load ptr, ptr %8, align 8
+  %21 = load ptr, ptr %5, align 8
   call void @heap.dump(ptr %21)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
   ret void
@@ -47,24 +47,39 @@ define i32 @main() {
 entry:
   %1 = alloca %.carla.struct.0, align 8
   %2 = getelementptr %.carla.struct.0, ptr %1, i32 0, i32 0
-  %3 = getelementptr inbounds [15 x i8], ptr @.carla.static.str.1, i32 0, i32 0
+  %3 = getelementptr inbounds [12 x i8], ptr @.carla.static.str.1, i32 0, i32 0
   store ptr %3, ptr %2, align 8
 ; [CARLA DEBUG]: Function added to stack: say.
-  %4 = load %.carla.struct.0, ptr %1, align 8
-  %5 = alloca ptr, align 8
-  %6 = getelementptr inbounds [13 x i8], ptr @.carla.static.str.2, i32 0, i32 0
-  store ptr %6, ptr %5, align 8
-  %7 = load ptr, ptr %5, align 8
+  %4 = alloca ptr, align 8
+  %5 = getelementptr inbounds [12 x i8], ptr @.carla.static.str.2, i32 0, i32 0
+  store ptr %5, ptr %4, align 8
+  %6 = load ptr, ptr %4, align 8
 ; [CARLA DEBUG]: The argument is a text
-  call void @person_t.say(%.carla.struct.0 %4, ptr %7)
+  %7 = load %.carla.struct.0, ptr %1, align 8
+  call void @person_t.say(%.carla.struct.0 %7, ptr %6)
+; [CARLA DEBUG]: 0 items remaining in the stack.
+  %8 = alloca %.carla.struct.0, align 8
+  %9 = getelementptr %.carla.struct.0, ptr %8, i32 0, i32 0
+  %10 = getelementptr inbounds [15 x i8], ptr @.carla.static.str.3, i32 0, i32 0
+  store ptr %10, ptr %9, align 8
+; [CARLA DEBUG]: Function added to stack: say.
+  %11 = alloca ptr, align 8
+  %12 = getelementptr inbounds [13 x i8], ptr @.carla.static.str.4, i32 0, i32 0
+  store ptr %12, ptr %11, align 8
+  %13 = load ptr, ptr %11, align 8
+; [CARLA DEBUG]: The argument is a text
+  %14 = load %.carla.struct.0, ptr %8, align 8
+  call void @person_t.say(%.carla.struct.0 %14, ptr %13)
 ; [CARLA DEBUG]: 0 items remaining in the stack.
 ; [CARLA DEBUG]: Default success return, in case the return is not done manually.
   ret i32 0
 }
 ; [CARLA DEBUG]: Tab n: 1
-@.carla.static.str.0 = private constant [30 x i8] c"{s} said: {s} - Made on Carla\00", align 1
-@.carla.static.str.1 = private constant [15 x i8] c"Lucas Silveira\00", align 1
-@.carla.static.str.2 = private constant [13 x i8] c"Hello, world\00", align 1
+@.carla.static.str.0 = private constant [29 x i8] c"{s}, Hello! I wanna say: {s}\00", align 1
+@.carla.static.str.1 = private constant [12 x i8] c"Boshimatrix\00", align 1
+@.carla.static.str.2 = private constant [12 x i8] c"Que doidera\00", align 1
+@.carla.static.str.3 = private constant [15 x i8] c"Lucas Silveira\00", align 1
+@.carla.static.str.4 = private constant [13 x i8] c"Eh elA porra\00", align 1
 
 ; Extern functions
 declare i32 @puts(ptr)

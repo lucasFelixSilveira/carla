@@ -36,6 +36,8 @@ ismatch (char c1, char c2)
     return ComparationOP;
   else if( c1 == ':' && c2 == ':' ) 
     return Quad;
+  else if( c1 == ':' && c2 == '.' ) 
+    return MethodAccess;
   else if( c1 == '+' && c2 == '=' ) 
     return MathOP;
   else if( c1 == '-' && c2 == '=' ) 

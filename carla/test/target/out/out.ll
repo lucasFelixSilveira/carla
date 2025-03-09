@@ -13,37 +13,33 @@ $_vsnprintf_l = comdat any
 
 $__local_stdio_printf_options = comdat any
 
-@.carla.static.str.0 = private constant [30 x i8] c"{s} said: {s} - Made on Carla\00", align 1
-@.carla.static.str.1 = private constant [15 x i8] c"Lucas Silveira\00", align 1
-@.carla.static.str.2 = private constant [16 x i8] c"Hello, world <3\00", align 1
+@.carla.static.str.0 = private constant [12 x i8] c"{s}, Hello!\00", align 1
+@.carla.static.str.1 = private constant [12 x i8] c"Boshimatrix\00", align 1
 @__local_stdio_printf_options._OptionsStorage = internal global i64 0, align 8
 
-define void @person_t.say(%.carla.struct.0 %0, ptr %1) local_unnamed_addr {
+; Function Attrs: nounwind
+define void @person_t.say(%.carla.struct.0 %0, ptr nocapture readnone %1) local_unnamed_addr #0 {
   %.fca.0.extract = extractvalue %.carla.struct.0 %0, 0
   %3 = tail call noalias noundef dereferenceable_or_null(128) ptr @malloc(i64 128)
-  %4 = tail call i32 (ptr, ptr, ...) @string.format(ptr %3, ptr nonnull @.carla.static.str.0, ptr %.fca.0.extract, ptr %1)
+  %4 = tail call i32 (ptr, ptr, ...) @string.format(ptr nonnull @.carla.static.str.0, ptr %.fca.0.extract)
   %5 = tail call i32 @puts(ptr nonnull dereferenceable(1) %3)
-  %6 = tail call ptr @free(ptr %3)
   ret void
 }
 
-define noundef i32 @main() local_unnamed_addr {
+; Function Attrs: nounwind
+define noundef i32 @main() local_unnamed_addr #0 {
 entry:
   %0 = tail call noalias noundef dereferenceable_or_null(128) ptr @malloc(i64 128)
-  %1 = tail call i32 (ptr, ptr, ...) @string.format(ptr %0, ptr nonnull @.carla.static.str.0, ptr nonnull @.carla.static.str.1, ptr nonnull @.carla.static.str.2)
+  %1 = tail call i32 (ptr, ptr, ...) @string.format(ptr nonnull @.carla.static.str.0, ptr nonnull @.carla.static.str.1)
   %2 = tail call i32 @puts(ptr nonnull dereferenceable(1) %0)
-  %3 = tail call ptr @free(ptr %0)
   ret i32 0
 }
 
 ; Function Attrs: nofree nounwind
-declare noundef i32 @puts(ptr nocapture noundef readonly) local_unnamed_addr #0
+declare noundef i32 @puts(ptr nocapture noundef readonly) local_unnamed_addr #1
 
 ; Function Attrs: mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite)
-declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #1
-
-; Function Attrs: mustprogress nounwind willreturn allockind("free") memory(argmem: readwrite, inaccessiblemem: readwrite)
-declare void @free(ptr allocptr nocapture noundef) local_unnamed_addr #2
+declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #2
 
 ; Function Attrs: mustprogress nofree nounwind willreturn memory(inaccessiblemem: readwrite)
 define noalias noundef ptr @heap.alloc(i64 %0) local_unnamed_addr #3 {
@@ -213,25 +209,18 @@ define linkonce_odr dso_local ptr @__local_stdio_printf_options() local_unnamed_
 }
 
 ; Function Attrs: nofree nounwind
-define void @stdio.println(ptr nocapture readonly %0) local_unnamed_addr #0 {
+define void @stdio.println(ptr nocapture readonly %0) local_unnamed_addr #1 {
 entry:
   %1 = tail call i32 @puts(ptr nonnull dereferenceable(1) %0)
   ret void
 }
 
-; Function Attrs: mustprogress willreturn memory(argmem: readwrite, inaccessiblemem: readwrite)
-define void @heap.dump(ptr %0) local_unnamed_addr #9 {
-  %2 = tail call ptr @free(ptr %0)
-  ret void
-}
-
-attributes #0 = { nofree nounwind }
-attributes #1 = { mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite) "alloc-family"="malloc" }
-attributes #2 = { mustprogress nounwind willreturn allockind("free") memory(argmem: readwrite, inaccessiblemem: readwrite) "alloc-family"="malloc" }
+attributes #0 = { nounwind }
+attributes #1 = { nofree nounwind }
+attributes #2 = { mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite) "alloc-family"="malloc" }
 attributes #3 = { mustprogress nofree nounwind willreturn memory(inaccessiblemem: readwrite) }
 attributes #4 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
 attributes #5 = { mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: readwrite) }
 attributes #6 = { noinline nounwind optnone uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #7 = { mustprogress nocallback nofree nosync nounwind willreturn }
 attributes #8 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #9 = { mustprogress willreturn memory(argmem: readwrite, inaccessiblemem: readwrite) }

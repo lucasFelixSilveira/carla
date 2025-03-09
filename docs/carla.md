@@ -9,7 +9,7 @@
 # Running carla
 <img src="https://imgur.com/fYPOwrC.png" height="500px">
 
-</div>
+</div>w
 
 # Language structure
 
@@ -40,6 +40,67 @@ struct person {
   char* name;  
 };    
 ```
+
+- `bound` is used when the field needs to be accessible to the sound code block of the struct (First block). Example:
+
+this will give error:
+```carla
+#include "stdio"
+#include "stdheap"
+#include "stdstring"
+
+struct person_t {
+  void say = (self, []char message) our {
+    []char buffer = heap::alloc(128);
+    []char person_name = self.name; 
+    string::format(buffer, "{s}, Hello! You wanna say: '{s}'?", 
+                  person_name, 
+                  message
+    );
+    io::println(buffer);
+    heap::dump(buffer);
+  }
+} impl {
+  []char name;
+};
+
+int32 main = () {
+  person_t person;
+  person.name = "Lucas";
+  person:.say("I love coding");
+}
+```
+
+this will not give an error:
+```carla
+#include "stdio"
+#include "stdheap"
+#include "stdstring"
+
+struct person_t {
+  bound []char name;
+  void say = (self, []char message) our {
+    []char buffer = heap::alloc(128);
+    []char person_name = self.name; 
+    string::format(buffer, "{s}, Hello! You wanna say: '{s}'?", 
+                  person_name, 
+                  message
+    );
+    io::println(buffer);
+    heap::dump(buffer);
+  }
+} impl {};
+
+int32 main = () {
+  person_t person;
+  person.name = "Lucas";
+  person:.say("I love coding");
+}
+```
+
+## The Reason
+The reason is because the bound makes the field belong to the instance, but also belong to the dynamic part of the dynamic block. This serves to block access, even from the instance itself, to fields that the dynamic block does not need to have the address of.
+
 
 - Struct without additional content, clean.
 ```carla
@@ -88,6 +149,14 @@ super::func(arguments...);
 
 -- Or you can use (if the function has inside of a module / struct implementation):
 id::func(arguments...);
+
+-- If you want to statically call a dynamic method:
+class::method(instance)
+
+-- To access a dynamic method:
+class::instance::method()
+-- or 
+instance:.method()
 ```
 - Since the first identifier is the identifier of a function, you can enter other identifiers, where the arguments will be. When anything else, if not an identifier, is identified, the call is cut off and it is finally executed.
 

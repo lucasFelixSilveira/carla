@@ -62,10 +62,21 @@ isStruct(char *buffer, Vector *strucies)
   return result;
 }
 
+char 
+isVarType(char *buffer, Vector *variables) 
+{
+  char result = 0;
+  VECTOR_CONTAINS (CacheStructs, variables, identifier, buffer, &result);
+
+  return result;
+}
+
 void 
 tGenerate(Vector *tree, Vector *tks, Vector *libs) 
 {
   Vector structs = vector_init (sizeof (CacheStructs));
+  Vector struct_vars = vector_init (sizeof (CacheStructs));
+  char *struct_type_name = NULL;
   char lambda = 0;
   char impl = 0;
   char is_bound = 0;
@@ -155,6 +166,9 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
 
               if( first.type == Keyword && strcmp (first.buffer, "struct") == 0 )
                 {
+                  if( struct_type_name != NULL )
+                    goto __cancel_parse__;
+
                   i++;
                   char *id = GET(tks, i++).buffer;
                   vector_push (tree, ((void*)&(PNode) {
@@ -166,7 +180,27 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     .identifier = id
                   }));
 
+                  struct_type_name = id;
+
                   continue;
+                }
+              
+              if( first.type == Identifier && strcmp (first.buffer, "self") == 0 && lambda )
+                {
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_DEFINITION,
+                    .data = {
+                      .definition = {
+                        .type     = strdup (struct_type_name),
+                        .id       = "self",
+                        .is_bound = 0,
+                        .hopeful  = 0
+                      }
+                    }
+                  }));
+
+                  struct_type_name = NULL;
+                  break;
                 }
 
               if( first.type == Identifier && strcmp (GET(tks, i + 1).buffer, ".") == 0 ) 
@@ -191,7 +225,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                  
                   continue;
                 }
-
+              
               if( first.type == Type || isType (first.buffer) || (isStruct(first.buffer, &structs) && strcmp (GET(tks, i + 1).buffer, "::") != 0 ) )
                 {
                   i++;
@@ -222,6 +256,11 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                                 }
                               }
                             }));
+
+                            vector_push (&struct_vars, ((void*)&(CacheStructs) {
+                              .identifier = id.buffer,
+                              ._type = first.buffer
+                            }));
                             
                             is_bound = 0;
                           }
@@ -238,11 +277,10 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   break;
                 }
 
-
-
               Token next = GET(tks, i + 1);
               Token after = GET(tks, i + 2);
               Token parenthesis = GET(tks, i + 3);
+              Token method = GET(tks, i + 4);
               if(
                 (
                   first.type == Identifier 
@@ -251,7 +289,15 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     && strcmp (first.buffer, "super") == 0
                   ) 
                 ) 
-                && next.type == Quad && after.type == Identifier && parenthesis.type == Unknown && parenthesis.buffer[0] == '(' 
+                && (
+                  next.type     == Quad 
+                  || next.type  == MethodAccess 
+                ) 
+                && after.type == Identifier 
+                && ((
+                  parenthesis.type == Unknown 
+                  && parenthesis.buffer[0] == '('
+                ) || parenthesis.type == MethodAccess)
               ) {
                   i += 3;
 
@@ -264,12 +310,44 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                       break;
                     }
 
-                  if( isStruct(first.buffer, &structs) )
+                  if( isVarType (first.buffer, &struct_vars) )
                     {
+                      CacheStructs str;
+                      VECTOR_FIND(CacheStructs, &struct_vars, identifier, first.buffer, &str);
+
                       vector_push (tree, ((void*)&(PNode) {
                         .type = NODE_INTERNAL_STRUCT,
-                        .data.internal_struct.__struct = first.buffer,
-                        .data.internal_struct.fn = after.buffer
+                        .data.internal_struct = {
+                          .need_pass_the_instance = 1,
+                          .instance_id = first.buffer,
+                          .__struct    = str._type,
+                          .fn          = after.buffer,
+                        }
+                      }));
+
+                      break;
+                    }
+
+                  if( isStruct (first.buffer, &structs) )
+                    {
+                      char *instance = NULL;
+                      char need_self = 0;
+                      char *direct_method_or_class_method = after.buffer;
+                      if( parenthesis.type == MethodAccess )
+                        { 
+                          instance = direct_method_or_class_method;
+                          need_self = 1;
+                          direct_method_or_class_method = method.buffer;
+                        }
+
+                      vector_push (tree, ((void*)&(PNode) {
+                        .type = NODE_INTERNAL_STRUCT,
+                        .data.internal_struct = {
+                          .need_pass_the_instance = need_self,
+                          .instance_id = instance,
+                          .__struct    = first.buffer,
+                          .fn          = direct_method_or_class_method,
+                        }
                       }));
                       
                       break;
