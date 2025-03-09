@@ -41,7 +41,7 @@ struct person {
 };    
 ```
 
-- `bound` is used when the field needs to be accessible to the sound code block of the struct (First block). Example:
+- `bound` is used when the field needs to be accessible to the dynamic code block of the struct (first block). Example:
 
 this will give error:
 ```carla
