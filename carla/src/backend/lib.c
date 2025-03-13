@@ -5,9 +5,44 @@
 #define GET(type, vector, index) ((type*)vector->items)[index]
 #if _WIN32
 # define PATH_SEPARATOR '\\'
+#include <windows.h>
+void remove_file(char *path);
+char* 
+getAbsolute() 
+{
+  char *path = (char*)malloc(1024);
+  DWORD result = GetModuleFileName(NULL, path, MAX_PATH);
+  remove_file(path);
+  return path;
+}
 #else
 # define PATH_SEPARATOR '/'
+#include <unistd.h>
+void remove_file(char *path);
+char* 
+getAbsolute() 
+{
+  char *path = (char*)malloc(1024);
+  ssize_t len = readlink("/proc/self/exe", path, sizeof(path)-1);
+  path[len] = '\0'; 
+  remove_file(path);
+  return path;
+}
 #endif
+
+void 
+remove_file(char *path) 
+{
+  char *last_slash = strrchr(path, '/'); 
+  
+  if (last_slash == NULL) {
+    last_slash = strrchr(path, '\\'); 
+  }
+
+  if (last_slash != NULL) {
+    *last_slash = '\0';
+  }
+}
 
 void
 putin(FILE *llvm, Vector *libs, char exec_dir[])
@@ -32,7 +67,7 @@ putin(FILE *llvm, Vector *libs, char exec_dir[])
       if( library.is )
         {
           sprintf (origin_path, "%s%clib%c%s%c%s.ll", 
-                  exec_path,
+                  getAbsolute(),
                   PATH_SEPARATOR,
                   PATH_SEPARATOR,
                   library.lib,
@@ -43,7 +78,7 @@ putin(FILE *llvm, Vector *libs, char exec_dir[])
       else
         {
           sprintf (origin_path, "%s%clib%c%s%cinit.ll", 
-                  exec_path,
+                  getAbsolute(),
                   PATH_SEPARATOR,
                   PATH_SEPARATOR,
                   library.lib,

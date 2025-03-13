@@ -1,9 +1,8 @@
 use std::path::PathBuf;
-use std::{env, fs, thread, time};
+use std::{env, fs};
 use std::process::{Command, Stdio};
 use std::iter::{Enumerate, Skip};
 use std::slice::Iter;
-use std::sync::{Arc, Mutex};
 
 #[inline]
 fn cli_error(msg: &str) {
@@ -27,6 +26,7 @@ fn main() {
     match doing.as_str() {
       "compile" => {
         let mut main: &String = &String::from("main.crl");
+        let mut output: String = String::new();
 
         if arguments.len() > 1 {
           let maybe_flags: Enumerate<Skip<Iter<'_, String>>> = arguments.iter().skip(1).enumerate();
@@ -38,6 +38,11 @@ fn main() {
             match argument.as_str() {
               "--main" | "-m" => {
                 main = &flags[index + 1];
+                skip = true;
+                continue
+              }
+              "--output" | "-o" => {
+                output = flags[index + 1].clone();
                 skip = true;
                 continue
               }
@@ -55,32 +60,14 @@ fn main() {
           return;
         }
 
-        let stop_flag = Arc::new(Mutex::new(false));  
+        print!("Generating the LLVM code");
 
-        let stop_flag_clone = Arc::clone(&stop_flag);
-        let task = thread::spawn(move || {
-          let positions: Vec<char> = vec!['|', '/', '-', '\\', '|', '/', '-', '\\'];
-          let qpos: usize = positions.len();
-          let mut c: usize = 0; 
-          loop {
-            thread::sleep(time::Duration::from_millis(50));
-            if *stop_flag_clone.lock().unwrap() {
-              break;
-            }
-
-            let position: char = positions[c];
-            if c == qpos - 1 { c = 0; } else { c += 1; }
-
-            print!("{position} Compiling...\r");
-          }
-        });
-
-        let result = 
+        let mut result = 
           Command::new(runner)
             .args(if cfg!(target_os = "windows") {
-                vec!["/C", "carlac", "main"]
+              vec!["/C", "carlac", main]
             } else {
-                vec!["-c", "carlac main"]
+              vec!["-c", "carlac", main]
             })
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -88,17 +75,66 @@ fn main() {
 
         match result {
           Ok(mut child) => {
+            print!(" - Success\nCompiling");
+            
             let _ = child.wait(); 
 
-            let mut flag = stop_flag.lock().unwrap();
-            *flag = true;
+            let out_folder: String = [cwd, std::path::MAIN_SEPARATOR_STR, "target", std::path::MAIN_SEPARATOR_STR, "out"].concat();
+            let ir_file: String = [&out_folder, std::path::MAIN_SEPARATOR_STR, "ir.ll"].concat();
+            let exe_file: String = [&out_folder, std::path::MAIN_SEPARATOR_STR, "out"].concat();
 
-            println!("Your project has been compiled!")
+            let mut compilation_call: Vec<&str> = Vec::new(); 
+
+            /* Std flags */
+            compilation_call.push(if cfg!(target_os = "windows") { "/C" } else { "-C"});
+            compilation_call.push("clang");
+            compilation_call.push(&ir_file);
+
+            /* Ouput flags */
+            compilation_call.push("-o");
+            compilation_call.push(if! output.is_empty() { &output } else { &exe_file });
+
+            /* Optimization flags */
+            compilation_call.push("-O3");
+            compilation_call.push("-march=native");
+            compilation_call.push("-mtune=native");
+            compilation_call.push("-ftree-slp-vectorize");
+            compilation_call.push("-fvisibility=hidden");
+            compilation_call.push("-ftree-vectorize");
+            compilation_call.push("-fno-math-errno");
+            compilation_call.push("-fomit-frame-pointer");
+            compilation_call.push("-ffast-math");
+            compilation_call.push("-fopenmp");
+            compilation_call.push("-fvectorize");
+            compilation_call.push("-fprofile-arcs");
+            compilation_call.push("-ftest-coverage");
+            compilation_call.push("-mavx512f");
+            compilation_call.push("-mavx2");
+            compilation_call.push("-Ofast");
+            compilation_call.push("-funroll-loops");
+
+            result = 
+              Command::new(runner)
+                .args(if cfg!(target_os = "windows") {
+                  compilation_call
+                } else {
+                  compilation_call
+                })
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn();
+
+            match result {
+              Ok(mut child) => {
+                let _ = child.wait(); 
+                  println!(" - Success\nYour project has been compiled!");
+              }
+              Err(e) => eprintln!("Fail to compile! Error on call the clang: {}", e)
+            }
+
           }
           Err(e) => eprintln!("Fail to compile! Error on call the process: {}", e),
         }
-
-        let _ = task.join();
 
       }
       "help" => {
@@ -106,7 +142,8 @@ fn main() {
           concat!(
             "carla [action] [flags](optional)\n",
             " actions:\n",
-            "\t- compile: (Possible flags) --main (alias -m)"
+            "\t- compile: (Possible flags) --main (alias -m)",
+            "\t                          | --output (alias -o)"
           )
         );
       }
