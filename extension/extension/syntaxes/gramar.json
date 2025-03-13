@@ -37,6 +37,10 @@
             "match": "\\b([a-zA-Z0-9][a-zA-Z0-9]*)(?=\\s*\\()"
         },
         {
+            "name": "entity.name.function.example",
+            "match": "[A-Z][a-zA-Z0-9]*"
+        },
+        {
             "name": "keyword.operator.example",
             "match": "[=:\\?]+",
             "captures": {

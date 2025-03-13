@@ -9,6 +9,7 @@
     ComparationOP,
     MethodAccess,
     Identifier,
+    EnumType,
     BinaryOP,
     Keyword,
     Integer,
@@ -26,6 +27,8 @@
   
   typedef struct {
     char *buffer;
+    char *def;
+    char *sub;
     TokenType type;
     size_t real;
   } Token;

@@ -26,7 +26,7 @@ int
 isCarla(char *__file__)
 {
   // char sufix[6] = { 'a', 'l', 'r', 'a', 'c', '.' }; // .CARLA
-  char sufix[3] = { 'l', 'c', '.' }; // .cl
+  char sufix[4] = { 'l', 'r', 'c', '.' }; // .crl
   size_t length = strlen (__file__);
   int i = 0;
   for(; i < sizeof (sufix); i++ ) 
@@ -56,7 +56,7 @@ carla_project(char **output_file)
   MKDIR (dir_name);
 
   // Output LLVM file directory
-  sprintf (dir_name, "%s%s%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll");
+  sprintf (dir_name, "%s%s%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll\0");
   memcpy (*output_file, dir_name, strlen (dir_name));
 
   // Output folder to .exe and llvm file

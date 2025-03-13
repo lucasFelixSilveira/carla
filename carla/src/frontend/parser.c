@@ -9,27 +9,6 @@
 
 #define GET(vector, index) ((Token*)vector->items)[index]
 
-/*
-  Expressions
-  |
-  |- (EXTERN) ?
-  |- | Type -> Definition
-  |       |- Identifier -> Optional[=]
-  |       |           |- =
-  |       |           |- ;
-  |       |           |- END <- NEED BE A LIBC FUNCTION
-  |       |           |- , <- NEED BE A LAMBDA ARGUMENT
-  |
-  |- Keyword -> Magic
-  |        |- Expression -> Boolean
-  |
-  |- Expression -> (FunctionCall | Expression) 
-  |
-  |- /[(](\w|\W)*[{]$/ -> Lambda 
-  |                            |- Definitions (arguments)
-  |                            |            |- Begin  
-*/
-
 #define BEGIN_SWITCH(str)    { char *_switch_str = str;
 #define CASE(val)            if( strcmp (_switch_str, (val)) == 0 ) {
 #define BREAK_CASE(val)      } else if( strcmp (_switch_str, (val)) == 0 ) {
@@ -170,6 +149,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     goto __cancel_parse__;
 
                   i++;
+                  printf ("struct");
                   char *id = GET(tks, i++).buffer;
                   vector_push (tree, ((void*)&(PNode) {
                     .type = NODE_STRUCT,
@@ -547,6 +527,49 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                     } 
                 }
             }
+          case EnumType:
+            {
+              if( GET(tks, i + 1).buffer[0] == '=' && GET(tks, i + 2).buffer[0] == '{' )
+                {
+                  i += 2;
+                  char *integer = first.sub;
+                  char *definition = first.def;
+
+                  Vector fields = vector_init (sizeof (EnumFieldName));
+                  while(1) 
+                    {
+                      Token identifier = GET(tks, i + 1);
+                      Token comma = GET(tks, i + 2);
+                      i += 2;
+                      char byte = identifier.buffer[0];
+                      if( identifier.type == Identifier && byte >= 0x41 && byte <= 0x5a ) 
+                        vector_push(&fields, ((void*)&(EnumFieldName) {
+                          .identifier = identifier.buffer
+                        }));
+                      
+                      char ch = comma.buffer[0];
+                      if( ch == '}' ) 
+                        break;
+                      
+                      if ( ch != ',' )
+                        goto __cancel_parse__;
+                        
+                    }
+
+                  vector_push (tree, ((void*)&(PNode) {
+                    .type = NODE_ENUM,
+                    .data = {
+                      .enumerator = {
+                        .ctx.integer_t  = integer,
+                        .ctx.definition = definition,
+                        .pFields        = &fields
+                      }
+                    }
+                  }));
+                  
+                  continue;
+                }
+            } break;
           default: break;
         }
     }

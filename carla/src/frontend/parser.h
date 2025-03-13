@@ -9,6 +9,10 @@
     char *_type;
   } CacheStructs;
 
+  typedef struct {
+    char *identifier;
+  } EnumFieldName;
+
   typedef enum {
     NODE_NUMBER,
     NODE_ID,
@@ -37,6 +41,7 @@
     NODE_FIELD_ACCESS,
     NODE_ASSIGNMENT,
     NODE_METHOD,
+    NODE_ENUM,
     NODE_EEXPR
   } NodeType;
 
@@ -91,6 +96,13 @@
         char need_pass_the_instance;
       } internal_struct;
       char *super;
+      struct {
+        struct {
+          char *integer_t; 
+          char *definition; 
+        } ctx;
+        Vector *pFields;
+      } enumerator;
     } data;
   } PNode;
 

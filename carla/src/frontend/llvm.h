@@ -40,7 +40,8 @@
     Normal,
     Function,
     Callback,
-    StructField
+    StructField,
+    Enumerator
   } VarType;
 
   typedef struct {

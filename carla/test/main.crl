@@ -1,24 +1,7 @@
 #include "stdio"
-#include "stdheap"
-#include "stdstring"
-
-struct person_t {
-  bound []char name;
-
-  void say = (self, []char message) our {
-    []char buffer = heap::alloc(128);
-    []char person_name = self.name; 
-    string::format(buffer, "{s}, Hello! I wanna say: {s}", 
-                  person_name, 
-                  message
-    );
-    io::println(buffer);
-    heap::dump(buffer);
-  }
-} impl {};
 
 int32 main = () {
-  person_t pessoa;
-  pessoa.name = "Lucas";
-  pessoa:.say("I love coding in carla");
+  for int32 i : 0..10 {
+    io::println("Hello, world");
+  }
 }

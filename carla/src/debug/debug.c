@@ -6,6 +6,7 @@
 #include "debug.h"
 
 #define TKGET(tks, i) ((Token*)tks->items)[i]
+#define GET(token, tks, i) ((token*)tks->items)[i]
 #define NGET(tks, i) ((PNode*)tks->items)[i]
 
 char *TType[] = {
@@ -36,6 +37,7 @@ char *TType[] = {
   "NODE_FIELD_ACCESS",
   "NODE_ASSIGNMENT",
   "NODE_METHOD",
+  "NODE_ENUM",
   "NODE_EEXP"
 };
 
@@ -48,7 +50,12 @@ pTokens (Vector *tks)
     i++
   ) {
       Token tk = TKGET(tks, i);
-      printf ("Token<%d> {\n\ttype: %d\n\tbuffer: %s\n},\n", i, tk.type, tk.buffer);
+      printf ("Token<%d> {\n\ttype: %d\n\tbuffer: %s", i, tk.type, tk.buffer);
+      
+      if( tk.type == EnumType ) 
+        printf ("\n\tdefinition: %s\n\t", tk.def);
+
+      printf("\n},\n");
     }
 }
 
@@ -86,6 +93,22 @@ pNodes (Vector *root)
               printf ("|\t|-type: %s\n", 
                      brench.data.value
               );
+            } break;
+          case NODE_ENUM:
+            {
+              printf ("|\t|-each: %s\n|\t|-definition: %s\n|\t|-- fields:\n", 
+                     brench.data.enumerator.ctx.integer_t,
+                     brench.data.enumerator.ctx.definition
+              );
+
+              Vector *fields = brench.data.enumerator.pFields;
+              for(int i = 0; i < fields->length; i++) {
+                EnumFieldName field = GET(EnumFieldName, fields, i);
+                printf ("|\t|\t|-identifier: %s[%d]\n", 
+                       field.identifier,
+                       i
+                );
+              }
             } break;
           case NODE_LAMBDA:
             {

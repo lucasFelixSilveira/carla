@@ -204,6 +204,9 @@ char *
 llvm_type (char *type)
 {
 
+  if( type == NULL )
+    return "void";
+    
   char result = 0;
   VECTOR_CONTAINS (Structies, &structies, struct_id, type, &result);
 
@@ -718,7 +721,30 @@ llGenerate(FILE *output, Vector *pTree)
                         {
                           case NODE_SINGLE:
                             { 
-                              printf ("\n\n; [CARLA DEBUG]: %s\n\n", "");
+                              if( str.v_type == Enumerator )
+                                {
+                                  char byte = next_n.data.single.data.value[0];
+                                  if( byte >= 0x41 && byte <= 0x5a )
+                                    {
+                                      llvm_alloca_t (output, str.type);
+                                      fprintf (output, "  %c%d = load %s, ptr @.carla.%s.enumerator.%s, align %d\n", '%', 
+                                              var++,
+                                              llvm_type (str.type),
+                                              str.id,
+                                              next_n.data.single.data.value,
+                                              llvm_sizeof (llvm_type (str.type))
+                                      );
+
+                                      fprintf (output, "  store %s %c%d, ptr %c%d, align %d\n",
+                                              llvm_type (str.type), '%', 
+                                              (var-1), '%',
+                                              (var-2),
+                                              llvm_sizeof (llvm_type (str.type))
+                                      );
+                                    }
+                                  goto __enum__cont;
+                                }
+
                               Variable field;
                               BoundedField bound;
                               char _result = 0;
@@ -738,11 +764,28 @@ llGenerate(FILE *output, Vector *pTree)
                                     .type = bound.type
                                   }, (var-1));
                                 }
+
+                              __enum__cont: {}
                               ExprCache resolve = cache[--clen];
                               switch(resolve.type)
                                 {
                                   case VAR_DECLARATION:
                                     {
+                                      if( str.v_type == Enumerator )
+                                        {
+                                          char *var_t = resolve.info.var.node.data.definition.type;
+                                          if( llvm_sizeof (llvm_type (var_t)) != llvm_sizeof (llvm_type (str.type)) )
+                                            llvm_resize_bits (output, (var-1), var_t, str.type);
+
+                                          char bits = llvm_sizeof (llvm_type (var_t)) * 8;
+                                          llvm_load_number (output, bits, (var-2));
+
+                                          llvm_store (output, (PNode) {
+                                            .data.definition.type = var_t,
+                                          }, (var-1), resolve.info.var.llvm);
+                                          break;
+                                        }
+
                                       llvm_store (output, (PNode) {
                                         .data.definition.type = (_result) ? field.type : bound.type,
                                       }, (var-1), resolve.info.var.llvm);
@@ -1391,7 +1434,9 @@ llGenerate(FILE *output, Vector *pTree)
                               if( j > 0 )
                                 sprintf (prefix, ", ");
                               else memset (prefix, 0, 3);
+
                               char *type = llvm_type (arg.data.definition.type);
+
                               fprintf (output, "%s%s %c%d",
                                       prefix,
                                       type, '%',
@@ -1909,6 +1954,75 @@ llGenerate(FILE *output, Vector *pTree)
                 }
 
 
+            } break;
+
+          case NODE_ENUM:
+            {
+              int j = 0;
+              Vector *vec = branch.data.enumerator.pFields;
+              char   *type = branch.data.enumerator.ctx.integer_t;
+              char   *name = branch.data.enumerator.ctx.definition;
+
+              vector_push (&vars, ((void*)&(Variable) {
+                .v_type   = Enumerator,
+                .type     = type,
+                .id       = name
+              }));
+
+              fprintf (output, "; Starts of the %s enumerator\n", name);
+              for(; j < vec->length; j++)
+                {
+                  EnumFieldName field = GET_T(EnumFieldName, vec, j);
+                  fprintf (output, "%c.carla.%s.enumerator.%s = constant %s %d\n", '@',
+                          name, 
+                          field.identifier,
+                          llvm_type (type),
+                          j
+                  );
+                }
+
+              int p = 0;
+              for(; p < vec->length; p++)
+                {
+                  EnumFieldName field = GET_T(EnumFieldName, vec, p);
+
+                  size_t length = strlen (field.identifier);
+                  fprintf (output, "\n%c.carla.%s.enumerator.%d.stringify = constant [%d x i8] [ ", '@',
+                          name, 
+                          p,
+                          (int)length
+                  );
+
+                  int k = 0;
+                  for(; k < length; k++)
+                    {
+                      fprintf (output, "i8 %d%s", 
+                              field.identifier[k],
+                              (k == (length - 1)) ? " " : ", "
+                      );
+                    }
+
+                  fprintf(output, "]");
+                }
+
+              fprintf (output, "\n%c.carla.stringify.%s.enumerator = constant [%d x ptr] [ ", '@',
+                      name,
+                      (int)vec->length
+              );
+
+              int o = 0;
+              for(; o < vec->length; o++)
+                {
+                  fprintf (output, "\n  ptr %c.carla.%s.enumerator.%d.stringify%s", '@',
+                          name,
+                          o,
+                          (o == (vec->length - 1)) ? "\n" : ", "
+                  );
+                }
+              
+              fprintf(output, "]\n");
+              
+              fprintf (output, "; Ends of the %s enumerator\n", name);
             } break;
 
           case NODE_FOR:

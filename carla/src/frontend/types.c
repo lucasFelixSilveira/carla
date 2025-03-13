@@ -34,7 +34,26 @@ parseType(Vector *lex, Vector *tks)
               char *type = (char*)malloc (128);
               type[0] = 0;
               sprintf (type, "%s", first.buffer);
-              Token next;
+              Token next = GET(lex, i+1);
+
+              if( strcmp (first.buffer, "enum") == 0 && next.type == Identifier ) {
+                sprintf (type, "%s %s", type, next.buffer);
+                Token colon = GET(lex, i+2);
+                Token integer = GET(lex, i+3);
+                if( colon.buffer[0] == ':' && integer.type == Identifier ) {
+                  i += 3;
+                  sprintf (type, "%s : %s", type, integer.buffer);
+                  vector_push (tks, ((void*)&(Token) {
+                    .buffer = strdup (type),
+                    .def    = next.buffer, 
+                    .sub    = integer.buffer, 
+                    .type   = EnumType
+                  }));
+                  continue;
+                } 
+                else goto __cancel_typement;
+              }
+
               int ptr = 0;
               while(1) {
                 next = GET(lex, i+1);
