@@ -1,4 +1,4 @@
 carla/debug.sh
 carla/test_as.sh
 a.*
-cli/target
+cli/target/
