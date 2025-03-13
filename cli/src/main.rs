@@ -4,12 +4,15 @@ use std::process::{Command, Stdio};
 use std::iter::{Enumerate, Skip};
 use std::slice::Iter;
 
+use colored::*;
+
 #[inline]
 fn cli_error(msg: &str) {
-  println!("[CLI ERROR]: {msg}")
+  println!("{}: {msg}", "[CLI ERROR]".red())
 }
 
 fn main() {
+  println!("teste");
   let runner: &str;
   if cfg!(target_os = "windows") {
     runner = "cmd"
@@ -75,7 +78,8 @@ fn main() {
 
         match result {
           Ok(mut child) => {
-            print!(" - Success\nCompiling");
+            let success = "Success".green();
+            print!(" - {success}\n└─ Emitting the LLVM Objetct");
             
             let _ = child.wait(); 
 
@@ -127,7 +131,7 @@ fn main() {
             match result {
               Ok(mut child) => {
                 let _ = child.wait(); 
-                  println!(" - Success\nYour project has been compiled!");
+                println!(" - {success}\nYour project has been compiled!");
               }
               Err(e) => eprintln!("Fail to compile! Error on call the clang: {}", e)
             }

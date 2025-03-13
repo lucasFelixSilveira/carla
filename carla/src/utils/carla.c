@@ -49,11 +49,21 @@ carla_project(char **output_file)
 
   // Target folder to save files
   sprintf (dir_name, "%s%s%s", cwd, PATH_SEPARATOR, "target");
-  MKDIR (dir_name);
+
+  #if _WIN32
+    MKDIR(dir_name); 
+  #else
+    MKDIR(dir_name, 0755); 
+  #endif
 
   // Output folder to .exe and LLVM file
   sprintf (dir_name, "%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out");
-  MKDIR (dir_name);
+
+  #if _WIN32
+    MKDIR(dir_name);
+  #else
+    MKDIR(dir_name, 0755);
+  #endif
 
   // Output LLVM file directory
   sprintf (dir_name, "%s%s%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll\0");
@@ -61,7 +71,12 @@ carla_project(char **output_file)
 
   // Output folder to .exe and llvm file
   sprintf (dir_name, "%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "logs");
-  MKDIR (dir_name);
+
+  #if _WIN32
+    MKDIR(dir_name);
+  #else
+    MKDIR(dir_name, 0755); 
+  #endif
 
   free (dir_name);
 }

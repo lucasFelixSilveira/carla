@@ -217,7 +217,6 @@ llvm_type (char *type)
       char *prefix = "%.carla.struct.";
       char *buffer = malloc (strlen (prefix) + 5);
       sprintf (buffer, "%s%d", prefix, __struct.carla_id);
-      free (prefix);
       return buffer;
     }
 
