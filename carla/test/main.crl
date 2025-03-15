@@ -1,7 +1,33 @@
 #include "stdio"
+#include "stdheap"
+#include "stdstring"
+
+enum blood_t : int8 = {
+  OPositivo, ONegativo
+};
+
+struct person_t {
+  bound char* name;
+  bound int8  type;
+
+  void toString   = (self, int8 age) {
+    char* myName  = self.name;
+    int8  myBType = self.type;
+
+    []char buffer = heap::alloc(128);
+    string::format(buffer, "My name is {s}, I am {d} and my blood type is {d}.", 
+                  myName, age, myBType
+    );
+    io::println(buffer);
+    heap::dump(buffer);
+  }
+} impl {}; 
 
 int32 main = () {
-  for int32 i : 0..10 {
-    io::println("Hello, world");
-  }
+  person_t person;
+  person.name = "Lucas";
+  int8 blood = blood_t.ONegativo;
+  person.type = blood;
+
+  person_t::toString(person, 16);
 }

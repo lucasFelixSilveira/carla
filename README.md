@@ -7,7 +7,7 @@
 </div>
 <br>
 
-- [CARLA YT VIDEO](https://www.youtube.com/watch?v=G0_mBSvDEmE&t=199s)
+- [CARLA YT VIDEO](https://youtu.be/gO_adPI3Pr4)
 ```carla
 #include <stdio>
 

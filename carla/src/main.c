@@ -29,7 +29,6 @@ main(int argc, char *argv[])
   // Tokenize the file received
   Vector lexemes = vector_init (sizeof (Token));
   FILE *main = fopen (main_file, "r");
-  free (main_file);
   tkGenerate (&lexemes, main);
   fclose (main);
   

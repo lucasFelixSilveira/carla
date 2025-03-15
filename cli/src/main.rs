@@ -12,7 +12,6 @@ fn cli_error(msg: &str) {
 }
 
 fn main() {
-  println!("teste");
   let runner: &str;
   if cfg!(target_os = "windows") {
     runner = "cmd"
@@ -131,7 +130,7 @@ fn main() {
             match result {
               Ok(mut child) => {
                 let _ = child.wait(); 
-                println!(" - {success}\nYour project has been compiled!");
+                println!(" - {success}\n{}",  "Your project has been compiled!".green());
               }
               Err(e) => eprintln!("Fail to compile! Error on call the clang: {}", e)
             }

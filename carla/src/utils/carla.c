@@ -66,7 +66,7 @@ carla_project(char **output_file)
   #endif
 
   // Output LLVM file directory
-  sprintf (dir_name, "%s%s%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll\0");
+  sprintf (dir_name, "%s%s%s%s%s%s%s%c", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll", 0x0);
   *output_file = strdup (dir_name);
 
   // Output folder to .exe and llvm file

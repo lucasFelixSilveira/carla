@@ -140,7 +140,7 @@ find_fn(PNode call, Vector *vars, char *__struct)
   if( call.type == NODE_INTERNAL_STRUCT )
     {
       to_find = (char*)malloc (128);
-      sprintf (to_find, "%s.%s", call.data.internal_struct.__struct,  call.data.internal_struct.fn);
+      sprintf (to_find, "%s.%s", call.data.internal_struct.__struct, call.data.internal_struct.fn);
     }
 
   Variable var;
