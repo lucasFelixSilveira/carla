@@ -55,6 +55,12 @@ pTokens (Vector *tks)
       if( tk.type == EnumType ) 
         printf ("\n\tdefinition: %s\n\t", tk.def);
 
+      printf ("\n\tlocation: (%d, %d at %d)", 
+              ((int) tk.local.posY),
+              ((int) tk.local.posX),
+              ((int) tk.local.posX + (int)strlen (tk.buffer))
+      );
+
       printf("\n},\n");
     }
 }

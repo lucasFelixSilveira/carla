@@ -3,6 +3,8 @@
 #include "../utils/vector.h"
 #include "../utils/symbols.h"
 #include "../utils/strings.h"
+#include "../utils/errors.h"
+#include "../utils/json.h"
 #include "parser.h"
 #include "lexer.h"
 
@@ -19,14 +21,15 @@ types_int(char *type)
 }
 
 void 
-parseType(Vector *lex, Vector *tks) 
+parseType(Vector *lex, Vector *tks, FILE *logs) 
 {
-
+  char *failType;
   char lambda = 0;
   int i = 0;
+  Token first;
   for(; i < lex->length; i++ ) 
     {
-      Token first = GET(lex, i);
+      first = GET(lex, i);
       switch(first.type)
         {
           case Identifier:
@@ -51,7 +54,11 @@ parseType(Vector *lex, Vector *tks)
                   }));
                   continue;
                 } 
-                else goto __cancel_typement;
+                else {
+                  failType = strdup (type);
+                  free (type);
+                  goto __cancel_typement;
+                }
               }
 
               int ptr = 0;
@@ -120,6 +127,7 @@ parseType(Vector *lex, Vector *tks)
                         }
                       }
                     }
+                    failType = strdup (type);
                     free (type);
                     goto __cancel_typement;
                   }
@@ -132,14 +140,32 @@ parseType(Vector *lex, Vector *tks)
             vector_push (tks, ((void*)&(Token) {
               .buffer = first.buffer,
               .type   = first.type,
-              .real   = first.real
+              .real   = first.real,
+              .local  = first.local
             }));
           } break;
         }
     }
   goto skip;
   __cancel_typement: {
-    printf ("\nInvalid type received\n");
+    JPair cPairs[2];
+    cPairs[0] = (JPair) { "type", json_string ("error") };
+    
+    JPair ePairs[3];
+    char *msg = (char*)malloc (256);
+    sprintf (msg, "`%s...` is an invalid type.", failType);
+    ePairs[0] = (JPair) { "message", json_string (msg) };
+    ePairs[1] = (JPair) { "code", json_number (SyntaxTypeError) };
+    ePairs[2] = (JPair) { "location", json_array ((JValue[]){
+      json_number (first.local.posY), json_number (first.local.posX)
+    }, 2) };
+    cPairs[1] = (JPair) { "error", json_object (ePairs, 3) };
+
+    JValue data = json_object (cPairs, 2);
+    char *json;
+    json_stringify (&json, data);
+    fprintf (logs, "%s", json);
+    exit (1);
   }
   skip: {}
 }

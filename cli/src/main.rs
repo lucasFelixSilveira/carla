@@ -4,7 +4,12 @@ use std::process::{Command, Stdio};
 use std::iter::{Enumerate, Skip};
 use std::slice::Iter;
 
+mod generators;
+
 use colored::*;
+use serde_json::Value;
+
+pub type ErrorT = (String, fn());
 
 #[inline]
 fn cli_error(msg: &str) {
@@ -55,7 +60,8 @@ fn main() {
           }
         }
 
-        if let Err(_) = fs::read_to_string([cwd, std::path::MAIN_SEPARATOR_STR, main].concat()) {
+        let main_file: String = [cwd, std::path::MAIN_SEPARATOR_STR, main].concat();
+        if let Err(_) = fs::read_to_string(&main_file) {
           cli_error(
             &format!("Your project is missing the default main file. Try using the flag to change the main file reference. `--main`")
           );
@@ -78,13 +84,14 @@ fn main() {
         match result {
           Ok(mut child) => {
             let success = "Success".green();
-            print!(" - {success}\n└─ Emitting the LLVM Objetct");
             
             let _ = child.wait(); 
 
-            let out_folder: String = [cwd, std::path::MAIN_SEPARATOR_STR, "target", std::path::MAIN_SEPARATOR_STR, "out"].concat();
-            let ir_file: String = [&out_folder, std::path::MAIN_SEPARATOR_STR, "ir.ll"].concat();
-            let exe_file: String = [&out_folder, std::path::MAIN_SEPARATOR_STR, "out"].concat();
+            let out_folder:  String = [cwd, std::path::MAIN_SEPARATOR_STR, "target", std::path::MAIN_SEPARATOR_STR, "out"].concat();
+            let logs_folder: String = [cwd, std::path::MAIN_SEPARATOR_STR, "target", std::path::MAIN_SEPARATOR_STR, "logs"].concat();
+            let ir_file:     String = [&out_folder, std::path::MAIN_SEPARATOR_STR, "ir.ll"].concat();
+            let logs_file:   String = [&logs_folder, std::path::MAIN_SEPARATOR_STR, "latest.json"].concat();
+            let exe_file:    String = [&out_folder, std::path::MAIN_SEPARATOR_STR, "out"].concat();
 
             let mut compilation_call: Vec<&str> = Vec::new(); 
 
@@ -130,7 +137,46 @@ fn main() {
             match result {
               Ok(mut child) => {
                 let _ = child.wait(); 
-                println!(" - {success}\n{}",  "Your project has been compiled!".green());
+
+                let open_logs = fs::read_to_string(logs_file);
+                match open_logs  {
+                  Ok(latest) => {
+                    if latest.is_empty() {
+                      println!(" - {success}\n└─ Emitting the LLVM Objetct - {success}\n{}", "Your code has been compiled with successful.".bright_green());
+                    }
+
+                    if let Ok(main_file_content) = fs::read_to_string(main_file) {
+                      if let Ok(data) = serde_json::from_str::<Value>(&latest) {
+                        let log_type: &str = 
+                          data
+                            .get("type").unwrap()
+                            .as_str().unwrap();
+
+                        print!(" - {}\n└─ ", 
+                          if log_type == "error" { "Error".red() } else { "Uknown".yellow() }
+                        );
+
+                        let error: &Value = 
+                          data
+                            .get("error").unwrap();
+
+
+                        let content: Vec<fn(Value, String)> = vec![
+                          generators::types::syntax::assembly
+                        ]; 
+
+                        let code: usize =
+                          error
+                            .get("code").unwrap()
+                            .as_u64().unwrap() as usize;
+
+                        content[code](error.clone(), main_file_content);
+                      }
+                    }
+                  },
+                  Err(e) => println!("\n{}", e)
+                }
+
               }
               Err(e) => eprintln!("Fail to compile! Error on call the clang: {}", e)
             }

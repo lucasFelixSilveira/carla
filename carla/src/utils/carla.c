@@ -41,7 +41,7 @@ isCarla(char *__file__)
 }
 
 void 
-carla_project(char **output_file) 
+carla_project(char **output_file, char **logs_file) 
 {
   char cwd[1024];
   getcwd (cwd, sizeof (cwd));
@@ -68,6 +68,10 @@ carla_project(char **output_file)
   // Output LLVM file directory
   sprintf (dir_name, "%s%s%s%s%s%s%s%c", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "out", PATH_SEPARATOR, "ir.ll", 0x0);
   *output_file = strdup (dir_name);
+
+  // Logs JSON file directory
+  sprintf (dir_name, "%s%s%s%s%s%s%s%c", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "logs", PATH_SEPARATOR, "latest.json", 0x0);
+  *logs_file = strdup (dir_name);
 
   // Output folder to .exe and llvm file
   sprintf (dir_name, "%s%s%s%s%s", cwd, PATH_SEPARATOR, "target", PATH_SEPARATOR, "logs");

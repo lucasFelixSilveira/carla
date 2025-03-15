@@ -92,6 +92,8 @@ validSingleOp(char c)
 void 
 tkGenerate(Vector *lex, FILE *file)
 {
+  int posY = 1;
+  int posX = 0;
   while(1)
     {
       if( feof (file) ) 
@@ -102,18 +104,30 @@ tkGenerate(Vector *lex, FILE *file)
       char j = getc (file);
       if( c == '-' && j == '-' )
         {
-          while(getc (file) != '\n')
+          while(!feof (file) && getc (file) != '\n')
             {}
+          posY++;
+          posX = 0;
           continue;
         }
       if( c == '-' && j == '#' )
         {
+          char v;
           _while__to_wait_comment_end: {};
-          while(getc (file) != '#') 
-            {};
+          while((v = getc (file)) != '#') 
+            if( v == 10 ) {
+              posY++;
+              posX = 0;
+            }
 
-          if( getc (file) != '-' ) 
-            goto _while__to_wait_comment_end;
+          if( (v = getc (file)) != '-' )
+            { 
+              if( v == 10 ) {
+                posY++;
+                posX = 0;
+              }
+              goto _while__to_wait_comment_end;
+            }
           continue;
         }
       else 
@@ -123,13 +137,26 @@ tkGenerate(Vector *lex, FILE *file)
         if( len > 0 ) {
           vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (buffer), 
-            .type = valid_buffer ()
+            .type = valid_buffer (),
+            .local.posX = posX,
+            .local.posY = posY,
+            .local.posV = (lex->length)
           }));
+          posX += len;
           len = 0;
         } 
+        
+        if( c == 32 ) 
+          posX++;
+
+        if( c == '\n' ) 
+          {
+            posY++;
+            posX = 0;
+          }
 
         if( iswspace (c) || c == '\r' || c == '\n' ) 
-          /*->*/ continue;
+          continue;
 
 
         char subt = getc (file);
@@ -142,28 +169,6 @@ tkGenerate(Vector *lex, FILE *file)
           }
         ungetc (subt, file);
         subt = 0;
-
-        char next_char = getc (file);
-        ungetc (next_char, file);
-        if( c == '<' && next_char != '=' ) 
-          {
-            char sbuff[128];
-            int len = 0;
-            char _c;
-            while( (_c = getc (file)) != '>' )
-              sbuff[len++] = _c;
-
-            if( getc (file) == 0x0a ) 
-              subt = 1;
-
-            int __l = len;
-            while( len >= 0 )
-              {
-                if( len == __l )
-                  ungetc ('\x01', file);
-                ungetc (sbuff[len--], file);
-              }
-          }
 
         if( c == 0x01 )
           continue;
@@ -199,8 +204,13 @@ tkGenerate(Vector *lex, FILE *file)
           vector_push (lex, (void*)(&(Token) {
             .buffer = strdup (strbuff), 
             .type = Text,
-            .real = j
+            .real = j,
+            .local.posX = posX,
+            .local.posY = posY,
+            .local.posV = (lex->length)
           }));
+
+          posX += strlen (strbuff);
 
           free (strbuff);
           continue;
@@ -224,8 +234,14 @@ tkGenerate(Vector *lex, FILE *file)
         vector_push (lex, (void*)(&(Token) {
           .buffer = strdup (buffer), 
           .type = (id == 0 ? Unknown : id),
-          .real = 0
+          .real = 0,
+          .local.posX = posX,
+          .local.posY = posY,
+          .local.posV = (lex->length)
         }));
+
+        posX += strlen (buffer);
+
       } else {
         buffer[len++] = c;
         buffer[len] = 0;
@@ -235,6 +251,9 @@ tkGenerate(Vector *lex, FILE *file)
   vector_push (lex, (void*)(&(Token) {
     .buffer = "", 
     .type = End,
-    .real = 0
+    .real = 0,
+    .local.posX = posX,
+    .local.posY = posY,
+    .local.posV = (lex->length)
   }));
 }

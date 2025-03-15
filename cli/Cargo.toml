@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 colored = "*"
+serde = "*"
+serde_json = "*"

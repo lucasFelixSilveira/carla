@@ -11,11 +11,8 @@
 #include "std.h"
 
 /**
-  IMPORTANT: Auto-cast do resultado de uma expressão para o tipo correspondente ao da variável na qual é receptora
-    - tipo: int64 x = msg[0] ;
-      sendo msg []ascii
-    
-  TODO: Implement ASSIGNMENT_FIELD to NUMBERS and IDENTIFIERS in the expression place
+  TODO: Implement ASSIGNMENT_FIELD to NUMBERS, IDENTIFIERS, ENUMERATORS in the expression place
+  TODO: Make the `ref` keyword: It can used to be create references to a method, or a `super` function 
 */
 
 int
@@ -24,9 +21,7 @@ exponence(int x, int y)
   int result = 1;
 
   for(int i = 0; i < y; i++)
-    {
-      result *= x;
-    }
+    result *= x;
 
   return result;
 }

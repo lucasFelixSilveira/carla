@@ -3,7 +3,7 @@
 # include "vector.h"
 
   int isCarla(char *__file__);
-  void carla_project(char **output_file);
+  void carla_project(char **output_file, char**logs_file);
 
   typedef struct {
     char  is;

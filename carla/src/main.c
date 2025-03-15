@@ -24,16 +24,18 @@ main(int argc, char *argv[])
   if(! carla )
     return 1;
   char *output_file;
-  carla_project (&output_file);
-
+  char *logs_file;
+  carla_project (&output_file, &logs_file);
+  
   // Tokenize the file received
   Vector lexemes = vector_init (sizeof (Token));
   FILE *main = fopen (main_file, "r");
   tkGenerate (&lexemes, main);
   fclose (main);
   
+  FILE *logs = fopen (logs_file, "w+");
   Vector tokens = vector_init (sizeof (Token));
-  parseType (&lexemes, &tokens);
+  parseType (&lexemes, &tokens, logs);
   int i = 0;
 
   #if DBG_LEXER 
