@@ -5,6 +5,8 @@
 #include "../utils/vector.h"
 #include "../utils/strings.h"
 #include "../utils/symbols.h"
+#include "../utils/errors.h"
+#include "../utils/json.h"
 #include "parser.h"
 #include "types.h"
 #include "llvm.h"
@@ -59,6 +61,7 @@ int lambda_counter = 0;
 char *lambda_name;
 int struct_i = 0;
 char *last_load;
+FILE *logs;
 
 Vector structies;
 
@@ -121,6 +124,24 @@ genT(char **tabs)
     sprintf (*tabs, "  ");
 }
 
+char *
+afterDot(char *buffer) 
+{
+  char *nBuffer = (char*)malloc (64);
+  int len = -1;
+  for(int i = 0; i < strlen (buffer); i++)
+    {
+      char ch = buffer[i];
+      if( len >= 0 )
+        nBuffer[len++] = ch; 
+
+      if( ch == '.' ) 
+        len = 0;
+    }
+  nBuffer[len] = 0;
+  return nBuffer;
+}
+
 Fn
 find_fn(PNode call, Vector *vars, char *__struct)
 {
@@ -152,8 +173,26 @@ find_fn(PNode call, Vector *vars, char *__struct)
 
       if(! (var.public || in) )
         {
-          printf ("%s IT IS A PRIVATE METHOD!", var.id);
-          exit(0);
+          JPair cPairs[2];
+          cPairs[0] = (JPair) { "type", json_string ("error") };
+          
+          JPair ePairs[4];
+          char *msg = (char*)malloc (256);
+          char *identifier = afterDot(var.id);
+          sprintf (msg, "`%s` is a private method", identifier);
+          ePairs[0] = (JPair) { "message", json_string (msg) };
+          ePairs[1] = (JPair) { "code", json_number (InvalidAccess) };
+          ePairs[2] = (JPair) { "buffer", json_string (identifier) };
+          ePairs[3] = (JPair) { "location", json_array ((JValue[]){
+            json_number (var.local.posY), json_number (var.local.posX)
+          }, 2) };
+          cPairs[1] = (JPair) { "error", json_object (ePairs, 4) };
+          
+          JValue data = json_object (cPairs, 2);
+          char *json;
+          json_stringify (&json, data);
+          fprintf (logs, "%s", json);
+          exit (1);
         }
 
       return (Fn) {
@@ -170,8 +209,26 @@ find_fn(PNode call, Vector *vars, char *__struct)
     }
   else
     {
-      printf ("%s NOT FOUND!", to_find);
-      exit(0);
+      JPair cPairs[2];
+      cPairs[0] = (JPair) { "type", json_string ("error") };
+      
+      JPair ePairs[4];
+      char *msg = (char*)malloc (256);
+      char *identifier = afterDot(to_find);
+      sprintf (msg, "`%s` not found", identifier);
+      ePairs[0] = (JPair) { "message", json_string (msg) };
+      ePairs[1] = (JPair) { "code", json_number (UnrecognizedSymbol) };
+      ePairs[2] = (JPair) { "buffer", json_string (identifier) };
+      ePairs[3] = (JPair) { "location", json_array ((JValue[]){
+        json_number (call.posD.posY), json_number (call.posD.posX)
+      }, 2) };
+      cPairs[1] = (JPair) { "error", json_object (ePairs, 4) };
+      
+      JValue data = json_object (cPairs, 2);
+      char *json;
+      json_stringify (&json, data);
+      fprintf (logs, "%s", json);
+      exit (1);
     }
 }
 
@@ -666,8 +723,9 @@ llvm_load_field(FILE *output, Variable field, unsigned int access)
 }
 
 void
-llGenerate(FILE *output, Vector *pTree)
+llGenerate(FILE *output, Vector *pTree, FILE *pLogs)
 {
+  logs = pLogs;
 
   Vector vars              = vector_init (sizeof (Variable));
   Vector scopes            = vector_init (sizeof (ScopeType));
@@ -1338,7 +1396,7 @@ llGenerate(FILE *output, Vector *pTree)
                               ScopeType stype = (ScopeType) {
                                 .type = t,
                                 .label_id = begin,
-                                ._if.false = __carla_false,
+                                ._if._false = __carla_false,
                               };
 
                               tab++;
@@ -1397,6 +1455,7 @@ llGenerate(FILE *output, Vector *pTree)
 
                   vector_push (&vars, ((void*)&(Variable) {
                     .v_type = Function,
+                    .local  = branch.posD, 
                     .type   = branch.data.definition.type,
                     .public = (! in_struct ) ? 1 : lamb.data.our,
                     .llvm   = 0,

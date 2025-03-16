@@ -1,6 +1,8 @@
 #ifndef ERRORS_H
 # define ERRORS_H
   typedef enum {
-    SyntaxTypeError
+    SyntaxTypeError,
+    InvalidAccess,
+    UnrecognizedSymbol
   } CarlaErrors;
 #endif

@@ -61,6 +61,7 @@
   } uNode;
 
   typedef struct PNode {
+    TokenLocation posD;
     NodeType type;
     union {
       char  our;

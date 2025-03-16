@@ -225,6 +225,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                           ) 
                         ) {
                             vector_push (tree, ((void*)&(PNode) {
+                              .posD = id.local,
                               .type = NODE_DEFINITION,
                               .data = {
                                 .definition = {
@@ -284,6 +285,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                   if( strcmp (first.buffer, "super") == 0 )
                     {
                       vector_push (tree, ((void*)&(PNode) {
+                        .posD = after.local,
                         .type = NODE_INTERNAL_SUPER,
                         .data.super = after.buffer
                       }));
@@ -296,6 +298,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                       VECTOR_FIND(CacheStructs, &struct_vars, identifier, first.buffer, &str);
 
                       vector_push (tree, ((void*)&(PNode) {
+                        .posD = after.local,
                         .type = NODE_INTERNAL_STRUCT,
                         .data.internal_struct = {
                           .need_pass_the_instance = 1,
@@ -321,6 +324,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                         }
 
                       vector_push (tree, ((void*)&(PNode) {
+                        .posD = after.local,
                         .type = NODE_INTERNAL_STRUCT,
                         .data.internal_struct = {
                           .need_pass_the_instance = need_self,
@@ -354,6 +358,7 @@ tGenerate(Vector *tree, Vector *tks, Vector *libs)
                         }
 
                       vector_push (tree, ((void*)&(PNode) {
+                        .posD = after.local,
                         .type = NODE_INTERNAL,
                         .data = {
                           .internal   = {

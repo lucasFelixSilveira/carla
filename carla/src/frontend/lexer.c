@@ -115,19 +115,25 @@ tkGenerate(Vector *lex, FILE *file)
           char v;
           _while__to_wait_comment_end: {};
           while((v = getc (file)) != '#') 
-            if( v == 10 ) {
-              posY++;
-              posX = 0;
+            {
+              posX++;
+              if( v == 10 ) {
+                posY++;
+                posX = 0;
+              }
             }
+          posX++;
 
           if( (v = getc (file)) != '-' )
             { 
+              posX++;
               if( v == 10 ) {
                 posY++;
                 posX = 0;
               }
               goto _while__to_wait_comment_end;
             }
+          posX++;
           continue;
         }
       else 

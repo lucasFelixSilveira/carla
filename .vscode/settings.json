@@ -11,7 +11,9 @@
     "direct.h": "c",
     "io.h": "c",
     "types.h": "c",
-    "json.h": "c"
+    "json.h": "c",
+    "symbols.h": "c",
+    "errors.h": "c"
   },
   "sarif-viewer.connectToGithubCodeScanning": "off"
 }

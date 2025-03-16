@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::time::Instant;
 use std::{env, fs};
 use std::process::{Command, Stdio};
 use std::iter::{Enumerate, Skip};
@@ -32,6 +33,7 @@ fn main() {
 
     match doing.as_str() {
       "compile" => {
+        let start_time = Instant::now();
         let mut main: &String = &String::from("main.crl");
         let mut output: String = String::new();
 
@@ -142,7 +144,11 @@ fn main() {
                 match open_logs  {
                   Ok(latest) => {
                     if latest.is_empty() {
-                      println!(" - {success}\n└─ Emitting the LLVM Objetct - {success}\n{}", "Your code has been compiled with successful.".bright_green());
+                      let elapsed_time = Instant::now() - start_time;
+                      println!(" - {success}\n└─ Emitting the LLVM Objetct - {success}\n{} - Compiled in {}", "Your code has been compiled and optimized with successful.".bright_green().bold(), 
+                        format!("{:.2?}s", elapsed_time.as_secs_f64()).bright_white().bold()
+                      );
+                      return;
                     }
 
                     if let Ok(main_file_content) = fs::read_to_string(main_file) {
@@ -160,17 +166,28 @@ fn main() {
                           data
                             .get("error").unwrap();
 
-
-                        let content: Vec<fn(Value, String)> = vec![
-                          generators::types::syntax::assembly
-                        ]; 
-
                         let code: usize =
                           error
                             .get("code").unwrap()
                             .as_u64().unwrap() as usize;
 
-                        content[code](error.clone(), main_file_content);
+                        let title: String = match code {
+                          0 => "Syntax type error".into(),
+                          1 => "Visibility data error".into(),
+                          2 => "Unrecognized symbol".into(),
+                          _ => "Unknown".into()
+                        };
+
+                        let procedure = match code {
+                          1 => generators::tip::assembly,
+                          _ => generators::common::assembly
+                        };
+
+                        procedure(
+                          error.clone(), 
+                          main_file_content, 
+                          title
+                        );
                       }
                     }
                   },

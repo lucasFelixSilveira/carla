@@ -24,6 +24,7 @@ void
 parseType(Vector *lex, Vector *tks, FILE *logs) 
 {
   char *failType;
+  char *ctx = (char*)malloc(1024);
   char lambda = 0;
   int i = 0;
   Token first;
@@ -43,9 +44,17 @@ parseType(Vector *lex, Vector *tks, FILE *logs)
                 sprintf (type, "%s %s", type, next.buffer);
                 Token colon = GET(lex, i+2);
                 Token integer = GET(lex, i+3);
-                if( colon.buffer[0] == ':' && integer.type == Identifier ) {
+                if( colon.buffer[0] == ':' ) {
                   i += 3;
                   sprintf (type, "%s : %s", type, integer.buffer);
+                 
+                  if( integer.type != Identifier || !types_int (integer.buffer) ) {
+                    failType = strdup (type);
+                    sprintf(ctx, "Has been expected an integer type");
+                    free(type);
+                    goto __cancel_typement;
+                  }
+
                   vector_push (tks, ((void*)&(Token) {
                     .buffer = strdup (type),
                     .def    = next.buffer, 
@@ -55,6 +64,7 @@ parseType(Vector *lex, Vector *tks, FILE *logs)
                   continue;
                 } 
                 else {
+                  sprintf(ctx, "Has been expected ';', found '%s'", colon.buffer);
                   failType = strdup (type);
                   free (type);
                   goto __cancel_typement;
@@ -127,8 +137,9 @@ parseType(Vector *lex, Vector *tks, FILE *logs)
                         }
                       }
                     }
-                    failType = strdup (type);
-                    free (type);
+                    failType = type[0] == 0 ? "[\0" : strdup (type);
+                    sprintf(ctx, "Your code open an array and not close it");
+                    free(type);
                     goto __cancel_typement;
                   }
                 }
@@ -151,20 +162,22 @@ parseType(Vector *lex, Vector *tks, FILE *logs)
     JPair cPairs[2];
     cPairs[0] = (JPair) { "type", json_string ("error") };
     
-    JPair ePairs[3];
+    JPair ePairs[4];
     char *msg = (char*)malloc (256);
-    sprintf (msg, "`%s...` is an invalid type.", failType);
+    sprintf (msg, "`%s...` is an invalid type. : %s", failType, ctx);
     ePairs[0] = (JPair) { "message", json_string (msg) };
     ePairs[1] = (JPair) { "code", json_number (SyntaxTypeError) };
-    ePairs[2] = (JPair) { "location", json_array ((JValue[]){
+    ePairs[2] = (JPair) { "buffer", json_string (failType) };
+    ePairs[3] = (JPair) { "location", json_array ((JValue[]){
       json_number (first.local.posY), json_number (first.local.posX)
     }, 2) };
-    cPairs[1] = (JPair) { "error", json_object (ePairs, 3) };
+    cPairs[1] = (JPair) { "error", json_object (ePairs, 4) };
 
     JValue data = json_object (cPairs, 2);
     char *json;
     json_stringify (&json, data);
     fprintf (logs, "%s", json);
+    free (failType);
     exit (1);
   }
   skip: {}

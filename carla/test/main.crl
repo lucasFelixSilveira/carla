@@ -1,8 +1,7 @@
 #include "stdio"
 
-enum person_t 2 int8 = {
-  Opa
-};
-
 int32 main = () {
-}
+  for int32 i : 0..12 {
+    io::println("Hello, world");
+  } 
+} 

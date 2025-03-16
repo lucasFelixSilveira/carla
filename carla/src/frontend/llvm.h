@@ -2,6 +2,7 @@
 # define LLVM_H
 # include "../utils/vector.h"
 # include "parser.h"
+# include "lexer.h"
 # include "std.h"
 
   typedef enum {
@@ -28,7 +29,7 @@
       char *type;  
     } complex;
     struct {
-      unsigned int false;  
+      unsigned int _false;  
     } _if;
   } ScopeType;
 
@@ -46,6 +47,7 @@
 
   typedef struct {
     VarType v_type;
+    TokenLocation local;
     char *__struct;
     int tab;
     unsigned int llvm;
@@ -97,6 +99,6 @@
     unsigned int carla_id; 
   } Structies;
 
-  void llGenerate(FILE *output, Vector *pTree);
+  void llGenerate(FILE *output, Vector *pTree, FILE *logs);
 
 #endif
