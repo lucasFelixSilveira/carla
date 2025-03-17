@@ -34,7 +34,7 @@ pub fn assembly(data: Value, content: String, title: String) {
   println!("{}{}{}{}", 
     "~".repeat(preview.len() + 1 - reduced).green(),
     "~".repeat(col as usize).green(),
-    "v".repeat(buffer.len()).green(),
+    "^".repeat(buffer.len()).green(),
     "~".repeat(line_content.len() - col as usize - buffer.len()).green(),
   );
   

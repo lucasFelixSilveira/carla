@@ -15,6 +15,7 @@
 /**
   TODO: Implement ASSIGNMENT_FIELD to NUMBERS, IDENTIFIERS, ENUMERATORS in the expression place
   TODO: Make the `ref` keyword: It can used to be create references to a method, or a `super` function 
+  TODO: Create errors assemblers to every 'CarlaErrors' enum field
 */
 
 int
@@ -83,6 +84,24 @@ typedef struct {
   char *type;
 } BoundedField;
 
+char *
+afterDot(char *buffer) 
+{
+  char *nBuffer = (char*)malloc (64);
+  int len = -1;
+  for(int i = 0; i < strlen (buffer); i++)
+    {
+      char ch = buffer[i];
+      if( len >= 0 )
+        nBuffer[len++] = ch; 
+
+      if( ch == '.' ) 
+        len = 0;
+    }
+  nBuffer[len] = 0;
+  return nBuffer;
+}
+
 int
 comp_get(Vector *vec, char *content) {
 
@@ -124,23 +143,7 @@ genT(char **tabs)
     sprintf (*tabs, "  ");
 }
 
-char *
-afterDot(char *buffer) 
-{
-  char *nBuffer = (char*)malloc (64);
-  int len = -1;
-  for(int i = 0; i < strlen (buffer); i++)
-    {
-      char ch = buffer[i];
-      if( len >= 0 )
-        nBuffer[len++] = ch; 
 
-      if( ch == '.' ) 
-        len = 0;
-    }
-  nBuffer[len] = 0;
-  return nBuffer;
-}
 
 Fn
 find_fn(PNode call, Vector *vars, char *__struct)
@@ -173,26 +176,11 @@ find_fn(PNode call, Vector *vars, char *__struct)
 
       if(! (var.public || in) )
         {
-          JPair cPairs[2];
-          cPairs[0] = (JPair) { "type", json_string ("error") };
-          
-          JPair ePairs[4];
           char *msg = (char*)malloc (256);
           char *identifier = afterDot(var.id);
           sprintf (msg, "`%s` is a private method", identifier);
-          ePairs[0] = (JPair) { "message", json_string (msg) };
-          ePairs[1] = (JPair) { "code", json_number (InvalidAccess) };
-          ePairs[2] = (JPair) { "buffer", json_string (identifier) };
-          ePairs[3] = (JPair) { "location", json_array ((JValue[]){
-            json_number (var.local.posY), json_number (var.local.posX)
-          }, 2) };
-          cPairs[1] = (JPair) { "error", json_object (ePairs, 4) };
           
-          JValue data = json_object (cPairs, 2);
-          char *json;
-          json_stringify (&json, data);
-          fprintf (logs, "%s", json);
-          exit (1);
+          errors_uses (logs, call.posD, var.local, InvalidAccess, identifier, identifier, msg, "change the visibility", ChangePrivacity);
         }
 
       return (Fn) {
@@ -209,26 +197,10 @@ find_fn(PNode call, Vector *vars, char *__struct)
     }
   else
     {
-      JPair cPairs[2];
-      cPairs[0] = (JPair) { "type", json_string ("error") };
-      
-      JPair ePairs[4];
       char *msg = (char*)malloc (256);
-      char *identifier = afterDot(to_find);
+      char *identifier = afterDot (to_find);
       sprintf (msg, "`%s` not found", identifier);
-      ePairs[0] = (JPair) { "message", json_string (msg) };
-      ePairs[1] = (JPair) { "code", json_number (UnrecognizedSymbol) };
-      ePairs[2] = (JPair) { "buffer", json_string (identifier) };
-      ePairs[3] = (JPair) { "location", json_array ((JValue[]){
-        json_number (call.posD.posY), json_number (call.posD.posX)
-      }, 2) };
-      cPairs[1] = (JPair) { "error", json_object (ePairs, 4) };
-      
-      JValue data = json_object (cPairs, 2);
-      char *json;
-      json_stringify (&json, data);
-      fprintf (logs, "%s", json);
-      exit (1);
+      errors_common (logs, call.posD, UnrecognizedSymbol, identifier, msg);
     }
 }
 

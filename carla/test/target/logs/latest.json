@@ -1,0 +1,1 @@
+{"type":"error","error":{"message":"`x` is a private method","code":1,"buffer":"x","can":"change the visibility","tip":0,"location":[4,7],"uses":{"buffer":"x","location":[8,8]}}}

@@ -1,7 +1,9 @@
 #include "stdio"
 
+struct test {
+  void x = () {};
+} impl {};
+
 int32 main = () {
-  for int32 i : 0..12 {
-    io::println("Hello, world");
-  } 
+  test::x();
 } 
