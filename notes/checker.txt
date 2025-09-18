@@ -1,0 +1,88 @@
+Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) {
+    Symbols symbols;
+
+    std::vector<std::pair<const std::vector<pContext>*, size_t>> stack;
+    stack.emplace_back(&ctx, 0);
+
+    int currentDepth = 0;
+    size_t globalIndex = 0;
+
+    while (!stack.empty()) {
+        auto& [currentCtx, index] = stack.back();
+
+        if (index >= currentCtx->size()) {
+            stack.pop_back();
+            if (currentDepth > 0) currentDepth--;
+            symbols.exitScope();
+            continue;
+        }
+
+        const pContext& context = (*currentCtx)[index];
+
+        std::cout << "Global: " << globalIndex++
+                  << ", Depth: " << currentDepth
+                  << ", Type: " << (context.kind == Block ? "Block" : "Common")
+                  << std::endl;
+
+        if (context.kind == Common) {
+            Token tk = std::get<Token>(context.content);
+
+            // Verificar se é uma declaração de variável: TYPE IDENTIFIER;
+            if (tk.type == TokenType::IDENTIFIER) {
+                // Verificar se temos pelo menos 2 tokens à frente para formar "TYPE IDENTIFIER;"
+                if (index + 2 < currentCtx->size() &&
+                    (*currentCtx)[index + 1].kind == Common &&
+                    (*currentCtx)[index + 2].kind == Common) {
+
+                    Token typeToken = tk; // Primeiro token é o tipo
+                    Token identifierToken = std::get<Token>((*currentCtx)[index + 1].content);
+                    Token semicolonToken = std::get<Token>((*currentCtx)[index + 2].content);
+
+                    // Verificar padrão: IDENTIFIER (tipo) + IDENTIFIER (nome) + SEMICOLON
+                    if (identifierToken.type == TokenType::IDENTIFIER &&
+                        semicolonToken.type == TokenType::SEMICOLON) {
+
+                        // Verificar se o tipo existe na tabela de símbolos
+                        std::string typeName = typeToken.value;
+                        if (symbols.contains(typeName)) {
+                            Symbol typeSymbol = symbols.get(typeName);
+
+                            if (typeSymbol.kind == TYPE) {
+                                // Adicionar variável à tabela de símbolos
+                                std::string varName = identifierToken.value;
+                                symbols.add(varName, VARIABLE, VAR_LOCAL, typeSymbol.bytes);
+
+                                std::cout << "Variável declarada: " << varName
+                                          << " do tipo: " << typeName
+                                          << " (" << typeSymbol.bytes << " bytes)"
+                                          << std::endl;
+
+                                // Pular os tokens processados
+                                index += 2;
+                            } else {
+                                std::cout << "ERRO: '" << typeName << "' não é um tipo válido" << std::endl;
+                                return Error{"'" + typeName + "' não é um tipo válido"};
+                            }
+                        } else {
+                            std::cout << "ERRO: Tipo desconhecido '" << typeName << "'" << std::endl;
+                            return Error{"Tipo desconhecido '" + typeName + "'"};
+                        }
+                    }
+                }
+            }
+        }
+
+        index++;
+
+        if (context.kind == Block) {
+            const auto& blockContent = std::get<std::vector<pContext>>(context.content);
+            if (!blockContent.empty()) {
+                stack.emplace_back(&blockContent, 0);
+                currentDepth++;
+                symbols.enterScope();
+            }
+        }
+    }
+
+    return Some{};
+}

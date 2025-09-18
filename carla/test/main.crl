@@ -1,9 +1,0 @@
-#include "stdio"
-
-struct test {
-  void x = () {};
-} impl {};
-
-int32 main = () {
-  test::x();
-} 

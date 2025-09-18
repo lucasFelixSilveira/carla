@@ -1,1 +1,0 @@
-declare i32 @strlen(i8* %str) 

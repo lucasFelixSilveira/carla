@@ -1,0 +1,32 @@
+const std := @import("std");
+const ws := std.ws;
+const stdout = std.io.writer().unwrap();
+
+const Handler = struct {
+    void ok() our {
+        stdout.writeln("Listenning port 2000");
+    }
+
+    void close(ws.SessionId id) our {
+        stdout.writeln("Conexao com usuario {s} finalizada", .{id});
+    }
+
+    int8* msg(ws.SessionId id, int8* data) our {
+        std.writeln("mensagem recebida de {s}: {s}", .{id, data});
+        return "Entendido!";
+    }
+};
+
+int32 main = () {
+    ws.Server server = ws.bind(2000);
+    server
+        .middleware((WSRequest) -> union(nil, int8*) {
+            if( WSRequest.ip == "28.96.63.126" ) {
+                return "Voce esta proibido de acessar este sistema";
+            }
+
+            return nil;
+        })
+        .run(Handler);
+    return 0;
+}
