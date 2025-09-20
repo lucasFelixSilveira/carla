@@ -31,8 +31,8 @@ inline bool Parser::isEOF(Token tk) {
 void Parser::parse(std::vector<Token>& tks) {
     std::vector<pContext> ctx = genCTX(tks);
 
-#   if DEBUG
-    for (size_t i = 0; i < ctx.size(); ++i) {
+#   if CARLA_DEBUG
+    for( size_t i = 0; i < ctx.size(); ++i ) {
         printCtx(ctx[i], "", i == ctx.size() - 1);
     }
 #   endif
@@ -51,10 +51,18 @@ Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) 
     int currentDepth = 0;
     size_t globalIndex = 0;
 
-    while(!stack.empty()) {
+    int skip = 0;
+
+    while (!stack.empty()) {
         auto& [currentCtx, index] = stack.back();
 
-        if( index >= currentCtx->size() ) {
+        if( skip > 0 ) {
+            skip--;
+            index++;
+            if( skip == 0 ) index--;
+        }
+
+        if (index >= currentCtx->size()) {
             stack.pop_back();
             if (currentDepth > 0) currentDepth--;
             symbols.exitScope();
@@ -63,22 +71,23 @@ Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) 
 
         const pContext& context = (*currentCtx)[index];
 
-#       if DEBUG
+        #if CARLA_DEBUG
         std::cout << "Global: " << globalIndex++
                   << ", Depth: " << currentDepth
                   << ", Type: " << (context.kind == Block ? "Block" : "Common")
                   << std::endl;
-#       endif
+        #endif
 
-        if (context.kind == Common) {
-            Token tk = std::get<Token>(context.content);
-            pNode node;
-            Result match = pattern(&node, &index, currentCtx);
-            if(! isSuccess(match) ) CompilerOutputs::Fatal(err(match));
+        pNode node = pNode();
+        int old = index;
+        Result match = pattern(&node, &symbols, &index, currentCtx);
+        if( isSuccess(match) ) {
             nodes.push_back(node);
+            skip = index - old;
+            continue;
+        } else {
+            CompilerOutputs::Fatal(err(match));
         }
-
-        index++;
 
         if (context.kind == Block) {
             const auto& blockContent = std::get<std::vector<pContext>>(context.content);
@@ -87,8 +96,14 @@ Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) 
                 currentDepth++;
                 symbols.enterScope();
             }
+            index++;
+            continue;
         }
+
+        CompilerOutputs::Fatal(err(match));
     }
+
+    printNodes(nodes);
 
     return Some{};
 }

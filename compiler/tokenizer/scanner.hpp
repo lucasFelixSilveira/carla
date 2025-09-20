@@ -51,6 +51,8 @@ Scanner::read(std::vector<char> source, std::streamsize size)
         char ch = str[i];
 
         switch(ch) {
+            case ',': addSimple(&tokens, COMMA); break;
+
             case '*': addSimple(&tokens, STAR); break;
             case '/': addSimple(&tokens, SLASH); break;
             case ';': addSimple(&tokens, SEMICOLON); break;

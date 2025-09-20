@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <iostream>
 
+#include "llvm_rtypes.hpp"
+
 enum SymKind {
     VARIABLE,
     TYPE,
@@ -33,8 +35,12 @@ public:
     int bytes = 0;
     int scopeLevel = 0;
 
-    Symbol(SymKind kind, SymVariant variant, int bytes, int scopeLevel = 0)
-        : kind(kind), variant(variant), bytes(bytes), scopeLevel(scopeLevel) {};
+    LLVMRadicalType radical;
+
+    Symbol(SymKind kind, SymVariant variant, LLVMRadicalType radical, int bytes, int scopeLevel = 0)
+        : kind(kind), variant(variant), radical(radical), bytes(bytes), scopeLevel(scopeLevel) {};
+
+    Symbol() {};
 };
 
 struct Symbols {
@@ -45,19 +51,21 @@ private:
 public:
     Symbols() {
         // Inicializar com tipos primitivos usando insert() em vez de operator[]
-        symbols.insert({"int8",   Symbol(TYPE, TYPE_PRIMITIVE,  1, 0)});
-        symbols.insert({"int16",  Symbol(TYPE, TYPE_PRIMITIVE,  2, 0)});
-        symbols.insert({"int32",  Symbol(TYPE, TYPE_PRIMITIVE,  4, 0)});
-        symbols.insert({"int64",  Symbol(TYPE, TYPE_PRIMITIVE,  8, 0)});
-        symbols.insert({"int128", Symbol(TYPE, TYPE_PRIMITIVE,  16, 0)});
-        symbols.insert({"int256", Symbol(TYPE, TYPE_PRIMITIVE,  32, 0)});
+        symbols.insert({"void",   Symbol(TYPE, TYPE_PRIMITIVE,  void_t, 0,  0)});
 
-        symbols.insert({"uint8",   Symbol(TYPE, TYPE_PRIMITIVE,  1, 0)});
-        symbols.insert({"uint16",  Symbol(TYPE, TYPE_PRIMITIVE,  2, 0)});
-        symbols.insert({"uint32",  Symbol(TYPE, TYPE_PRIMITIVE,  4, 0)});
-        symbols.insert({"uint64",  Symbol(TYPE, TYPE_PRIMITIVE,  8, 0)});
-        symbols.insert({"uint128", Symbol(TYPE, TYPE_PRIMITIVE,  16, 0)});
-        symbols.insert({"uint256", Symbol(TYPE, TYPE_PRIMITIVE,  32, 0)});
+        symbols.insert({"int8",   Symbol(TYPE, TYPE_PRIMITIVE,  i8,     1,  0)});
+        symbols.insert({"int16",  Symbol(TYPE, TYPE_PRIMITIVE,  i16,    2,  0)});
+        symbols.insert({"int32",  Symbol(TYPE, TYPE_PRIMITIVE,  i32,    4,  0)});
+        symbols.insert({"int64",  Symbol(TYPE, TYPE_PRIMITIVE,  i64,    8,  0)});
+        symbols.insert({"int128", Symbol(TYPE, TYPE_PRIMITIVE,  i128,   16, 0)});
+        symbols.insert({"int256", Symbol(TYPE, TYPE_PRIMITIVE,  i256,   32, 0)});
+
+        symbols.insert({"uint8",   Symbol(TYPE, TYPE_PRIMITIVE, i8,     1,  0)});
+        symbols.insert({"uint16",  Symbol(TYPE, TYPE_PRIMITIVE, i16,    2,  0)});
+        symbols.insert({"uint32",  Symbol(TYPE, TYPE_PRIMITIVE, i32,    4,  0)});
+        symbols.insert({"uint64",  Symbol(TYPE, TYPE_PRIMITIVE, i64,    8,  0)});
+        symbols.insert({"uint128", Symbol(TYPE, TYPE_PRIMITIVE, i128,   16, 0)});
+        symbols.insert({"uint256", Symbol(TYPE, TYPE_PRIMITIVE, i256,   32, 0)});
     }
 
     // Entra em um novo escopo
@@ -105,8 +113,8 @@ public:
     }
 
     // Adiciona símbolo com escopo específico - CORRIGIDO
-    void add(const std::string& id, SymKind kind, SymVariant variant, int bytes) {
-        Symbol newSymbol(kind, variant, bytes, currentScope);
+    void add(const std::string& id, SymKind kind, SymVariant variant, LLVMRadicalType radical, int bytes) {
+        Symbol newSymbol(kind, variant, radical, bytes, currentScope);
         auto result = symbols.insert({id, newSymbol});
         if (!result.second) {
             result.first->second = newSymbol;

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "parser/parser.hpp"
+#include "globals.hpp"
 
 int
 main(int argc, char **argv)
@@ -21,6 +22,7 @@ main(int argc, char **argv)
     int min_arguments = 2;
     if( argc < min_arguments ) CompilerOutputs::Fatal("You need enter with a action. If you don't know the acceptable actions, use: help.");
 
+    GlobalArgs::instance().set(argc, argv);
     CompilerParams params = CompilerParams::format(argc, argv);
 
     /* checa se o arquivo esta acessivel */

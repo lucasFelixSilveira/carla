@@ -4,16 +4,52 @@
 
 #include "../utils/result.hpp"
 #include "ast.hpp"
+#include "patterns/lambda.hpp"
+#include "symbols.hpp"
+#include "patterns/declaration.hpp"
+#include "patterns/lambda.hpp"
+#include "../compiler_outputs.hpp"
+#include "../tokenizer/token_kind.hpp"
+#include <iostream>
+#include <sstream>
 
 template<typename T, typename X>
-Result pattern(pNode *result, T index, X ctx) {
-    const pContext& context = (*ctx)[index];
+Result pattern(pNode *result, Symbols *sym, T index, X ctx) {
+    const pContext& context = (*ctx)[*index];
+    if( context.kind == Block ) {
+        if( lambda(result, sym, index, ctx) ) return Some{};
+        else return Err{unknownPattern(ctx, index)};
+    }
+
     Token tk = std::get<Token>(context.content);
 
     switch(tk.kind) {
     case IDENTIFIER: {
-        if( declaration(result, index, ctx) ) return Some{};
+        if( declaration(result, sym, index, ctx) ) return Some{};
     } break;
-    default: return Err{"Uknown pattern"};
+    default: return Err{unknownPattern(ctx, index)};
     }
+
+    return Err{unknownPattern(ctx, index)};
+}
+
+template<typename T, typename X>
+std::string unknownPattern(const T ctx, const X index) {
+    std::stringstream str;
+    std::stringstream buff;
+    std::stringstream line;
+
+    const pContext& context = (*ctx)[*index];
+    if( context.kind == Common ) {
+        Token tk = std::get<Token>(context.content);
+        buff << ((tk.lexeme.length() == 0) ? tokenKindToString(tk.kind) : tk.lexeme);
+        line << std::to_string(tk.line);
+    } else {
+        buff << BOLD_YELLOW << "Carla[Internal<Block>]" << RESET;
+        line << BOLD_YELLOW << "Carla[Internal<Line(?:Numeric!)>]" << RESET;
+    }
+
+    str << RED << "Unknown pattern at context index " << *index << " (addr. " << GREEN << index << RED << ')' << RESET << ": '" << buff.str() << "'\n";
+    str << DARK_GREY << "└─ " << RESET << "Expected another pattern at line " << line.str() << "\n";
+    return str.str();
 }
