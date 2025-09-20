@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "parser/parser.hpp"
+#include "llvm/codegen.hpp"
 #include "globals.hpp"
 
 int
@@ -40,7 +41,11 @@ main(int argc, char **argv)
     std::vector<Token> tokens = Scanner::read(src, size);
 
     /* Parser phase */
-    Parser::parse(tokens);
+    auto irNodes = Parser::parse(tokens);
+
+    /* Code Generation phase */
+    std::string llvmIR = generateLLVMIR(irNodes, params);
+    std::cout << std::string(2, '\n') << llvmIR << std::endl;
 
     /* Calculo do tempo que demorou para a compilacao */
     auto end = std::chrono::high_resolution_clock::now();
@@ -49,7 +54,7 @@ main(int argc, char **argv)
 
     float seconds = ((double) ms.count()) / 1000.0;
     char *duration = (char*) std::malloc(32);
-    std::sprintf(duration, "Total compilation time: %s%.2fs%s\x0a", BOLD_GREEN, seconds, RESET);
+    std::sprintf(duration, "Total compilation time: %s%.2fs%s\x0a", Colorizer::BOLD_GREEN, seconds, Colorizer::RESET);
     CompilerOutputs::Log((std::string) duration);
     free(duration);
 

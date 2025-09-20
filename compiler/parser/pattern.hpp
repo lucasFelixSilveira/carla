@@ -45,11 +45,11 @@ std::string unknownPattern(const T ctx, const X index) {
         buff << ((tk.lexeme.length() == 0) ? tokenKindToString(tk.kind) : tk.lexeme);
         line << std::to_string(tk.line);
     } else {
-        buff << BOLD_YELLOW << "Carla[Internal<Block>]" << RESET;
-        line << BOLD_YELLOW << "Carla[Internal<Line(?:Numeric!)>]" << RESET;
+        buff << Colorizer::BOLD_YELLOW << "Carla[Internal<Block>]" << Colorizer::RESET;
+        line << Colorizer::BOLD_YELLOW << "Carla[Internal<Line(?:Numeric!)>]" << Colorizer::RESET;
     }
 
-    str << RED << "Unknown pattern at context index " << *index << " (addr. " << GREEN << index << RED << ')' << RESET << ": '" << buff.str() << "'\n";
-    str << DARK_GREY << "└─ " << RESET << "Expected another pattern at line " << line.str() << "\n";
+    str << Colorizer::RED << "Unknown pattern at context index " << *index << " (addr. " << Colorizer::GREEN << index << Colorizer::RED << ')' << Colorizer::RESET << ": '" << buff.str() << "'\n";
+    str << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Expected another pattern at line " << line.str() << "\n";
     return str.str();
 }

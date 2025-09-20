@@ -6,7 +6,7 @@
 template<typename T, typename X>
 bool declaration(pNode *result, Symbols *sym, T index, X ctx) {
     Token tk = std::get<Token>((*ctx)[*index].content);
-    Symbol type;
+    Symbol type = Symbol();
 
     // Temos certeza que o valor é um identificador por causa da checagem
     // anterior feita pelo 'pattern.hpp'

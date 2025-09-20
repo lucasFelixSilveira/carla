@@ -36,7 +36,7 @@ bool lambda(pNode *result, Symbols *sym, T index, X ctx) {
 
         const pContext& symbol = blockContent[internal];
         if( symbol.kind != Common || !std::holds_alternative<Token>(symbol.content) ) return false;
-        if( std::get<Token>(symbol.content).kind != COMMA ) break;
+        if( std::get<Token>(symbol.content).kind != COMMA ) return false;
         internal++;
     }
 

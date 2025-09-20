@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <stdexcept>
 #include <iostream>
+#include "../compiler_outputs.hpp"
 
 #include "llvm_rtypes.hpp"
 
@@ -40,7 +40,15 @@ public:
     Symbol(SymKind kind, SymVariant variant, LLVMRadicalType radical, int bytes, int scopeLevel = 0)
         : kind(kind), variant(variant), radical(radical), bytes(bytes), scopeLevel(scopeLevel) {};
 
-    Symbol() {};
+    Symbol(SymKind kind, Symbol type) {
+        this->kind = kind;
+        this->variant = type.variant;
+        this->radical = type.radical;
+        this->bytes = type.bytes;
+        this->scopeLevel = type.scopeLevel;
+    };
+
+    Symbol() = default;
 };
 
 struct Symbols {
@@ -50,22 +58,27 @@ private:
 
 public:
     Symbols() {
-        // Inicializar com tipos primitivos usando insert() em vez de operator[]
-        symbols.insert({"void",   Symbol(TYPE, TYPE_PRIMITIVE,  void_t, 0,  0)});
+        int sys = sizeof(int);
+        LLVMRadicalType sysl = (LLVMRadicalType) sys;
 
-        symbols.insert({"int8",   Symbol(TYPE, TYPE_PRIMITIVE,  i8,     1,  0)});
-        symbols.insert({"int16",  Symbol(TYPE, TYPE_PRIMITIVE,  i16,    2,  0)});
-        symbols.insert({"int32",  Symbol(TYPE, TYPE_PRIMITIVE,  i32,    4,  0)});
-        symbols.insert({"int64",  Symbol(TYPE, TYPE_PRIMITIVE,  i64,    8,  0)});
-        symbols.insert({"int128", Symbol(TYPE, TYPE_PRIMITIVE,  i128,   16, 0)});
-        symbols.insert({"int256", Symbol(TYPE, TYPE_PRIMITIVE,  i256,   32, 0)});
+        symbols.insert({"void",   Symbol(TYPE, TYPE_PRIMITIVE,  void_t, 0,    0)});
 
-        symbols.insert({"uint8",   Symbol(TYPE, TYPE_PRIMITIVE, i8,     1,  0)});
-        symbols.insert({"uint16",  Symbol(TYPE, TYPE_PRIMITIVE, i16,    2,  0)});
-        symbols.insert({"uint32",  Symbol(TYPE, TYPE_PRIMITIVE, i32,    4,  0)});
-        symbols.insert({"uint64",  Symbol(TYPE, TYPE_PRIMITIVE, i64,    8,  0)});
-        symbols.insert({"uint128", Symbol(TYPE, TYPE_PRIMITIVE, i128,   16, 0)});
-        symbols.insert({"uint256", Symbol(TYPE, TYPE_PRIMITIVE, i256,   32, 0)});
+        symbols.insert({"int",    Symbol(TYPE, TYPE_PRIMITIVE,  sysl,   sys,  0)});
+        symbols.insert({"uint",   Symbol(TYPE, TYPE_PRIMITIVE,  sysl,   sys,  0)});
+
+        symbols.insert({"int8",   Symbol(TYPE, TYPE_PRIMITIVE,  i8,     1,    0)});
+        symbols.insert({"int16",  Symbol(TYPE, TYPE_PRIMITIVE,  i16,    2,    0)});
+        symbols.insert({"int32",  Symbol(TYPE, TYPE_PRIMITIVE,  i32,    4,    0)});
+        symbols.insert({"int64",  Symbol(TYPE, TYPE_PRIMITIVE,  i64,    8,    0)});
+        symbols.insert({"int128", Symbol(TYPE, TYPE_PRIMITIVE,  i128,   16,   0)});
+        symbols.insert({"int256", Symbol(TYPE, TYPE_PRIMITIVE,  i256,   32,   0)});
+
+        symbols.insert({"uint8",   Symbol(TYPE, TYPE_PRIMITIVE, i8,     1,    0)});
+        symbols.insert({"uint16",  Symbol(TYPE, TYPE_PRIMITIVE, i16,    2,    0)});
+        symbols.insert({"uint32",  Symbol(TYPE, TYPE_PRIMITIVE, i32,    4,    0)});
+        symbols.insert({"uint64",  Symbol(TYPE, TYPE_PRIMITIVE, i64,    8,    0)});
+        symbols.insert({"uint128", Symbol(TYPE, TYPE_PRIMITIVE, i128,   16,   0)});
+        symbols.insert({"uint256", Symbol(TYPE, TYPE_PRIMITIVE, i256,   32,   0)});
     }
 
     // Entra em um novo escopo
@@ -88,10 +101,10 @@ public:
         return currentScope;
     }
 
-    Symbol get(const std::string& id) const {
+    Symbol get(const std::string& id) {
         auto it = symbols.find(id);
         if (it == symbols.end()) {
-            throw std::runtime_error("Símbolo não encontrado: " + id);
+            CompilerOutputs::Fatal("Símbolo não encontrado!");
         }
         return it->second;
     }

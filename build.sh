@@ -1,9 +1,10 @@
+#!/bin/bash
+
 cd compiler
 
-g++ -g -O0 -fpermissive main.cpp compiler_outputs.hpp params.hpp \
-    tokenizer/scanner.hpp tokenizer/token.hpp tokenizer/token_kind.hpp \
-    parser/ast.hpp parser/parser.hpp parser/symbols.hpp parser/pattern.hpp parser/llvm_rtypes.hpp \
-    parser/patterns/declaration.hpp \
-    debug/debug.hpp -o ../build/carla
+g++ -std=c++17 -g -O0 -fPIC -fpermissive -fexceptions main.cpp \
+    -o ../build/carla \
+    -I. \
+    `llvm-config --cxxflags --ldflags --libs core support irreader`
 
 cd ..

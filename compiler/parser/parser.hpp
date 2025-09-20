@@ -15,20 +15,20 @@
 typedef struct Parser {
 private:
     static std::vector<pContext> genCTX(std::vector<Token>& tks);
-    static Result checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks);
+    static Result checkSyntax(std::vector<pNode> *nodes,std::vector<pContext>& ctx, std::vector<Token>& tks);
 
     /* Utils functions */
     static bool isEOF(Token tk);
 public:
 // std::vector<pNode> parse(std::vector<Token>& tks);
-    static void parse(std::vector<Token>& tks);
+    static std::vector<pNode> parse(std::vector<Token>& tks);
 } Parser;
 
 inline bool Parser::isEOF(Token tk) {
     return tk.kind == CARLA_EOF;
 }
 
-void Parser::parse(std::vector<Token>& tks) {
+std::vector<pNode> Parser::parse(std::vector<Token>& tks) {
     std::vector<pContext> ctx = genCTX(tks);
 
 #   if CARLA_DEBUG
@@ -37,14 +37,15 @@ void Parser::parse(std::vector<Token>& tks) {
     }
 #   endif
 
-    Result syntax = checkSyntax(ctx, tks);
-    if(! isSuccess(syntax) ) return CompilerOutputs::Fatal(err(syntax));
+    std::vector<pNode> nodes;
+    Result syntax = checkSyntax(&nodes, ctx, tks);
+    if(! isSuccess(syntax) ) CompilerOutputs::Fatal(err(syntax));
+    return nodes;
 }
 
-Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) {
+Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx, std::vector<Token>& tks) {
     Symbols symbols;
 
-    std::vector<pNode> nodes;
     std::vector<std::pair<const std::vector<pContext>*, size_t>> stack;
     stack.emplace_back(&ctx, 0);
 
@@ -82,7 +83,7 @@ Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) 
         int old = index;
         Result match = pattern(&node, &symbols, &index, currentCtx);
         if( isSuccess(match) ) {
-            nodes.push_back(node);
+            nodes->push_back(node);
             skip = index - old;
             continue;
         } else {
@@ -103,7 +104,7 @@ Result Parser::checkSyntax(std::vector<pContext>& ctx, std::vector<Token>& tks) 
         CompilerOutputs::Fatal(err(match));
     }
 
-    printNodes(nodes);
+    printNodes(*nodes);
 
     return Some{};
 }

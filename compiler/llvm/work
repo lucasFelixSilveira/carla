@@ -1,0 +1,143 @@
+#pragma once
+
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Support/raw_ostream.h>
+#include <string>
+#include <vector>
+#include <variant>
+#include "../parser/symbols.hpp"
+#include "../parser/ast.hpp"
+#include "types.hpp"
+#include "../globals.hpp"
+#include "../params.hpp"
+
+std::string generateLLVMIR(const std::vector<pNode>& nodes, CompilerParams params ) {
+    llvm::LLVMContext context;
+    llvm::Module module(params.main, context);
+    llvm::IRBuilder<> builder(context);
+    Symbols symbolTable;
+
+    llvm::Function* currentFunction = nullptr;
+    llvm::Type* type = llvm::Type::getVoidTy(context);
+    std::string funcName = "unnamed";
+
+    // First pass: Look for declarations to set function return type and name
+    for (const auto& node : nodes) {
+        if (node.kind == NODE_DECLARATION) {
+            if (auto* decl = std::get_if<pDeclaration>(&node.values)) {
+                if (decl->type.kind == FUNCTION || decl->complement == dHopefull) {
+                    type = getLLVMType(decl->type.radical, context);
+                    funcName = decl->name;
+                    symbolTable.add(decl->name, decl->type.kind, decl->type.variant, decl->type.radical, decl->type.bytes);
+                } else if (decl->type.variant == VAR_GLOBAL || decl->complement == dHopefull) {
+                    llvm::Type* type = getLLVMType(decl->type.radical, context);
+                    symbolTable.add(decl->name, decl->type.kind, decl->type.variant, decl->type.radical, decl->type.bytes);
+                    new llvm::GlobalVariable(
+                        module,
+                        type,
+                        false,
+                        llvm::GlobalValue::ExternalLinkage,
+                        nullptr,
+                        decl->name
+                    );
+                } else if (decl->type.variant == VAR_LOCAL || decl->complement == dArgument) {
+                    if (currentFunction) {
+                        llvm::BasicBlock* entry = &currentFunction->getEntryBlock();
+                        builder.SetInsertPoint(entry, entry->begin());
+                        builder.CreateAlloca(type, nullptr, decl->name);
+                        symbolTable.add(decl->name, decl->type.kind, decl->type.variant, decl->type.radical, decl->type.bytes);
+                    }
+                }
+            }
+        }
+    }
+
+    // Second pass: Process lambdas and other nodes
+    for (const auto& node : nodes) {
+        switch (node.kind) {
+            case NODE_DECLARATION:
+                // Handled in first pass
+                break;
+            case NODE_LAMBDA: {
+                if (auto* lambda = std::get_if<pLambda>(&node.values)) {
+                    symbolTable.enterScope();
+
+                    // Collect argument types and names
+                    std::vector<llvm::Type*> paramTypes;
+                    std::vector<std::string> paramNames;
+                    for (const auto& arg : lambda->args) {
+                        if (auto* decl = std::get_if<pDeclaration>(&arg.values)) {
+                            paramTypes.push_back(getLLVMType(decl->type.radical, context));
+                            paramNames.push_back(decl->name);
+                            // Add parameter to symbol table
+                            symbolTable.add(decl->name, VARIABLE, VAR_PARAM, decl->type.radical, decl->type.bytes);
+                        } else {
+                            // Fallback to i32 for non-declaration args
+                            paramTypes.push_back(llvm::Type::getInt32Ty(context));
+                            paramNames.push_back("arg_" + std::to_string(paramNames.size()));
+                        }
+                    }
+
+                    // Create function with return type from declaration
+                    llvm::FunctionType* funcType = llvm::FunctionType::get(
+                        type,
+                        paramTypes,
+                        false // isVarArg
+                    );
+
+                    // Use funcName from declaration or generate one
+                    std::string finalFuncName = funcName.empty() ? (lambda->pub ? "pub_lambda" : "lambda_" + std::to_string((uintptr_t)&node)) : funcName;
+                    currentFunction = llvm::Function::Create(
+                        funcType,
+                        lambda->pub ? llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage,
+                        finalFuncName,
+                        module
+                    );
+
+                    // Set argument names
+                    unsigned idx = 0;
+                    for (auto& arg : currentFunction->args()) {
+                        if (idx < paramNames.size()) {
+                            arg.setName(paramNames[idx]);
+                        }
+                        ++idx;
+                    }
+
+                    // Create entry block
+                    llvm::BasicBlock* bb = llvm::BasicBlock::Create(context, "entry", currentFunction);
+                    builder.SetInsertPoint(bb);
+
+                    // Return based on type (default value or void)
+                    if (type->isVoidTy()) {
+                        builder.CreateRetVoid();
+                    } else if (type->isIntegerTy()) {
+                        builder.CreateRet(llvm::ConstantInt::get(type, 0));
+                    } else {
+                        builder.CreateRet(llvm::Constant::getNullValue(type));
+                    }
+
+                    symbolTable.exitScope();
+                    currentFunction = nullptr;
+                }
+                break;
+            }
+            case NODE_CALL:
+                // Not implemented
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Verify module
+    llvm::verifyModule(module, &llvm::errs());
+
+    // Output IR as string
+    std::string ir;
+    llvm::raw_string_ostream os(ir);
+    module.print(os, nullptr);
+    return ir;
+}

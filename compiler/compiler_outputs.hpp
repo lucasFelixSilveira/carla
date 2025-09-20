@@ -14,31 +14,33 @@ public:
 };
 
 // Common color macros
-#define RESET "\033[0m"
-#define RED "\033[31m"
-#define BOLD_RED "\033[1;31m"
-#define GREEN "\033[32m"
-#define BOLD_GREEN "\033[1;32m"
-#define YELLOW "\033[33m"
-#define BOLD_YELLOW "\033[1;33m"
-#define BLUE "\033[34m"
-#define BOLD_BLUE "\033[1;34m"
-#define PURPLE "\033[35m"
-#define CYAN "\033[36m"
-#define DARK_YELLOW "\033[33m"
-#define DARK_RED "\033[31m"
-#define DARK_GREY "\033[90m"
-#define BOLD "\033[1m"
+namespace Colorizer {
+    constexpr const char* RESET = "\033[0m";
+    constexpr const char* RED = "\033[31m";
+    constexpr const char* BOLD_RED = "\033[1;31m";
+    constexpr const char* GREEN = "\033[32m";
+    constexpr const char* BOLD_GREEN = "\033[1;32m";
+    constexpr const char* YELLOW = "\033[33m";
+    constexpr const char* BOLD_YELLOW = "\033[1;33m";
+    constexpr const char* BLUE = "\033[34m";
+    constexpr const char* BOLD_BLUE = "\033[1;34m";
+    constexpr const char* PURPLE = "\033[35m";
+    constexpr const char* CYAN = "\033[36m";
+    constexpr const char* DARK_YELLOW = "\033[33m";
+    constexpr const char* DARK_RED = "\033[31m";
+    constexpr const char* DARK_GREY = "\033[90m";
+    constexpr const char* BOLD = "\033[1m";
+}
 
 void
 CompilerOutputs::Log(std::string log)
 {
-    std::cout << "\r" << BOLD_GREEN << "[Carla]" << RESET << ": " << log;
+    std::cout << "\r" << Colorizer::BOLD_GREEN << "[Carla]" << Colorizer::RESET << ": " << log;
 }
 
 void
 CompilerOutputs::Fatal(std::string log)
 {
-    std::cout << "\r" << BOLD_RED << "[Carla FAIL]" << RESET << ": " << log << std::endl;
+    std::cout << "\r" << Colorizer::BOLD_RED << "[Carla FAIL]" << Colorizer::RESET << ": " << log << std::endl;
     std::exit(-1);
 }
