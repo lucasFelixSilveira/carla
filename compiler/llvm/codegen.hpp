@@ -13,6 +13,7 @@
 #include "types.hpp"
 #include "../globals.hpp"
 #include "../params.hpp"
+#include "expressions.hpp"
 
 std::string generateLLVMIR(const std::vector<pNode>& nodes, CompilerParams params ) {
     llvm::LLVMContext context;
@@ -20,6 +21,7 @@ std::string generateLLVMIR(const std::vector<pNode>& nodes, CompilerParams param
     llvm::IRBuilder<> builder(context);
     Symbols symbolTable;
 
+    std::map<std::string, llvm::AllocaInst*> namedValues; // Para armazenar variáveis locais
     llvm::Function* currentFunction = nullptr;
     llvm::Type* type = llvm::Type::getVoidTy(context);
     std::string funcName = "unnamed";
@@ -74,6 +76,7 @@ std::string generateLLVMIR(const std::vector<pNode>& nodes, CompilerParams param
                     arg.setName(paramNames[idx]);
                     llvm::AllocaInst* alloca = builder.CreateAlloca(paramTypes[idx], nullptr, paramNames[idx] + ".addr");
                     builder.CreateStore(&arg, alloca);
+                    namedValues[paramNames[idx]] = alloca;
 
                     if( idx < lamb.args.size() ) {
                         if( auto* argDecl = std::get_if<pDeclaration>(&lamb.args[idx].values) ) {
@@ -83,7 +86,33 @@ std::string generateLLVMIR(const std::vector<pNode>& nodes, CompilerParams param
                 }
                 ++idx;
             }
+        }
+        // Processar declaração de variável
+        else if (first.kind == NODE_DECLARATION) {
+            pDeclaration decl = std::get<pDeclaration>(first.values);
 
+            // Adicionar à tabela de símbolos
+            symbolTable.add(decl.name, Symbol(decl.name, VARIABLE, VAR_LOCAL, decl.type.radical, decl.type.bytes));
+
+            // Se estamos dentro de uma função, criar alocação na pilha
+            if (currentFunction) {
+                llvm::Type* varType = getLLVMType(decl.type.radical, context);
+                llvm::AllocaInst* alloca = createEntryBlockAlloca(currentFunction, builder, decl.name, varType);
+                namedValues[decl.name] = alloca;
+
+                // Se temos uma inicialização (expressão)
+                if (i + 1 < nodes.size() && nodes[i + 1].kind == NODE_EXPRESSION) {
+                    pExpression expr = std::get<pExpression>(nodes[i + 1].values);
+                    llvm::Value* initValue = generateExpression(expr, builder, context, module, symbolTable, namedValues);
+                    builder.CreateStore(initValue, alloca);
+                    i++; // Consumir o próximo nó (a expressão)
+                }
+            }
+        }
+        // Processar expressões soltas
+        else if (first.kind == NODE_EXPRESSION) {
+            pExpression expr = std::get<pExpression>(first.values);
+            generateExpression(expr, builder, context, module, symbolTable, namedValues);
         }
 
         i++;

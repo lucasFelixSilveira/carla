@@ -1,7 +1,10 @@
+#pragma once
+
 #include <cstddef>
 #include <string>
 #include <vector>
 #include "ast.hpp"
+#include "global.hpp"
 #include "pattern.hpp"
 #include "symbols.hpp"
 #include "../tokenizer/token.hpp"
@@ -12,17 +15,23 @@
 
 #define ips iPerScope[scope]
 
-typedef struct Parser {
+static Symbols symbols;
+
+struct Parser {
 private:
     static std::vector<pContext> genCTX(std::vector<Token>& tks);
-    static Result checkSyntax(std::vector<pNode> *nodes,std::vector<pContext>& ctx, std::vector<Token>& tks);
 
     /* Utils functions */
     static bool isEOF(Token tk);
 public:
 // std::vector<pNode> parse(std::vector<Token>& tks);
     static std::vector<pNode> parse(std::vector<Token>& tks);
-} Parser;
+    static Result checkSyntax(std::vector<pNode> *nodes,std::vector<pContext>& ctx, bool global);
+};
+
+inline Result checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx) {
+    return Parser::checkSyntax(nodes, ctx, false);
+}
 
 inline bool Parser::isEOF(Token tk) {
     return tk.kind == CARLA_EOF;
@@ -38,14 +47,12 @@ std::vector<pNode> Parser::parse(std::vector<Token>& tks) {
 #   endif
 
     std::vector<pNode> nodes;
-    Result syntax = checkSyntax(&nodes, ctx, tks);
+    Result syntax = checkSyntax(&nodes, ctx, true);
     if(! isSuccess(syntax) ) CompilerOutputs::Fatal(err(syntax));
     return nodes;
 }
 
-Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx, std::vector<Token>& tks) {
-    Symbols symbols;
-
+Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx, bool global) {
     std::vector<std::pair<const std::vector<pContext>*, size_t>> stack;
     stack.emplace_back(&ctx, 0);
 
@@ -54,7 +61,7 @@ Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx
 
     int skip = 0;
 
-    while (!stack.empty()) {
+    while(!stack.empty()) {
         auto& [currentCtx, index] = stack.back();
 
         if( skip > 0 ) {
@@ -63,7 +70,7 @@ Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx
             if( skip == 0 ) index--;
         }
 
-        if (index >= currentCtx->size()) {
+        if( index >= currentCtx->size() ) {
             stack.pop_back();
             if (currentDepth > 0) currentDepth--;
             symbols.exitScope();
@@ -84,15 +91,28 @@ Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx
         Result match = pattern(&node, &symbols, &index, currentCtx);
         if( isSuccess(match) ) {
             nodes->push_back(node);
+            GlobalData::setPNode(node);
+
+            pNode gpNode = GlobalData::getGPNode();
+            if( node.kind == NODE_LAMBDA && gpNode.kind == NODE_DECLARATION ) {
+                pDeclaration decl = std::get<pDeclaration>(gpNode.values);
+                GlobalData::SymbolEntry data = GlobalData::symbols[decl.name];
+                auto second = std::get<1>(data);
+                std::vector<pNode> body = std::get<std::vector<pNode>>(second);
+                for( pNode node : body ) nodes->push_back(node);
+            }
+
+            if( global ) GlobalData::setGPNode(node);
+
             skip = index - old;
             continue;
         } else {
             CompilerOutputs::Fatal(err(match));
         }
 
-        if (context.kind == Block) {
+        if( context.kind == Block ) {
             const auto& blockContent = std::get<std::vector<pContext>>(context.content);
-            if (!blockContent.empty()) {
+            if(! blockContent.empty() ) {
                 stack.emplace_back(&blockContent, 0);
                 currentDepth++;
                 symbols.enterScope();

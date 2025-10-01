@@ -28,7 +28,8 @@ typedef enum TokenKind {
 
     IMPORT,
 
-    CARLA_EOF
+    CARLA_EOF,
+    UNKNOWN_TK
 } TokenKind;
 
 typedef enum TokenSubKind {

@@ -4,8 +4,9 @@
 #include "../symbols.hpp"
 #include <vector>
 
-template<typename T, typename X>
-bool lambda(pNode *result, Symbols *sym, T index, X ctx) {
+#include "../global.hpp"
+
+bool lambda(pNode *result, Symbols *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
     pContext arguments = (*ctx)[*index];
     if(! std::holds_alternative<std::vector<pContext>>(arguments.content) ) return false;
     const auto& blockContent = std::get<std::vector<pContext>>(arguments.content);
@@ -22,7 +23,7 @@ bool lambda(pNode *result, Symbols *sym, T index, X ctx) {
         const pContext& typeCtx = blockContent[internal];
         if( typeCtx.kind != Common || !std::holds_alternative<Token>(typeCtx.content) ) return false;
         Token typeTk = std::get<Token>(typeCtx.content);
-        if( ! sym->contains(typeTk.lexeme) || sym->get(typeTk.lexeme).kind != TYPE ) return false;
+        if(! sym->contains(typeTk.lexeme) || sym->get(typeTk.lexeme).kind != TYPE ) return false;
 
         const pContext& idCtx = blockContent[internal + 1];
         if( idCtx.kind != Common || !std::holds_alternative<Token>(idCtx.content) ) return false;
@@ -41,6 +42,7 @@ bool lambda(pNode *result, Symbols *sym, T index, X ctx) {
     }
 
     *result = pNode(NODE_LAMBDA, args);
+    GlobalData::addLambdaBody(body);
     *index += 2;
     return true;
 }

@@ -3,8 +3,7 @@
 #include "../ast.hpp"
 #include "../symbols.hpp"
 
-template<typename T, typename X>
-bool declaration(pNode *result, Symbols *sym, T index, X ctx) {
+bool declaration(pNode *result, Symbols *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
     Token tk = std::get<Token>((*ctx)[*index].content);
     Symbol type = Symbol();
 

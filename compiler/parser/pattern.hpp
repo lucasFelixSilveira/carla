@@ -8,9 +8,9 @@
 #include "symbols.hpp"
 #include "patterns/declaration.hpp"
 #include "patterns/lambda.hpp"
+#include "patterns/expressions.hpp"
 #include "../compiler_outputs.hpp"
 #include "../tokenizer/token_kind.hpp"
-#include <iostream>
 #include <sstream>
 
 template<typename T, typename X>
@@ -18,15 +18,20 @@ Result pattern(pNode *result, Symbols *sym, T index, X ctx) {
     const pContext& context = (*ctx)[*index];
     if( context.kind == Block ) {
         if( lambda(result, sym, index, ctx) ) return Some{};
+        else if( expressions(result, sym, index, ctx) ) return Some{};
         else return Err{unknownPattern(ctx, index)};
     }
 
     Token tk = std::get<Token>(context.content);
 
     switch(tk.kind) {
-    case IDENTIFIER: {
-        if( declaration(result, sym, index, ctx) ) return Some{};
-    } break;
+    case IDENTIFIER:
+    if( declaration(result, sym, index, ctx) ) return Some{};
+    else if( expressions(result, sym, index, ctx) ) return Some{};
+    case NUMBER:
+    if( expressions(result, sym, index, ctx) ) return Some{};
+    case STRING:
+    if( expressions(result, sym, index, ctx) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};
     }
 
