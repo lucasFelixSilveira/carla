@@ -124,7 +124,10 @@ Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx
         CompilerOutputs::Fatal(err(match));
     }
 
+
+#   if CARLA_DEBUG
     printNodes(*nodes);
+#   endif
 
     return Some{};
 }

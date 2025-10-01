@@ -27,6 +27,7 @@ public:
     using SymbolEntry = std::tuple<Kind, SymbolData>;
 
     static inline std::map<std::string, SymbolEntry> symbols;
+
     inline static void setPNode(pNode node) { last = node; }
     inline static pNode getPNode() { return last; }
 

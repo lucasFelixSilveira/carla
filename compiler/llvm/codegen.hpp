@@ -118,7 +118,7 @@ std::string generateLLVMIR(const std::vector<pNode>& nodes, CompilerParams param
         i++;
     }
 
-    llvm::verifyModule(module, &llvm::errs());
+    // llvm::verifyModule(module, &llvm::errs());
 
     std::string ir;
     llvm::raw_string_ostream os(ir);
