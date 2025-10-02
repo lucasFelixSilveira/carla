@@ -57,7 +57,8 @@ main(int argc, char **argv)
 
     /* Create target directory if it doesn't exist */
     struct stat st = {0};
-    if( stat("target", &st) != -1 && MKDIR("target") != 0 ) CompilerOutputs::Fatal("Failed to create target directory");
+    std::string createFolder = "mkdir target > /dev/null 2>&1";
+    if( stat("target", &st) == -1 && std::system(createFolder.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to create target directory");
 
     /* Write LLVM IR to target/output.ll */
     std::ofstream outFile("target/output.ll");
