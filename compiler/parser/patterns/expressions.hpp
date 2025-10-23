@@ -1,275 +1,119 @@
 #pragma once
-
 #include "../ast.hpp"
 #include "../symbols.hpp"
-#include <memory>
-#include <iostream>
-#include <vector>
-#include <map>
 #include <stack>
+#include <memory>
+#include <variant>
+#include <string>
+#include <vector>
 
-#include "lambda.hpp"
-
-// Adiciona enum para precedência de operadores
-enum OperatorPrecedence : int {
-    PREC_LOWEST = 0,
-    PREC_ASSIGNMENT = 1,   // =, +=, -=, *=, /=, etc.
-    PREC_LOGICAL_OR = 2,   // ||
-    PREC_LOGICAL_AND = 3,  // &&
-    PREC_EQUALITY = 4,     // ==, !=
-    PREC_RELATIONAL = 5,   // <, >, <=, >=
-    PREC_BITWISE_OR = 6,   // |
-    PREC_BITWISE_XOR = 7,  // ^
-    PREC_BITWISE_AND = 8,  // &
-    PREC_SHIFT = 9,        // <<, >>
-    PREC_ADDITIVE = 10,    // +, -
-    PREC_MULTIPLICATIVE = 11, // *, /, %
-    PREC_UNARY = 12,       // !, ~, +, -, ++, --
-    PREC_CALL = 13,        // (), []
-    PREC_MEMBER = 14       // ., ->
-};
-
-// Mapeamento de operadores para sua precedência
-std::map<TokenKind, OperatorPrecedence> operatorPrecedence = {
-    {PLUS, PREC_ADDITIVE},
-    {MINUS, PREC_ADDITIVE},
-    {STAR, PREC_MULTIPLICATIVE},
-    {SLASH, PREC_MULTIPLICATIVE},
-    {EQUAL, PREC_EQUALITY},
-    // {NOT_EQUAL, PREC_EQUALITY},
-    // {LESS_THAN, PREC_RELATIONAL},
-    // {GREATER_THAN, PREC_RELATIONAL},
-    {LESS_EQUAL, PREC_RELATIONAL},
-    {GREATER_EQUAL, PREC_RELATIONAL},
-    {AND, PREC_LOGICAL_AND},
-    {OR, PREC_LOGICAL_OR},
-    // {ASSIGN, PREC_ASSIGNMENT},
-    // {PLUS_ASSIGN, PREC_ASSIGNMENT},
-    // {MINUS_ASSIGN, PREC_ASSIGNMENT},
-    // {STAR_ASSIGN, PREC_ASSIGNMENT},
-    // {SLASH_ASSIGN, PREC_ASSIGNMENT},
-    // {MOD, PREC_MULTIPLICATIVE},
-    // {BIT_AND, PREC_BITWISE_AND},
-    // {BIT_OR, PREC_BITWISE_OR},
-    // {BIT_XOR, PREC_BITWISE_XOR},
-    // {BIT_NOT, PREC_UNARY},
-    // {LEFT_SHIFT, PREC_SHIFT},
-    // {RIGHT_SHIFT, PREC_SHIFT},
-    {DOT, PREC_MEMBER},
-    {ARROW, PREC_MEMBER},
-    {LEFT_PAREN, PREC_CALL}
-};
-
-bool parseExpression(std::shared_ptr<pNode>* result, Symbols* sym, size_t* index, const std::vector<pContext>* ctx,
-                    OperatorPrecedence minPrecedence);
-
-bool parseExpressionBlock(pNode* result, Symbols* sym, size_t* index, const std::vector<pContext>* ctx);
-
-// Função para obter precedência do operador
-OperatorPrecedence getPrecedence(TokenKind kind) {
-    auto it = operatorPrecedence.find(kind);
-    if (it != operatorPrecedence.end()) {
-        return it->second;
-    }
-    return PREC_LOWEST;
+static inline int precedence(const std::string& op) {
+    if (op == "*" || op == "/") return 2;
+    if (op == "+" || op == "-") return 1;
+    return 0;
 }
 
-// Função para verificar se o token é um operador
-bool isOperator(TokenKind kind) {
-    return operatorPrecedence.find(kind) != operatorPrecedence.end();
+static inline std::string getOperator(TokenKind kind) {
+    switch (kind) {
+        case TokenKind::PLUS: return "+";
+        case TokenKind::MINUS: return "-";
+        case TokenKind::STAR: return "*";
+        case TokenKind::SLASH: return "/";
+        default: return "";
+    }
 }
 
-// Função para analisar uma expressão primária (literal, variável, etc.)
-bool parsePrimaryExpression(std::shared_ptr<pNode>* result, Symbols* sym, size_t* index, const std::vector<pContext>* ctx) {
-    if (*index >= ctx->size()) return false;
+static std::shared_ptr<pNode> makeExprNode(
+    std::variant<double, std::string, std::shared_ptr<pNode>> left,
+    const std::string& op,
+    std::variant<double, std::string, std::shared_ptr<pNode>> right
+) {
+    return std::make_shared<pNode>(pExpression{left, op, right});
+}
 
-    const pContext& context = (*ctx)[*index];
+bool expressions(pNode *result, Symbols *sym, size_t *index, const std::vector<pContext> *ctx) {
+    std::vector<std::variant<double, std::string, std::shared_ptr<pNode>>> values;
+    std::vector<std::string> ops;
 
-    // Token simples (identificador, número, string)
-    if (context.kind == Common && std::holds_alternative<Token>(context.content)) {
-        Token token = std::get<Token>(context.content);
+    size_t i = *index;
 
-        if (token.kind == IDENTIFIER) {
-            if (!sym->contains(token.lexeme)) return false;
-
-            Symbol symbol = sym->get(token.lexeme);
-            sym->markAsUsed(token.lexeme); // Marca o símbolo como usado
-
-            pExpression expr(EXPR_VARIABLE, symbol);
-            *result = std::make_shared<pNode>(expr);
-            (*index)++;
-            return true;
-        }
-        else if (token.kind == NUMBER) {
-            long long val = std::stoll(token.lexeme);
-            pExpression expr(EXPR_LITERAL, val);
-            *result = std::make_shared<pNode>(expr);
-            (*index)++;
-            return true;
-        }
-        else if (token.kind == STRING) {
-            pExpression expr(EXPR_LITERAL, token.lexeme);
-            *result = std::make_shared<pNode>(expr);
-            (*index)++;
-            return true;
-        }
-    }
-    // Expressão em parenteses
-    else if (context.kind == Common && std::holds_alternative<Token>(context.content) &&
-             std::get<Token>(context.content).kind == LEFT_PAREN) {
-        (*index)++; // Consumir '('
-
-        std::shared_ptr<pNode> innerExpr;
-        if (!parseExpression(&innerExpr, sym, index, ctx, PREC_LOWEST)) {
-            return false;
-        }
-
-        if (*index >= ctx->size() ||
-            !std::holds_alternative<Token>((*ctx)[*index].content) ||
-            std::get<Token>((*ctx)[*index].content).kind != RIGHT_PAREN) {
-            // Erro: esperava ')'
-            return false;
-        }
-
-        (*index)++; // Consumir ')'
-        *result = innerExpr;
+    auto applyOp = [&]() {
+        if (values.size() < 2 || ops.empty()) return false;
+        auto right = values.back(); values.pop_back();
+        auto left = values.back(); values.pop_back();
+        std::string op = ops.back(); ops.pop_back();
+        auto node = makeExprNode(left, op, right);
+        values.push_back(node);
         return true;
-    }
-    // Bloco (lambda ou subexpressão)
-    else if (context.kind == Block) {
-        pNode blockResult;
-        size_t tmpIndex = 0;
+    };
 
-        if (lambda(&blockResult, sym, &tmpIndex, &std::get<std::vector<pContext>>(context.content))) {
-            *result = std::make_shared<pNode>(blockResult);
-            (*index)++;
-            return true;
-        }
-        else if (parseExpressionBlock(&blockResult, sym, &tmpIndex, &std::get<std::vector<pContext>>(context.content))) {
-            *result = std::make_shared<pNode>(blockResult);
-            (*index)++;
-            return true;
-        }
-    }
+    while (i < ctx->size()) {
+        const pContext &c = (*ctx)[i];
+        if (c.kind != Common && c.kind != Block) break;
 
-    return false;
-}
+        if (c.kind == Common && std::holds_alternative<Token>(c.content)) {
+            Token tk = std::get<Token>(c.content);
 
-// Função para analisar um bloco de expressão
-bool parseExpressionBlock(pNode* result, Symbols* sym, size_t* index, const std::vector<pContext>* ctx) {
-    sym->enterScope(); // Entrar em novo escopo para o bloco
-
-    size_t internal = *index;
-    std::vector<std::shared_ptr<pNode>> exprs;
-
-    while (internal < ctx->size()) {
-        std::shared_ptr<pNode> expr;
-        if (!parseExpression(&expr, sym, &internal, ctx, PREC_LOWEST)) {
-            sym->exitScope();
-            return false;
-        }
-
-        exprs.push_back(expr);
-
-        // Verificar por ';' no final da expressão
-        if (internal < ctx->size() &&
-            std::holds_alternative<Token>((*ctx)[internal].content) &&
-            std::get<Token>((*ctx)[internal].content).kind == SEMICOLON) {
-            internal++; // Consumir ';'
-        }
-    }
-
-    // O resultado é a última expressão do bloco
-    if (exprs.empty()) {
-        sym->exitScope();
-        return false;
-    }
-
-    *result = *exprs.back();
-    *index = internal;
-    sym->exitScope();
-    return true;
-}
-
-// Função para analisar uma expressão binária
-bool parseBinaryExpression(std::shared_ptr<pNode>* result, Symbols* sym, size_t* index, const std::vector<pContext>* ctx,
-                           std::shared_ptr<pNode> left, TokenKind opKind, OperatorPrecedence precedence) {
-    (*index)++; // Consumir o operador
-
-    std::shared_ptr<pNode> right;
-    if (!parseExpression(&right, sym, index, ctx, precedence)) {
-        return false;
-    }
-
-    pExpression expr(EXPR_BINARY, std::make_tuple(opKind, left, right));
-    *result = std::make_shared<pNode>(expr);
-    return true;
-}
-
-// Função principal para analisar expressões com precedência
-bool parseExpression(std::shared_ptr<pNode>* result, Symbols* sym, size_t* index, const std::vector<pContext>* ctx,
-                    OperatorPrecedence minPrecedence) {
-    std::shared_ptr<pNode> left;
-    if (!parsePrimaryExpression(&left, sym, index, ctx)) {
-        return false;
-    }
-
-    while (*index < ctx->size()) {
-        const pContext& context = (*ctx)[*index];
-
-        // Verifique se é o fim da expressão
-        if (context.kind == Common && std::holds_alternative<Token>(context.content)) {
-            Token token = std::get<Token>(context.content);
-
-            if (token.kind == SEMICOLON || token.kind == RIGHT_PAREN ||
-                token.kind == COMMA || token.kind == RIGHT_BRACKET) {
+            if (tk.kind == NUMBER) {
+                values.push_back(std::stod(tk.lexeme));
+            } else if (tk.kind == IDENTIFIER) {
+                values.push_back(tk.lexeme);
+            } else if (tk.kind == STRING) {
+                // Adiciona a string literal (sem as aspas)
+                std::string str_literal = tk.lexeme;
+                // Remove as aspas do início e fim
+                if (str_literal.size() >= 2 &&
+                    ((str_literal.front() == '"' && str_literal.back() == '"') ||
+                     (str_literal.front() == '\'' && str_literal.back() == '\''))) {
+                    str_literal = str_literal.substr(1, str_literal.size() - 2);
+                }
+                values.push_back(str_literal);
+            } else if (tk.kind == PLUS || tk.kind == MINUS || tk.kind == STAR || tk.kind == SLASH) {
+                std::string op = getOperator(tk.kind);
+                while (!ops.empty() && precedence(ops.back()) >= precedence(op)) {
+                    if (!applyOp()) return false;
+                }
+                ops.push_back(op);
+            } else if (tk.kind == SEMICOLON) {
+                i++;
                 break;
             }
-
-            // Verifique se é um operador
-            if (isOperator(token.kind)) {
-                OperatorPrecedence currentPrecedence = getPrecedence(token.kind);
-
-                if (currentPrecedence < minPrecedence) {
-                    break;
-                }
-
-                // Para operadores de mesma precedência, associatividade da esquerda para a direita
-                OperatorPrecedence nextPrecedence =
-                    (currentPrecedence == PREC_ASSIGNMENT) ? currentPrecedence : currentPrecedence + 1;
-
-                if (!parseBinaryExpression(&left, sym, index, ctx, left, token.kind, nextPrecedence)) {
-                    return false;
-                }
-                continue;
+        } else if (c.kind == Block && std::holds_alternative<std::vector<pContext>>(c.content)) {
+            // Tratar o bloco como uma subexpressão (parênteses em Carla)
+            const auto& block_ctx = std::get<std::vector<pContext>>(c.content);
+            size_t block_index = 0;
+            pNode sub_result;
+            // Chama recursivamente a função expressions para processar o conteúdo do bloco
+            if (!expressions(&sub_result, sym, &block_index, &block_ctx)) {
+                return false;
             }
+            // Verifica se o bloco foi totalmente consumido
+            if (block_index != block_ctx.size()) {
+                return false;
+            }
+            // Adiciona o resultado da subexpressão como um nó
+            values.push_back(std::make_shared<pNode>(sub_result));
         }
 
-        break;
+        i++;
     }
 
-    *result = left;
-    return true;
-}
-
-// Função principal para expressões
-bool expressions(pNode* result, Symbols* sym, long unsigned int* index, const std::vector<pContext>* ctx) {
-    std::shared_ptr<pNode> expr;
-    size_t internal = *index;
-
-    if (!parseExpression(&expr, sym, &internal, ctx, PREC_LOWEST)) {
-        return false;
+    // Aplica operadores restantes
+    while (!ops.empty()) {
+        if (!applyOp()) return false;
     }
 
-    // Verificar por ';' no final da expressão
-    if (internal < ctx->size() &&
-        (*ctx)[internal].kind == Common &&
-        std::holds_alternative<Token>((*ctx)[internal].content) &&
-        std::get<Token>((*ctx)[internal].content).kind == SEMICOLON) {
-        internal++; // Consumir ';'
+    // Verifica se sobrou exatamente um valor
+    if (values.size() != 1) return false;
+
+    // Atribui o resultado
+    if (std::holds_alternative<std::shared_ptr<pNode>>(values.back())) {
+        *result = *std::get<std::shared_ptr<pNode>>(values.back());
+    } else {
+        auto simple = pExpression{values.back(), "", 0.0};
+        *result = pNode(simple);
     }
 
-    *result = *expr;
-    *index = internal;
+    *index = i;
     return true;
 }

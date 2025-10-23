@@ -153,6 +153,25 @@ public:
         symbols.insert({"float32", Symbol("float32", TYPE, TYPE_PRIMITIVE, i32,    4,    0)});
         symbols.insert({"float64", Symbol("float64", TYPE, TYPE_PRIMITIVE, i64,    8,    0)});
 
+        // Adicionar tipos com nomes curtos
+        symbols.insert({"i8",   Symbol("i8",   TYPE, TYPE_PRIMITIVE,  i8,     1,    0)});
+        symbols.insert({"i16",  Symbol("i16",  TYPE, TYPE_PRIMITIVE,  i16,    2,    0)});
+        symbols.insert({"i32",  Symbol("i32",  TYPE, TYPE_PRIMITIVE,  i32,    4,    0)});
+        symbols.insert({"i64",  Symbol("i64",  TYPE, TYPE_PRIMITIVE,  i64,    8,    0)});
+        symbols.insert({"i128", Symbol("i128", TYPE, TYPE_PRIMITIVE,  i128,   16,   0)});
+        symbols.insert({"i256", Symbol("i256", TYPE, TYPE_PRIMITIVE,  i256,   32,   0)});
+
+        symbols.insert({"u8",   Symbol("u8",   TYPE, TYPE_PRIMITIVE, i8,     1,    0)});
+        symbols.insert({"u16",  Symbol("u16",  TYPE, TYPE_PRIMITIVE, i16,    2,    0)});
+        symbols.insert({"u32",  Symbol("u32",  TYPE, TYPE_PRIMITIVE, i32,    4,    0)});
+        symbols.insert({"u64",  Symbol("u64",  TYPE, TYPE_PRIMITIVE, i64,    8,    0)});
+        symbols.insert({"u128", Symbol("u128", TYPE, TYPE_PRIMITIVE, i128,   16,   0)});
+        symbols.insert({"u256", Symbol("u256", TYPE, TYPE_PRIMITIVE, i256,   32,   0)});
+
+        // Adicionar tipos de ponto flutuante com nomes curtos
+        symbols.insert({"f32", Symbol("f32", TYPE, TYPE_PRIMITIVE, i32,    4,    0)});
+        symbols.insert({"f64", Symbol("f64", TYPE, TYPE_PRIMITIVE, i64,    8,    0)});
+
         // Adicionar tipo string
         symbols.insert({"string", Symbol("string", TYPE, TYPE_PRIMITIVE, i8, 0, 0)});
 

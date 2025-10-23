@@ -12,7 +12,8 @@
 #include <string>
 #include <vector>
 #include "parser/parser.hpp"
-#include "llvm/codegen.hpp"
+#include "llvm/gen.hpp"
+
 #include "globals.hpp"
 
 #ifdef _WIN32
@@ -50,10 +51,11 @@ main(int argc, char **argv)
     std::vector<Token> tokens = Scanner::read(src, size);
 
     /* Parser phase */
-    auto irNodes = Parser::parse(tokens);
+    Symbols symbols;
+    auto irNodes = Parser::parse(symbols, tokens);
 
     /* Code Generation phase */
-    std::string llvmIR = generateLLVMIR(irNodes, params);
+    std::string llvmIR = generateLLVMCode(irNodes, symbols, false);
 
     /* Create target directory if it doesn't exist */
     struct stat st = {0};
@@ -92,7 +94,7 @@ main(int argc, char **argv)
 
     /* Link object file to executable using clang silently */
     std::string clangCommand = "clang target/output.o -o target/output > /dev/null 2>&1";
-    if( std::system(clangCommand.c_str()) != 10 ) CompilerOutputs::Fatal("Failed to link object file to executable using clang");
+    if( std::system(clangCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to link object file to executable using clang");
 
     auto end = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::microseconds>(end - start);

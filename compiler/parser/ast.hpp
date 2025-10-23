@@ -4,6 +4,7 @@
 
 #include "../tokenizer/token.hpp"
 #include "symbols.hpp"
+#include <future>
 #include <string>
 #include <variant>
 #include <vector>
@@ -39,16 +40,17 @@ using pContext = pTokenCtx;
 enum NodeKind {
     NODE_DECLARATION,
     NODE_LAMBDA,
-    NODE_EXPRESSION,
     NODE_CALL,
+
+    NODE_EXPRESSION
 };
 
 inline std::string pKindStr(NodeKind kind) {
     switch (kind) {
         case NODE_DECLARATION: return "NODE_DECLARATION";
         case NODE_LAMBDA:      return "NODE_LAMBDA";
-        case NODE_EXPRESSION:  return "NODE_EXPRESSION";
         case NODE_CALL:        return "NODE_CALL";
+        case NODE_EXPRESSION:  return "NODE_EXPRESSION";
         default:               return "UNKNOWN";
     }
 }
@@ -89,46 +91,18 @@ struct pNode; // forward
 
 struct pLambda {
     bool pub;
+    pContext body;
+
     std::vector<pNode> args;
 
-    pLambda(bool pub, std::vector<pNode> args)
-        : pub(pub), args(std::move(args)) {}
+    pLambda(bool pub, std::vector<pNode> args, pContext body)
+        : pub(pub), args(std::move(args)), body(body) {}
 };
-
-// --------------------
-// Expressões
-// --------------------
-enum ExprKind {
-    EXPR_BINARY,
-    EXPR_UNARY,
-    EXPR_LITERAL,
-    EXPR_VARIABLE,
-    EXPR_CALL,
-    EXPR_MEMBER,
-    EXPR_INDEX,
-    EXPR_TERNARY,
-    EXPR_GROUP
-};
-
-// Agora usamos ponteiros para permitir recursão infinita
-using ExprContent = std::variant<
-    std::tuple<TokenKind, std::shared_ptr<pNode>, std::shared_ptr<pNode>>,            // operador binário
-    std::tuple<TokenKind, std::shared_ptr<pNode>>,                                    // operador unário
-    std::variant<std::string, long long int, double, bool>,                           // literal
-    Symbol,                                                                           // variável
-    std::tuple<std::shared_ptr<pNode>, std::vector<std::shared_ptr<pNode>>>,          // chamada de função
-    std::tuple<std::shared_ptr<pNode>, std::string>,                                  // acesso a membro
-    std::tuple<std::shared_ptr<pNode>, std::shared_ptr<pNode>>,                       // acesso a índice
-    std::tuple<std::shared_ptr<pNode>, std::shared_ptr<pNode>, std::shared_ptr<pNode>>, // operador ternário
-    std::shared_ptr<pNode>                                                            // expressão agrupada
->;
 
 struct pExpression {
-    ExprKind kind;
-    ExprContent content;
-
-    pExpression(ExprKind kind, ExprContent content)
-        : kind(kind), content(std::move(content)) {}
+    std::variant<double, std::string, std::shared_ptr<pNode>> left;
+    std::string op;
+    std::variant<double, std::string, std::shared_ptr<pNode>> right;
 };
 
 // --------------------
@@ -141,6 +115,7 @@ using pValues = std::variant<
     pExpression
 >;
 
+
 struct pNode {
     NodeKind kind;
     pValues values;
@@ -150,12 +125,11 @@ struct pNode {
         : kind(NODE_DECLARATION), values(pDeclaration(dType, type, identifier)) {}
 
     // lambda
-    pNode(bool pub, std::vector<pNode> args)
-        : kind(NODE_LAMBDA), values(pLambda(pub, std::move(args))) {}
+    pNode(bool pub, std::vector<pNode> args, pContext body)
+        : kind(NODE_LAMBDA), values(pLambda(pub, std::move(args), body)) {}
 
     // expressão
-    pNode(pExpression expr)
-        : kind(NODE_EXPRESSION), values(std::move(expr)) {}
-
+    pNode(const pExpression& expr)
+        : kind(NODE_EXPRESSION), values(expr) {}
     pNode() = default;
 };

@@ -4,8 +4,6 @@
 #include "../symbols.hpp"
 #include <vector>
 
-#include "../global.hpp"
-
 bool lambda(pNode *result, Symbols *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
     pContext arguments = (*ctx)[*index];
     if(! std::holds_alternative<std::vector<pContext>>(arguments.content) ) return false;
@@ -41,8 +39,7 @@ bool lambda(pNode *result, Symbols *sym, long unsigned int *index, const std::ve
         internal++;
     }
 
-    *result = pNode(NODE_LAMBDA, args);
-    GlobalData::addLambdaBody(body);
+    *result = pNode(NODE_LAMBDA, args, body);
     *index += 2;
     return true;
 }

@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include "ast.hpp"
-#include "global.hpp"
 #include "pattern.hpp"
 #include "symbols.hpp"
 #include "../tokenizer/token.hpp"
@@ -15,8 +14,6 @@
 
 #define ips iPerScope[scope]
 
-static Symbols symbols;
-
 struct Parser {
 private:
     static std::vector<pContext> genCTX(std::vector<Token>& tks);
@@ -25,19 +22,15 @@ private:
     static bool isEOF(Token tk);
 public:
 // std::vector<pNode> parse(std::vector<Token>& tks);
-    static std::vector<pNode> parse(std::vector<Token>& tks);
-    static Result checkSyntax(std::vector<pNode> *nodes,std::vector<pContext>& ctx, bool global);
+    static std::vector<pNode> parse(Symbols& symbols, std::vector<Token>& tks);
+    static Result checkSyntax(Symbols& symbols, std::vector<pNode> *nodes,std::vector<pContext>& ctx, bool global);
 };
-
-inline Result checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx) {
-    return Parser::checkSyntax(nodes, ctx, false);
-}
 
 inline bool Parser::isEOF(Token tk) {
     return tk.kind == CARLA_EOF;
 }
 
-std::vector<pNode> Parser::parse(std::vector<Token>& tks) {
+std::vector<pNode> Parser::parse(Symbols& symbols, std::vector<Token>& tks) {
     std::vector<pContext> ctx = genCTX(tks);
 
 #   if CARLA_DEBUG
@@ -47,12 +40,12 @@ std::vector<pNode> Parser::parse(std::vector<Token>& tks) {
 #   endif
 
     std::vector<pNode> nodes;
-    Result syntax = checkSyntax(&nodes, ctx, true);
+    Result syntax = checkSyntax(symbols, &nodes, ctx, true);
     if(! isSuccess(syntax) ) CompilerOutputs::Fatal(err(syntax));
     return nodes;
 }
 
-Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx, bool global) {
+Result Parser::checkSyntax(Symbols& symbols, std::vector<pNode> *nodes, std::vector<pContext>& ctx, bool global) {
     std::vector<std::pair<const std::vector<pContext>*, size_t>> stack;
     stack.emplace_back(&ctx, 0);
 
@@ -91,19 +84,6 @@ Result Parser::checkSyntax(std::vector<pNode> *nodes, std::vector<pContext>& ctx
         Result match = pattern(&node, &symbols, &index, currentCtx);
         if( isSuccess(match) ) {
             nodes->push_back(node);
-            GlobalData::setPNode(node);
-
-            pNode gpNode = GlobalData::getGPNode();
-            if( node.kind == NODE_LAMBDA && gpNode.kind == NODE_DECLARATION ) {
-                pDeclaration decl = std::get<pDeclaration>(gpNode.values);
-                GlobalData::SymbolEntry data = GlobalData::symbols[decl.name];
-                auto second = std::get<1>(data);
-                std::vector<pNode> body = std::get<std::vector<pNode>>(second);
-                for( pNode node : body ) nodes->push_back(node);
-            }
-
-            if( global ) GlobalData::setGPNode(node);
-
             skip = index - old;
             continue;
         } else {

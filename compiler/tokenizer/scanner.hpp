@@ -38,6 +38,12 @@ Scanner::read(std::vector<char> source, std::streamsize size)
 
         {"our", OUR},
         {"const", CONST},
+        {"if", IF},
+        {"else", ELSE},
+        {"sizeof", SIZEOF},
+        {"let", LET},
+        {"mut", MUT},
+        {"return", RETURN},
 
         {"@import", IMPORT},
     };
