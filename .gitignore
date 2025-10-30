@@ -2,3 +2,4 @@ carla/debug.sh
 carla/test_as.sh
 a.*
 cli/target/
+morgana/.git

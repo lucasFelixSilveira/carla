@@ -11,13 +11,13 @@
 #include <string>
 #include <vector>
 
-typedef struct Scanner {
+struct Scanner {
 private:
     static void addBuffer(std::vector<Token> *vec, TokenKind kind, std::string buff);
     static void addSimple(std::vector<Token> *vec, TokenKind kind);
 public:
     static std::vector<Token> read(std::vector<char> source, std::streamsize size);
-} Scanner;
+};
 
 int line = 1;
 
