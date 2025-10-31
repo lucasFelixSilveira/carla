@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 #include "parser/parser.hpp"
-#include "llvm/gen.hpp"
+#include "moragana/gen.hpp"
 
 #include "globals.hpp"
 
@@ -55,22 +55,22 @@ main(int argc, char **argv)
     auto irNodes = Parser::parse(symbols, tokens);
 
     /* Code Generation phase */
-    std::string llvmIR = generateLLVMCode(irNodes, symbols, false);
+    std::string morgIR = generateMorganaCode(irNodes, symbols, false);
 
     /* Create target directory if it doesn't exist */
     struct stat st = {0};
     std::string createFolder = "mkdir target > /dev/null 2>&1";
     if( stat("target", &st) == -1 && std::system(createFolder.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to create target directory");
 
-    /* Write LLVM IR to target/output.ll */
-    std::ofstream outFile("target/output.ll");
+    /* Write Moragana IR to target/output.morg */
+    std::ofstream outFile("target/output.morg");
     if(! outFile.is_open() ) {
-        CompilerOutputs::Fatal("Failed to open output file target/output.ll");
+        CompilerOutputs::Fatal("Failed to open output file target/output.morg");
     }
-    outFile << llvmIR;
+    outFile << morgIR;
     outFile.close();
     if( outFile.fail() ) {
-        CompilerOutputs::Fatal("Failed to write LLVM IR to target/output.ll");
+        CompilerOutputs::Fatal("Failed to write Moragana IR to target/output.morg");
     }
 
     /* calculate time of the **INTERNAL** compilation process */
@@ -85,12 +85,12 @@ main(int argc, char **argv)
              << Colorizer::RESET << "\n";
     CompilerOutputs::Log(duration.str());
 
-    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "LLVM Object generated "
+    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Moragana Object generated "
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
-    /* Compile LLVM IR to object file using llc silently */
-    std::string llcCommand = "llc -filetype=obj -o target/output.o target/output.ll > /dev/null 2>&1";
-    if( std::system(llcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile LLVM IR to object file using llc");
+    /* Compile Moragana IR to object file using morgc silently */
+    std::string morgcCommand = "morgc target/output.morg target/output.o > /dev/null 2>&1";
+    if( std::system(morgcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile Moragana IR to object file using morgc");
 
     /* Link object file to executable using clang silently */
     std::string clangCommand = "clang target/output.o -o target/output > /dev/null 2>&1";
@@ -104,12 +104,12 @@ main(int argc, char **argv)
     CompilerOutputs::ClearCurrentLine();
     duration.str("");
     duration << "Total " << Colorizer::BOLD_CYAN << "Carla" << Colorizer::RESET
-             << " + " << Colorizer::BOLD_RED << "LLVM" << Colorizer::RESET
+             << " + " << Colorizer::BOLD_RED << "Moragana" << Colorizer::RESET
              << " compilation proccess time: " << Colorizer::BOLD_YELLOW
              << std::fixed << std::setprecision(2) << seconds << "s"
              << Colorizer::RESET << "\n";
     CompilerOutputs::Log(duration.str());
-    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "LLVM Object emmited "
+    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Moragana Object emmited "
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
               << Colorizer::DARK_GREY << "(.exe)" << std::endl;
 

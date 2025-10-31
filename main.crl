@@ -1,3 +1,2 @@
-int32 main = () {
-    i128 x = "Hello, world!";
+int32 main = (int8 argc) {
 }

@@ -11,7 +11,7 @@
 #include <iostream>
 #include "../compiler_outputs.hpp"
 
-#include "llvm_rtypes.hpp"
+#include "morgana_types.hpp"
 
 enum SymKind {
     VARIABLE,
@@ -47,7 +47,7 @@ public:
     int bytes = 0;
     int scopeLevel = 0;
 
-    LLVMRadicalType radical;
+    MORGRadicalType radical;
 
     std::string name;
     bool isInitialized = false;
@@ -70,10 +70,10 @@ public:
     int columnNumber = 0;
     std::string filename;
 
-    Symbol(std::string name, SymKind kind, SymVariant variant, LLVMRadicalType radical, int bytes, int scopeLevel = 0)
+    Symbol(std::string name, SymKind kind, SymVariant variant, MORGRadicalType radical, int bytes, int scopeLevel = 0)
         : name(name), kind(kind), variant(variant), radical(radical), bytes(bytes), scopeLevel(scopeLevel) {};
 
-    Symbol(SymKind kind, SymVariant variant, LLVMRadicalType radical, int bytes, int scopeLevel = 0)
+    Symbol(SymKind kind, SymVariant variant, MORGRadicalType radical, int bytes, int scopeLevel = 0)
         : kind(kind), variant(variant), radical(radical), bytes(bytes), scopeLevel(scopeLevel) {};
 
     Symbol(SymKind kind, Symbol type) {
@@ -126,7 +126,7 @@ private:
 public:
     Symbols() {
         int sys = sizeof(int);
-        LLVMRadicalType sysl = (LLVMRadicalType) sys;
+        MORGRadicalType sysl = (MORGRadicalType) sys;
 
         // Tipos primitivos
         symbols.insert({"void",   Symbol("void", TYPE, TYPE_PRIMITIVE,  void_t, 0,    0)});
@@ -224,7 +224,7 @@ public:
     }
 
     // Adiciona símbolo com escopo específico - CORRIGIDO
-    void add(const std::string& id, SymKind kind, SymVariant variant, LLVMRadicalType radical, int bytes) {
+    void add(const std::string& id, SymKind kind, SymVariant variant, MORGRadicalType radical, int bytes) {
         Symbol newSymbol(id, kind, variant, radical, bytes, currentScope);
         auto result = symbols.insert({id, newSymbol});
         if (!result.second) {
