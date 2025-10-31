@@ -1,13 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <cmath>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <variant>
 #include <vector>
 #include "../parser/ast.hpp"
 #include "../parser/parser.hpp"
@@ -16,11 +8,6 @@
 #include "./gen.hpp"
 
 std::string generateMorganaCode(std::vector<pNode> nodes, Symbols symbols, bool func);
-
-int var = 0;
-
-std::vector<int> stack_index;
-std::vector<int>  func_index;
 
 struct morg {
     static std::string toStr(Symbol type);
@@ -41,8 +28,6 @@ std::string morg::toStr(Symbol type) {
 }
 
 std::string morg::lambda(Symbols& sym, pNode declaration, pNode lambda) {
-    var = 0;
-
     std::stringstream ss;
 
     pDeclaration decl = std::get<pDeclaration>(declaration.values);
@@ -51,25 +36,21 @@ std::string morg::lambda(Symbols& sym, pNode declaration, pNode lambda) {
 
     ss << type << ' ' << decl.name << ' ';
 
-    bool first = true;
     for( auto param : func.args ) {
         pDeclaration arg = std::get<pDeclaration>(param.values);
         ss << toStr(arg.type) << " ";
-        first = false;
     }
-
-    var++;
 
     ss << "{\n";
 
-    if( func.args.size() > 0 ) {
-        ss << "(";
-        for( auto param : func.args ) {
-            pDeclaration arg = std::get<pDeclaration>(param.values);
-            ss << arg.name << ", ";
-            first = false;
-        }
-        ss << ") @_\n";
+    unsigned int len = func.args.size();
+    for( int i = 0; i < len; i++ ) {
+        if( i == 0  )         ss << "(";
+        if( i == (len - 1)  ) ss << ") @_\n";
+
+        auto param = func.args[i];
+        pDeclaration arg = std::get<pDeclaration>(param.values);
+        ss << arg.name << ", ";
     }
 
     std::vector<pNode> stmt;
@@ -78,8 +59,6 @@ std::string morg::lambda(Symbols& sym, pNode declaration, pNode lambda) {
 
     ss << "ret 0\n";
     ss << "}\n\n";
-
-    var = 0;
 
     return ss.str();
 }

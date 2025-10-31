@@ -1,14 +1,10 @@
 #pragma once
 
 #include <cstdint>
-#include <iostream>
-#include <memory>
 #include <sstream>
-#include <tuple>
 #include <vector>
 
 #include "../parser/ast.hpp"
-#include "../params.hpp"
 
 #include "./morgana.hpp"
 
