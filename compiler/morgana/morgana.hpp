@@ -45,12 +45,13 @@ std::string morg::lambda(Symbols& sym, pNode declaration, pNode lambda) {
 
     unsigned int len = func.args.size();
     for( int i = 0; i < len; i++ ) {
-        if( i == 0  )         ss << "(";
-        if( i == (len - 1)  ) ss << ") @_\n";
+        if( i == 0 ) ss << '(';
 
         auto param = func.args[i];
         pDeclaration arg = std::get<pDeclaration>(param.values);
         ss << arg.name << ", ";
+
+        if( i == (len - 1)  ) ss << ") @_\n";
     }
 
     std::vector<pNode> stmt;

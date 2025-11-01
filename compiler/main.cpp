@@ -4,6 +4,7 @@
 #include "tokenizer/token.hpp"
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <iomanip>
 #include <sys/stat.h>
 #include <fstream>
@@ -12,7 +13,7 @@
 #include <string>
 #include <vector>
 #include "parser/parser.hpp"
-#include "moragana/gen.hpp"
+#include "morgana/gen.hpp"
 
 #include "globals.hpp"
 
@@ -62,7 +63,7 @@ main(int argc, char **argv)
     std::string createFolder = "mkdir target > /dev/null 2>&1";
     if( stat("target", &st) == -1 && std::system(createFolder.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to create target directory");
 
-    /* Write Moragana IR to target/output.morg */
+    /* Write Morgana IR to target/output.morg */
     std::ofstream outFile("target/output.morg");
     if(! outFile.is_open() ) {
         CompilerOutputs::Fatal("Failed to open output file target/output.morg");
@@ -70,8 +71,11 @@ main(int argc, char **argv)
     outFile << morgIR;
     outFile.close();
     if( outFile.fail() ) {
-        CompilerOutputs::Fatal("Failed to write Moragana IR to target/output.morg");
+        CompilerOutputs::Fatal("Failed to write Morgana IR to target/output.morg");
     }
+
+    std::filesystem::path absPath = std::filesystem::absolute("target/output.morg");
+    std::filesystem::path absPathC = std::filesystem::absolute("target/output.c");
 
     /* calculate time of the **INTERNAL** compilation process */
     auto mid = std::chrono::high_resolution_clock::now();
@@ -85,15 +89,15 @@ main(int argc, char **argv)
              << Colorizer::RESET << "\n";
     CompilerOutputs::Log(duration.str());
 
-    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Moragana Object generated "
+    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object generated "
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
-    /* Compile Moragana IR to object file using morgc silently */
-    std::string morgcCommand = "morgc target/output.morg target/output.o > /dev/null 2>&1";
-    if( std::system(morgcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile Moragana IR to object file using morgc");
+    /* Compile Morgana IR to object file using morgc silently */
+    std::string morgcCommand = "morgc " + absPath.string() + " > " + absPathC.string();
+    if( std::system(morgcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile Morgana IR to object file using morgc");
 
     /* Link object file to executable using clang silently */
-    std::string clangCommand = "clang target/output.o -o target/output > /dev/null 2>&1";
+    std::string clangCommand = "cc target/output.c -o target/output > /dev/null 2>&1";
     if( std::system(clangCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to link object file to executable using clang");
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -104,17 +108,14 @@ main(int argc, char **argv)
     CompilerOutputs::ClearCurrentLine();
     duration.str("");
     duration << "Total " << Colorizer::BOLD_CYAN << "Carla" << Colorizer::RESET
-             << " + " << Colorizer::BOLD_RED << "Moragana" << Colorizer::RESET
+             << " + " << Colorizer::BOLD_RED << "Morgana" << Colorizer::RESET
              << " compilation proccess time: " << Colorizer::BOLD_YELLOW
              << std::fixed << std::setprecision(2) << seconds << "s"
              << Colorizer::RESET << "\n";
     CompilerOutputs::Log(duration.str());
-    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Moragana Object emmited "
+    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object emmited "
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
               << Colorizer::DARK_GREY << "(.exe)" << std::endl;
-
-    /* DEBUG: */
-    // dvecprint(tokens);
 
     int success_code = 0;
     return success_code;
