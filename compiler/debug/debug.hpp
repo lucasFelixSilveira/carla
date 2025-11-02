@@ -76,7 +76,7 @@ void printNode(pNode node, int indent) {
             std::cout << "Lambda: pub = " << (arg.pub ? "true" : "false") << "\n";
             printIndent(indent);
             std::cout << "Args:\n";
-            printNodes(arg.args, indent + 1);
+            // printNodes(arg.args, indent + 1);
         }
     }, node.values);
 }

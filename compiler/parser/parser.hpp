@@ -21,16 +21,15 @@ private:
     /* Utils functions */
     static bool isEOF(Token tk);
 public:
-// std::vector<pNode> parse(std::vector<Token>& tks);
-    static std::vector<pNode> parse(Symbols& symbols, std::vector<Token>& tks);
-    static Result checkSyntax(Symbols& symbols, std::vector<pNode> *nodes,std::vector<pContext>& ctx, bool global);
+    static std::vector<pNode> parse(Symt& symbols, std::vector<Token>& tks);
+    static Result checkSyntax(Symt& symbols, std::vector<pNode> *nodes,std::vector<pContext>& ctx, bool global);
 };
 
 inline bool Parser::isEOF(Token tk) {
     return tk.kind == CARLA_EOF;
 }
 
-std::vector<pNode> Parser::parse(Symbols& symbols, std::vector<Token>& tks) {
+std::vector<pNode> Parser::parse(Symt& symbols, std::vector<Token>& tks) {
     std::vector<pContext> ctx = genCTX(tks);
 
 #   if CARLA_DEBUG
@@ -45,7 +44,7 @@ std::vector<pNode> Parser::parse(Symbols& symbols, std::vector<Token>& tks) {
     return nodes;
 }
 
-Result Parser::checkSyntax(Symbols& symbols, std::vector<pNode> *nodes, std::vector<pContext>& ctx, bool global) {
+Result Parser::checkSyntax(Symt& symbols, std::vector<pNode> *nodes, std::vector<pContext>& ctx, bool global) {
     std::vector<std::pair<const std::vector<pContext>*, size_t>> stack;
     stack.emplace_back(&ctx, 0);
 
@@ -66,7 +65,7 @@ Result Parser::checkSyntax(Symbols& symbols, std::vector<pNode> *nodes, std::vec
         if( index >= currentCtx->size() ) {
             stack.pop_back();
             if (currentDepth > 0) currentDepth--;
-            symbols.exitScope();
+            symbols.exit();
             continue;
         }
 
@@ -95,7 +94,7 @@ Result Parser::checkSyntax(Symbols& symbols, std::vector<pNode> *nodes, std::vec
             if(! blockContent.empty() ) {
                 stack.emplace_back(&blockContent, 0);
                 currentDepth++;
-                symbols.enterScope();
+                symbols.entry();
             }
             index++;
             continue;

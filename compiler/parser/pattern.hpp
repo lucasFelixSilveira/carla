@@ -5,7 +5,6 @@
 #include "../utils/result.hpp"
 #include "ast.hpp"
 #include "patterns/lambda.hpp"
-#include "patterns/expressions.hpp"
 #include "patterns/declaration.hpp"
 #include "patterns/lambda.hpp"
 #include "../compiler_outputs.hpp"
@@ -13,7 +12,7 @@
 #include <sstream>
 
 template<typename T, typename X>
-Result pattern(pNode *result, Symbols *sym, T index, X ctx) {
+Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     const pContext& context = (*ctx)[*index];
     if( context.kind == Block ) {
         if( lambda(result, sym, index, ctx) ) return Some{};
@@ -25,11 +24,6 @@ Result pattern(pNode *result, Symbols *sym, T index, X ctx) {
     switch(tk.kind) {
     case IDENTIFIER:
     if( declaration(result, sym, index, ctx) ) return Some{};
-    else if( expressions(result, sym, index, ctx) ) return Some{};
-    case NUMBER:
-    if( expressions(result, sym, index, ctx) ) return Some{};
-    case STRING:
-    if( expressions(result, sym, index, ctx) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};
     }
 

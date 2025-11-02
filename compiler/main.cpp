@@ -1,3 +1,4 @@
+#include "charset.hpp"
 #include "compiler_outputs.hpp"
 #include "params.hpp"
 #include "tokenizer/scanner.hpp"
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "parser/parser.hpp"
 #include "morgana/gen.hpp"
 
@@ -52,7 +54,8 @@ main(int argc, char **argv)
     std::vector<Token> tokens = Scanner::read(src, size);
 
     /* Parser phase */
-    Symbols symbols;
+    Symt symbols;
+    charset(symbols);
     auto irNodes = Parser::parse(symbols, tokens);
 
     /* Code Generation phase */

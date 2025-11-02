@@ -4,7 +4,6 @@
 
 #include "../tokenizer/token.hpp"
 #include "symbols.hpp"
-#include <future>
 #include <string>
 #include <variant>
 #include <vector>
@@ -93,10 +92,11 @@ struct pLambda {
     bool pub;
     pContext body;
 
-    std::vector<pNode> args;
+    morgana::desconstruct::values argsn;
+    morgana::function::args argst;
 
-    pLambda(bool pub, std::vector<pNode> args, pContext body)
-        : pub(pub), args(std::move(args)), body(body) {}
+    pLambda(bool pub, morgana::function::args argst, morgana::desconstruct::values argsn, pContext body)
+        : pub(pub), argst(std::move(argst)), argsn(std::move(argsn)), body(body) {}
 };
 
 struct pExpression {
@@ -125,8 +125,8 @@ struct pNode {
         : kind(NODE_DECLARATION), values(pDeclaration(dType, type, identifier)) {}
 
     // lambda
-    pNode(bool pub, std::vector<pNode> args, pContext body)
-        : kind(NODE_LAMBDA), values(pLambda(pub, std::move(args), body)) {}
+    pNode(bool pub, morgana::function::args argst, morgana::desconstruct::values argsn, pContext body)
+        : kind(NODE_LAMBDA), values(pLambda(pub, std::move(argst), std::move(argsn), body)) {}
 
     // expressão
     pNode(const pExpression& expr)

@@ -1,19 +1,20 @@
 #pragma once
 
-#include <cstdint>
-#include <sstream>
+#include <memory>
 #include <vector>
 
 #include "../parser/ast.hpp"
+#include "../parser/parser.hpp"
 
-#include "./morgana.hpp"
+#include "../libs/morgana/builder.hpp"
+#include "../libs/morgana/context.hpp"
 
 #define has(n) (i + n < nodes.size())
 
-std::string generateMorganaCode(std::vector<pNode> nodes, Symbols symbols, bool func) {
-    std::stringstream ctx;
+std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool func) {
+    Builder builder;
 
-    uint64_t i = 0;
+    long i = 0;
     for(; i < nodes.size(); i++ ) {
         pNode node = nodes[i];
 
@@ -25,7 +26,26 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symbols symbols, bool 
 
                     if( next.kind == NodeKind::NODE_LAMBDA ) {
                         i++;
-                        ctx << morg::lambda(symbols, node, next);
+
+                        pDeclaration decl = std::get<pDeclaration>(node.values);
+                        auto ret = std::get<std::shared_ptr<morgana::type>>(decl.type);
+
+                        pLambda lambda = std::get<pLambda>(next.values);
+
+                        symbols.entry();
+
+                        std::vector<pNode> stmt = {};
+                        auto body = std::get<std::vector<pContext>>(lambda.body.content);
+                        Parser::checkSyntax(symbols, &stmt, body, false);
+
+                        Context ctx;
+                        morgana::desconstruct d(morgana::mics::that, lambda.argsn);
+                        ctx << d.string();
+                        ctx << generateMorganaCode(stmt, symbols, true);
+
+                        morgana::function f(decl.name, ret, lambda.argst, ctx.string());
+                        builder << f.string();
+
                         continue;
                     }
                 }
@@ -49,5 +69,5 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symbols symbols, bool 
         }
     }
 
-    return ctx.str();
+    return builder.string();
 };
