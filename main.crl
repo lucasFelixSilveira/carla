@@ -1,1 +1,2 @@
-int32 main = (int8 argc, int32 x) {}
+int32 main = () {
+}

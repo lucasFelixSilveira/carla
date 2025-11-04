@@ -12,12 +12,11 @@
 #include <ios>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "parser/parser.hpp"
 #include "morgana/gen.hpp"
-
-#include "globals.hpp"
 
 #ifdef _WIN32
 # include <direct.h>
@@ -36,7 +35,6 @@ main(int argc, char **argv)
     int min_arguments = 2;
     if( argc < min_arguments ) CompilerOutputs::Fatal("You need enter with a action. If you don't know the acceptable actions, use: help.");
 
-    GlobalArgs::instance().set(argc, argv);
     CompilerParams params = CompilerParams::format(argc, argv);
 
     /* checks if the file is accessible */
@@ -78,7 +76,8 @@ main(int argc, char **argv)
     }
 
     std::filesystem::path absPath = std::filesystem::absolute("target/output.morg");
-    std::filesystem::path absPathC = std::filesystem::absolute("target/output.c");
+    std::filesystem::path absPathC = std::filesystem::absolute("target/output.cpp");
+    std::filesystem::path absPathBin = std::filesystem::absolute("target/output");
 
     /* calculate time of the **INTERNAL** compilation process */
     auto mid = std::chrono::high_resolution_clock::now();
@@ -96,11 +95,11 @@ main(int argc, char **argv)
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
     /* Compile Morgana IR to object file using morgc silently */
-    std::string morgcCommand = "morgc " + absPath.string() + " > " + absPathC.string();
-    if( std::system(morgcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile Morgana IR to object file using morgc");
+    std::string morgcCommand = "morgana build -m " + absPath.string() + ((params.optimized) ? "-o" : "") + " > /dev/null 2>&1";
+    if( std::system(morgcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile Morgana IR to object file using morgana");
 
     /* Link object file to executable using clang silently */
-    std::string clangCommand = "cc target/output.c -o target/output > /dev/null 2>&1";
+    std::string clangCommand = "g++ " + absPathC.string() + " -o " + absPathBin.string() + " > /dev/null 2>&1";
     if( std::system(clangCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to link object file to executable using clang");
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -116,7 +115,7 @@ main(int argc, char **argv)
              << std::fixed << std::setprecision(2) << seconds << "s"
              << Colorizer::RESET << "\n";
     CompilerOutputs::Log(duration.str());
-    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object emmited "
+    std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object emitted "
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
               << Colorizer::DARK_GREY << "(.exe)" << std::endl;
 

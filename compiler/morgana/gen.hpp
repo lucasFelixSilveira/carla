@@ -27,25 +27,50 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                     if( next.kind == NodeKind::NODE_LAMBDA ) {
                         i++;
 
+                        /*
+                         * Uses the declaration node to collect the return type
+                         * of the lambda whose it was declared
+                         */
                         pDeclaration decl = std::get<pDeclaration>(node.values);
                         auto ret = std::get<std::shared_ptr<morgana::type>>(decl.type);
 
+                        /*
+                         * Make the same, but now for the lambda body and
+                         * the arguments stuff
+                         */
                         pLambda lambda = std::get<pLambda>(next.values);
 
+                        /* Enter one more scope */
                         symbols.entry();
 
+                        /*
+                         * Generate the statement vector to the lambda body
+                         * and then check the syntax to validate it
+                         */
                         std::vector<pNode> stmt = {};
                         auto body = std::get<std::vector<pContext>>(lambda.body.content);
                         Parser::checkSyntax(symbols, &stmt, body, false);
 
+                        /*
+                         * Create the lambda body context and generates
+                         * the IR into the lambda;
+                         *
+                         * Also do the arguments destruction, for the
+                         * renaming of the arguments
+                         */
                         Context ctx;
                         morgana::desconstruct d(morgana::mics::that, lambda.argsn);
                         ctx << d.string();
                         ctx << generateMorganaCode(stmt, symbols, true);
 
+                        /*
+                         * Finally, create the lambda, define all the required
+                         * info and put it into the builder
+                         */
                         morgana::function f(decl.name, ret, lambda.argst, ctx.string());
                         builder << f.string();
 
+                        /* Jumps to the next iteration */
                         continue;
                     }
                 }
