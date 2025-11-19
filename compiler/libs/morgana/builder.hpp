@@ -41,6 +41,7 @@ private:
     bool debug = false;
 
 public:
+    long addr = 0;
     MorganaSymbols symbols;
 
     std::string string() const;

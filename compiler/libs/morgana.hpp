@@ -3,15 +3,18 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <utility>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
+#include "morgana/storage.hpp"
+
 namespace morgana {
+
     using dynamic = std::monostate;
     using non_size = std::variant<dynamic, int>;
 
-    enum radical { Integer = 0 };
+    enum radical { Integer = 0, Alias = 1 };
 
     /*
      * This class represents a type in the IR.
@@ -27,10 +30,13 @@ namespace morgana {
     struct type {
     private:
         enum radical radical;
+        int addr;
         non_size length;
         int bits;
         bool pointer;
         bool vector;
+
+        static std::unordered_map<std::string, int> addrs;
     public:
         type(enum radical radical, int bits): radical(radical), bits(bits), pointer(false), vector(false) {}
 
@@ -41,6 +47,20 @@ namespace morgana {
         static type integer(int bits) {
             type t(radical::Integer, bits);
             return t;
+        }
+
+        /*
+         *
+         */
+        static type clone(Storage& storage, type& t) {
+            type clone = t;
+            clone.radical = radical::Alias;
+            clone.addr = storage.addr++;
+            clone.pointer = false;
+            clone.vector = false;
+
+            storage.aliases.push_back({ clone.addr, t.string() });
+            return clone;
         }
 
         /*
@@ -86,6 +106,8 @@ namespace morgana {
 
             if( radical == Integer) {
                 ss << "i" << bits;
+            } else if( radical == Alias ) {
+                ss << "a" << addr;
             }
 
             if( vector ) ss << "]";
@@ -94,6 +116,10 @@ namespace morgana {
         }
     };
 
+    /*
+     * Convert the function class to the string representation
+     * of the function and their body in Morgana IR language.
+     */
     struct function {
         std::string name;
         std::shared_ptr<type> return_type;
@@ -158,7 +184,7 @@ namespace morgana {
     };
 
     /*
-     *
+     * Class to make a desconstructor of something
      */
     struct desconstruct {
         using data = std::variant<std::string>;
@@ -188,4 +214,119 @@ namespace morgana {
             return ss.str();
         }
     };
+
+    /*
+     * Convert the alloc class to the string representation
+     * of some alloc instruction in Morgana IR language.
+     */
+    struct alloc {
+        std::shared_ptr<type> info;
+        long long addr = 0;
+
+        alloc(Storage& storage, std::shared_ptr<type> info) : info(info) {
+            addr = storage.local++;
+        }
+
+        /*
+         * Make a Shared pointer type without a large code
+         */
+        std::shared_ptr<alloc> shared() {
+            return std::make_shared<alloc>(*this);
+        }
+
+        /*
+         * Save the address of the alloc instruction
+         */
+        alloc& save(int* copy) {
+            *copy = addr;
+            return *this;
+        }
+
+        /*
+         * Convert the alloc instruction to the string
+         * representation of the alloc instruction
+         * on Morgana IR
+         */
+        std::string string() {
+            std::stringstream ss;
+            ss << '_' << addr << " = alloc " << info->string() << '\n';
+            return ss.str();
+        }
+    };
+
+    /*
+     * Convert the store instruction to the string
+     * representation of the store instruction
+     * on Morgana IR
+     */
+    struct store {
+        int addr;
+        long long int value;
+
+        store(int addr, long long int value) : addr(addr), value(value) {}
+        store(std::shared_ptr<alloc> allocation, long long int value) : addr(allocation->addr), value(value) {}
+
+        /*
+         * Make a Shared pointer type without a large code
+         */
+        std::shared_ptr<store> shared() {
+            return std::make_shared<store>(*this);
+        }
+
+        /*
+         * Convert the store instruction to the string
+         * representation of the store instruction
+         * on Morgana IR
+         */
+        std::string string() {
+            std::stringstream ss;
+            ss << "store _" << addr << ' ' << value << '\n';
+            return ss.str();
+        }
+    };
+
+    /*
+     * Convert the load instruction to the string
+     * representation of the load instruction
+     * on Morgana IR
+     */
+    struct load {
+        int allocation_addr;
+        int addr;
+
+        load(Storage& storage, int addr) : allocation_addr(addr) {
+            addr = storage.local++;
+        }
+
+        load(Storage& storage, std::shared_ptr<alloc> allocation) : allocation_addr(allocation->addr) {
+            addr = storage.local++;
+        }
+
+        /*
+         * Make a Shared pointer type without a large code
+         */
+        std::shared_ptr<load> shared() {
+            return std::make_shared<load>(*this);
+        }
+
+        /*
+         * Save the address of the load instruction
+         */
+        load& save(int* copy) {
+            *copy = addr;
+            return *this;
+        }
+
+        /*
+         * Convert the load instruction to the string
+         * representation of the load instruction
+         * on Morgana IR
+         */
+        std::string string() {
+            std::stringstream ss;
+            ss << "_" << addr << " = load " << '_' << allocation_addr << '\n';
+            return ss.str();
+        }
+    };
+
 };

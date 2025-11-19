@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <iomanip>
 
 #include "../libs/morgana.hpp"
 
@@ -17,11 +18,12 @@ using Symbol = std::variant<
 
 using Symbols = std::tuple<int, std::vector<std::unordered_map<std::string, Symbol>>>;
 
+// === Classe Symt ===
 struct Symt {
 public:
     void entry();
     void exit();
-    void dump();
+    void dump() const;
 
     void addSymbol(const std::string& name, const Symbol& symbol);
     void removeSymbol(const std::string& name);
@@ -31,30 +33,70 @@ private:
     Symbols symbols = {};
 };
 
-void Symt::entry() {
+
+inline void Symt::entry() {
     std::get<0>(symbols)++;
-    std::get<1>(symbols).push_back({});
+    std::get<1>(symbols).emplace_back();
 }
 
-void Symt::exit() {
+inline void Symt::exit() {
+    auto& scopes = std::get<1>(symbols);
+    if (scopes.size() <= 1) return;
     std::get<0>(symbols)--;
-    std::get<1>(symbols).pop_back();
+    scopes.pop_back();
 }
 
-void Symt::addSymbol(const std::string& name, const Symbol& symbol) {
+inline void Symt::addSymbol(const std::string& name, const Symbol& symbol) {
+    if (std::get<1>(symbols).empty()) {
+        std::get<1>(symbols).emplace_back();
+    }
     std::get<1>(symbols).back()[name] = symbol;
 }
 
-void Symt::removeSymbol(const std::string& name) {
-    std::get<1>(symbols).back().erase(name);
+inline void Symt::removeSymbol(const std::string& name) {
+    auto& current = std::get<1>(symbols).back();
+    current.erase(name);
 }
 
-Symbol* Symt::findSymbol(const std::string& name) {
-    for( auto it = std::get<1>(symbols).rbegin(); it != std::get<1>(symbols).rend(); ++it ) {
-        auto symbol = it->find(name);
-        if( symbol != it->end() ) {
-            return &symbol->second;
+inline Symbol* Symt::findSymbol(const std::string& name) {
+    auto& scopes = std::get<1>(symbols);
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
+        auto found = it->find(name);
+        if (found != it->end()) {
+            return &found->second;
         }
     }
     return nullptr;
+}
+
+inline void Symt::dump() const {
+    const auto& scopes = std::get<1>(symbols);
+
+    std::cout << "========================================\n";
+    std::cout << " SYMBOL TABLE DUMP (" << scopes.size() << " scope(s))\n";
+    std::cout << "========================================\n";
+
+    for (size_t i = 0; i < scopes.size(); ++i) {
+        const auto& scope = scopes[i];
+        std::cout << "Scope #" << i << " (depth " << i << "):\n";
+
+        if (scope.empty()) {
+            std::cout << "  (empty)\n";
+            continue;
+        }
+
+        for (const auto& [name, sym] : scope) {
+            std::cout << "  " << std::setw(12) << std::left << name << " : ";
+            if (std::holds_alternative<std::shared_ptr<morgana::type>>(sym)) {
+                std::cout << "<type>";
+            } else if (std::holds_alternative<std::shared_ptr<morgana::variable>>(sym)) {
+                std::cout << "<variable>";
+            } else {
+                std::cout << "<unknown>";
+            }
+            std::cout << "\n";
+        }
+    }
+
+    std::cout << "========================================\n";
 }

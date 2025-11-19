@@ -20,6 +20,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
         switch(node.kind) {
             case NodeKind::NODE_DECLARATION: {
+                Storage storage;
 
                 if( (!func) && has(1) ) {
                     pNode next = nodes[i + 1];
@@ -70,20 +71,22 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                         morgana::function f(decl.name, ret, lambda.argst, ctx.string());
                         builder << f.string();
 
+                        symbols.exit();
+
                         /* Jumps to the next iteration */
                         continue;
                     }
                 }
 
-                // pDeclaration decl = std::get<pDeclaration>(node.values);
-                // std::tuple<std::string, int> result = LLVM::alloca(decl.type);
-                // ctx << std::get<0>(result);
-                // int dst = std::get<1>(result);
+                pDeclaration decl = std::get<pDeclaration>(node.values);
+                auto type = std::get<std::shared_ptr<morgana::type>>(decl.type);
+                morgana::alloc ptr(storage, type);
 
-                // if( decl.complement == dHopeless ) continue;
+                builder << ptr.string();
+                if( decl.complement == dHopeless ) continue;
 
-                // if( (!has(1)) || nodes[i + 1].kind != NodeKind::NODE_EXPRESSION )
-                //     CompilerOutputs::Fatal("A `hopefull` declaration needs a Expression before it!");
+                if( (!has(1)) || nodes[i + 1].kind != NodeKind::NODE_EXPRESSION )
+                    CompilerOutputs::Fatal("A `hopefull` declaration needs a Expression before it!");
 
                 // pNode expr = nodes[i + 1];
                 // auto ptr = std::make_shared<pNode>(expr);
