@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <variant>
 #include <vector>
 
 #include "../parser/ast.hpp"
@@ -79,7 +80,10 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                 }
 
                 pDeclaration decl = std::get<pDeclaration>(node.values);
-                auto type = std::get<std::shared_ptr<morgana::type>>(decl.type);
+                std::shared_ptr<morgana::type> type;
+                if( std::holds_alternative<std::shared_ptr<morgana::type>>(decl.type) ) type = std::get<std::shared_ptr<morgana::type>>(decl.type);
+                else if( std::holds_alternative<std::shared_ptr<special>>(decl.type) ) type = assemble_special_symbol(&symbols, &decl.type, decl.ctx);
+
                 morgana::alloc ptr(storage, type);
 
                 builder << ptr.string();

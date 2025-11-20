@@ -1,5 +1,5 @@
 
 i32 main {
 () @_
-_0 = alloc i8
+_0 = alloc [128:i32]
 }

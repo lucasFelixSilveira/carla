@@ -25,7 +25,8 @@ bool lambda(pNode *result, Symt *sym, long unsigned int *index, const std::vecto
         const pContext& typeCtx = blockContent[internal];
         if( typeCtx.kind != Common || !std::holds_alternative<Token>(typeCtx.content) ) return false;
         Token typeTk = std::get<Token>(typeCtx.content);
-        if( (type = sym->findSymbol(typeTk.lexeme)) == nullptr || !std::holds_alternative<std::shared_ptr<morgana::type>>(*type) ) return false;
+        if( (type = sym->findSymbol(typeTk.lexeme)) == nullptr ) return false;
+        if(! (std::holds_alternative<std::shared_ptr<morgana::type>>(*type) || std::holds_alternative<std::shared_ptr<special>>(*type)) ) return false;
 
         const pContext& idCtx = blockContent[internal + 1];
         if( idCtx.kind != Common || !std::holds_alternative<Token>(idCtx.content) ) return false;

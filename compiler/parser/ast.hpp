@@ -78,9 +78,10 @@ struct pDeclaration {
     std::string name;
     Symbol type;
     pDeclaration_e complement;
+    std::vector<pContext> ctx;
 
-    pDeclaration(pDeclaration_e dType, Symbol type, const std::string& identifier)
-        : name(identifier), type(type), complement(dType) {}
+    pDeclaration(pDeclaration_e dType, Symbol type, const std::string& identifier, std::vector<pContext> ctx)
+        : name(identifier), type(type), complement(dType), ctx(ctx) {}
 };
 
 // --------------------
@@ -121,8 +122,8 @@ struct pNode {
     pValues values;
 
     // declaração
-    pNode(pDeclaration_e dType, Symbol type, const std::string& identifier)
-        : kind(NODE_DECLARATION), values(pDeclaration(dType, type, identifier)) {}
+    pNode(pDeclaration_e dType, Symbol type, const std::string& identifier, std::vector<pContext> ctx)
+        : kind(NODE_DECLARATION), values(pDeclaration(dType, type, identifier, ctx)) {}
 
     // lambda
     pNode(bool pub, morgana::function::args argst, morgana::desconstruct::values argsn, pContext body)

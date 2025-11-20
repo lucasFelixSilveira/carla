@@ -63,6 +63,14 @@ namespace morgana {
             return clone;
         }
 
+        enum radical get_radical() const {
+            return radical;
+        }
+
+        int bytes() const {
+            return bits / 8;
+        }
+
         /*
          * Constructor for pointer type.
          * - Used for create a simple pointer

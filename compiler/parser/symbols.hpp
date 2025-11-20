@@ -11,10 +11,23 @@
 
 #include "../libs/morgana.hpp"
 
+struct special;
+
 using Symbol = std::variant<
+    std::shared_ptr<special>,
     std::shared_ptr<morgana::type>,
     std::shared_ptr<morgana::variable>
 >;
+
+struct special {
+    enum Kind { Comptime, Keyword };
+    Kind kind;
+    int size;
+    std::vector<std::string> types;
+    std::string name;
+    special(std::string name, int size, std::vector<std::string> types) : kind(Kind::Comptime), size(size), types(types), name(name) {}
+    special(std::string name) : kind(Kind::Keyword), size(0), types({}), name(name) {}
+};
 
 using Symbols = std::tuple<int, std::vector<std::unordered_map<std::string, Symbol>>>;
 

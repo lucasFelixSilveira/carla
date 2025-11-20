@@ -45,7 +45,9 @@ Scanner::read(std::vector<char> source, std::streamsize size)
         {"mut", MUT},
         {"return", RETURN},
 
-        {"@import", IMPORT},
+        {"@type", TYPE},
+        {"@use", USE},
+        {"@import", IMPORT}
     };
 
     std::vector<Token> tokens;
