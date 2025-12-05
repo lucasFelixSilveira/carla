@@ -2,6 +2,7 @@
 
 #include "../ast.hpp"
 #include "../symbols.hpp"
+
 #include "components/special_symbols.hpp"
 
 #include <memory>
@@ -12,6 +13,7 @@
 
 // Declaração comum, onde já se sabe o tipo futuro ou o tipo do valor/resultado.
 bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+    std::vector<pContext> specialCtx;
     Token tk = std::get<Token>((*ctx)[*index].content);
     Symbol* type;
 
@@ -20,13 +22,7 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
     if( (type = sym->findSymbol(tk.lexeme)) == nullptr ) return false;
     if(! (std::holds_alternative<std::shared_ptr<morgana::type>>(*type) || std::holds_alternative<std::shared_ptr<special>>(*type)) ) return false;
 
-    int jumped = 1;
-    std::vector<pContext> specialCtx = {};
-    if( std::holds_alternative<std::shared_ptr<special>>(*type) ) {
-        if(! parse_components_special(type, sym, *index, index, ctx) ) return false;
-        specialCtx = std::get<std::vector<pContext>>((*ctx)[*index + 1].content);
-        jumped += 1;
-    }
+    int jumped = check_special(type, sym, ctx, index, specialCtx) ? 2 : 1;
 
     pContext ptr = (*ctx)[*index + jumped];
     if( ptr.kind != Common ) return false;
@@ -62,11 +58,7 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
             (symbolToken.kind == SEMICOLON) ? dHopeless :
             dHopefull;
 
-        // Adicionar variável à tabela de símbolos durante o parsing
-        std::shared_ptr<morgana::type> into;
-        if( std::holds_alternative<std::shared_ptr<morgana::type>>(*type) ) into = std::get<std::shared_ptr<morgana::type>>(*type);
-        else if( std::holds_alternative<std::shared_ptr<special>>(*type) ) into = assemble_special_symbol(sym, type, specialCtx);
-
+        std::shared_ptr<morgana::type> into = builtin(type, assemble_special_symbol(sym, specialCtx));
         morgana::variable v(identifierToken.lexeme, into, true);
         sym->addSymbol(identifierToken.lexeme, v.shared());
 

@@ -6,7 +6,9 @@
 #include <variant>
 #include <vector>
 
+
 bool lambda(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+    std::vector<pContext> specialCtx;
     pContext arguments = (*ctx)[*index];
     if(! std::holds_alternative<std::vector<pContext>>(arguments.content) ) return false;
     const auto& blockContent = std::get<std::vector<pContext>>(arguments.content);

@@ -80,9 +80,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                 }
 
                 pDeclaration decl = std::get<pDeclaration>(node.values);
-                std::shared_ptr<morgana::type> type;
-                if( std::holds_alternative<std::shared_ptr<morgana::type>>(decl.type) ) type = std::get<std::shared_ptr<morgana::type>>(decl.type);
-                else if( std::holds_alternative<std::shared_ptr<special>>(decl.type) ) type = assemble_special_symbol(&symbols, &decl.type, decl.ctx);
+                std::shared_ptr<morgana::type> type = builtin(&decl.type, assemble_special_symbol(&symbols, decl.ctx));
 
                 morgana::alloc ptr(storage, type);
 

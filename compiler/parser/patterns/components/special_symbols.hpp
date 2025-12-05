@@ -3,10 +3,29 @@
 #include "../../symbols.hpp"
 #include "../../ast.hpp"
 #include <cstdlib>
+#include <functional>
 #include <memory>
 #include <variant>
 #include <vector>
 
+std::shared_ptr<morgana::type> builtin(Symbol* symbol, std::function<std::shared_ptr<morgana::type>(Symbol* x)> assemble) {
+    if (std::holds_alternative<std::shared_ptr<morgana::type>>(*symbol)) return std::get<std::shared_ptr<morgana::type>>(*symbol);
+    if( std::holds_alternative<std::shared_ptr<special>>(*symbol) ) return assemble(symbol);
+
+    return nullptr;
+}
+
+bool parse_components_special(Symbol* symbol, Symt *sym, long unsigned int current, long unsigned int *index, const std::vector<pContext>* ctx);
+
+bool check_special(Symbol *symbol, Symt *sym, const std::vector<pContext>* ctx, long unsigned int *index, std::vector<pContext>& stmt) {
+    if( std::holds_alternative<std::shared_ptr<special>>(*symbol) ) {
+        if(! parse_components_special(symbol, sym, *index, index, ctx) ) return false;
+        stmt = std::get<std::vector<pContext>>((*ctx)[*index + 1].content);
+        return true;
+    }
+
+    return false;
+}
 
 bool parse_components_special(Symbol* symbol, Symt *sym, long unsigned int current, long unsigned int *index, const std::vector<pContext>* ctx) {
     auto s = std::get<std::shared_ptr<special>>(*symbol);
@@ -52,20 +71,26 @@ bool parse_components_special(Symbol* symbol, Symt *sym, long unsigned int curre
     return true;
 }
 
-std::shared_ptr<morgana::type> assemble_special_symbol(Symt* sym, Symbol *symbol, std::vector<pContext> ctx) {
-    auto s = std::get<std::shared_ptr<special>>(*symbol);
+std::function<std::shared_ptr<morgana::type>(Symbol *x)> assemble_special_symbol(Symt* sym, std::vector<pContext> ctx) {
+    return
+    [&](Symbol *x) -> std::shared_ptr<morgana::type> {
 
-    // stackptr(int64, 32) -> [32:i64]
-    if( s->name == "stackptr" ) {
-        pContext type = ctx[0];
-        pContext size = ctx[2];
+        auto s = std::get<std::shared_ptr<special>>(*x);
 
-        Symbol* s = sym->findSymbol(std::get<Token>(type.content).lexeme);
-        std::shared_ptr<morgana::type> into = std::get<std::shared_ptr<morgana::type>>(*s);
-        auto copy = *into;
-        int sizei = std::atoi(std::get<Token>(size.content).lexeme.c_str());
-        copy.vec(sizei);
+        if( s->name == "stackptr" ) {
+            pContext type = ctx[0];
+            pContext size = ctx[2];
 
-        return std::make_shared<morgana::type>(copy);
-    }
+            Symbol* s = sym->findSymbol(std::get<Token>(type.content).lexeme);
+            std::shared_ptr<morgana::type> into = std::get<std::shared_ptr<morgana::type>>(*s);
+            auto copy = *into;
+            int sizei = std::atoi(std::get<Token>(size.content).lexeme.c_str());
+            copy.vec(sizei);
+
+            return std::make_shared<morgana::type>(copy);
+        }
+
+        return nullptr;
+
+    };
 }
