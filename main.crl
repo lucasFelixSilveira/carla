@@ -1,3 +1,2 @@
 int32 main = () {
-    stackptr(int32, 4) arr;
 }

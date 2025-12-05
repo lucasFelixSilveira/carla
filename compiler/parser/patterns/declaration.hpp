@@ -10,7 +10,6 @@
 #include <variant>
 #include <vector>
 
-
 // Declaração comum, onde já se sabe o tipo futuro ou o tipo do valor/resultado.
 bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
     std::vector<pContext> specialCtx;
