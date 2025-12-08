@@ -1,2 +1,2 @@
-int32 main = (stackptr[int8, 128] x) {
+int32 main = (stackptr[int8, 2] x) {
 }

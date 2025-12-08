@@ -14,6 +14,7 @@
 
 std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool func) {
     Builder builder;
+    Storage storage;
 
     long i = 0;
     for(; i < nodes.size(); i++ ) {
@@ -21,7 +22,6 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
         switch(node.kind) {
             case NodeKind::NODE_DECLARATION: {
-                Storage storage;
 
                 if( (!func) && has(1) ) {
                     pNode next = nodes[i + 1];
@@ -89,11 +89,6 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
                 if( (!has(1)) || nodes[i + 1].kind != NodeKind::NODE_EXPRESSION )
                     CompilerOutputs::Fatal("A `hopefull` declaration needs a Expression before it!");
-
-                // pNode expr = nodes[i + 1];
-                // auto ptr = std::make_shared<pNode>(expr);
-                // result = morg::expr(LLVM::toStr(decl.type), symbols, ptr);
-                // ctx << std::get<0>(result) << morg::store(decl, symbols, std::get<1>(result), dst);
             } break;
             default: break;
         }
