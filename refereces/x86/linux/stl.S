@@ -25,6 +25,8 @@ print:
     mov     %r8, %rdi
     ret
 
+.globl print_ln
+.type print_ln, @function
 print_ln:
 
     call    print

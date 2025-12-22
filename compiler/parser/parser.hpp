@@ -64,7 +64,7 @@ Result Parser::checkSyntax(Symt& symbols, std::vector<pNode> *nodes, std::vector
 
         if( index >= currentCtx->size() ) {
             stack.pop_back();
-            if (currentDepth > 0) currentDepth--;
+            if( currentDepth > 0 ) currentDepth--;
             symbols.exit();
             continue;
         }
