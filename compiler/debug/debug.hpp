@@ -104,7 +104,6 @@ std::string printExpressionNodes(pExpressionNodes expr, int tabs=10, std::string
     bool lhs_literal = std::holds_alternative<std::string>(expr.lhs);
     bool rhs_literal = std::holds_alternative<std::string>(expr.rhs);
 
-
     bool lhs_nodes = std::holds_alternative<std::shared_ptr<pExpressionNodes>>(expr.lhs);
     bool rhs_nodes = std::holds_alternative<std::shared_ptr<pExpressionNodes>>(expr.rhs);
 
@@ -113,77 +112,34 @@ std::string printExpressionNodes(pExpressionNodes expr, int tabs=10, std::string
 
     std::string op = tokenKindToString(expr.op);
 
-    if( lhs_literal && rhs_literal ) {
-        printIndent(tabs);
+    if( lhs_literal ) {
         ss << std::get<std::string>(expr.lhs)
-           << " " << op << " "
-           << std::get<std::string>(expr.rhs) << " ";
+           << " " << op << " ";
     }
 
-    if( lhs_literal && rhs_nodes ) {
-        ss << makeIndent(tabs)
-           << std::get<std::string>(expr.lhs)
-           << " " << op << " { "
-           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1)
-           << makeIndent(tabs) << "} ";
+    if( lhs_nodes ) {
+        ss <<  printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.lhs), tabs-1)
+           << " " << op << " ";
     }
 
-    if( lhs_literal && rhs_expr ) {
-
-        auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
-
-        ss << makeIndent(tabs)
-           << std::get<std::string>(expr.lhs)
-           << " " << op << " "
-           << " { "
-           << printExpression(_expr, tabs-1)
-           << makeIndent(tabs) << "} ";
-    }
-
-    if( lhs_nodes && rhs_nodes ) {
-        ss << makeIndent(tabs)
-           << "{ "
-           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.lhs), tabs-1)
-           << makeIndent(tabs) << "} " << op << " { "
-           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1)
-           << makeIndent(tabs) << "} ";
-    }
-
-    if( lhs_nodes && rhs_expr ) {
-
-        auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
-
-        ss << makeIndent(tabs)
-           << "{ "
-           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.lhs), tabs-1)
-           << makeIndent(tabs) << "} " << op << " { "
-           << printExpression(_expr, tabs-1)
-           << makeIndent(tabs) << "} ";
-    }
-
-    if( lhs_expr && rhs_nodes ) {
-
+    if( lhs_expr ) {
         auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.lhs);
 
-        ss << makeIndent(tabs)
-           << "{ "
-           << printExpression(_expr, tabs-1)
-           << makeIndent(tabs) << "} " << op << " { "
-           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1)
-           << makeIndent(tabs) << "} ";
+        ss << printExpression(_expr, tabs-1)
+           << " " << op << " ";
     }
 
-    if( lhs_expr && rhs_expr ) {
+    if( rhs_literal ) {
+        ss << std::get<std::string>(expr.rhs);
+    }
 
-        auto _expr1 = *std::get<std::shared_ptr<pExpression>>(expr.lhs);
-        auto _expr2 = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
+    if( rhs_nodes ) {
+        ss << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1);
+    }
 
-        ss << makeIndent(tabs)
-           << "{ "
-           << printExpression(_expr1, tabs-1)
-           << makeIndent(tabs) << "} " << op << " { "
-           << printExpression(_expr2, tabs-1)
-           << makeIndent(tabs) << "} ";
+    if( rhs_expr ) {
+        auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
+        ss << printExpression(_expr, tabs-1);
     }
 
     return ss.str();

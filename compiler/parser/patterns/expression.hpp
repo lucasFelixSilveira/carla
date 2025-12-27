@@ -14,12 +14,21 @@
 bool contains(const std::array<std::string, 2>& vec, const std::string& str) {
     return std::find(vec.begin(), vec.end(), str) != vec.end();
 }
+//  (1 + 2) + ((2+(3-4))+ )
+// { 1 PLUS 2 } PLUS {   {     2 PLUS  { 3 MINUS 4     }   } PLUS {   } }
+// 1 + 2 + (3 - 4) + 5
+// (1+2) + ((3-4) + 5)
+// lhs = 1 + 2
+//     - lhs 1
+//     - rhs 2
+// rhs ((3-4) + 5)
+//     - lhs (3-4)
+//         -lhs 3
+//         -rhs 4
+//     -rhs 5
 
-// int8 (b =  (x + 1))
-// b = arg1
-// arg1 = x + 1
-// x + 1
-// ^
+std::vector<pExpression> exprs;
+
 bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx, bool internal=false) {
     pContext data = (*ctx)[*index];
 
@@ -38,18 +47,20 @@ bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::v
     pExpressionNodes nodes;
 
     pContext op = (*ctx)[*index + 1];
-
     if( op.kind != TokenCtxKind::Common ) return false;
+
     Token opdata = std::get<Token>(op.content);
     int pos = opdata.kind;
     if(! (pos >= 7 && pos <= 15) ) return false;
+
     nodes.op = (TokenKind) pos;
 
+    pContext stmt[2] = { (*ctx)[*index], (opdata.kind == TokenKind::SEMICOLON) ? pContext() : (*ctx)[*index + 2] };
 
-    pContext stmt[2] = { (*ctx)[*index], (*ctx)[*index + 2] };
-    *index += 3;
+    int exprlen = ((opdata.kind == TokenKind::SEMICOLON) ? 1 : 2);
+    *index += ((opdata.kind == TokenKind::SEMICOLON) ? 1 : 3);
 
-    for( int i = 0; i < 2; i++ ) {
+    for( int i = 0; i < exprlen; i++ ) {
         pContext side = stmt[i];
 
         if( side.kind == TokenCtxKind::Block ) {
@@ -75,40 +86,44 @@ bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::v
         }
     }
 
-    pContext check_next;
-    if( *index >= ctx->size() && internal ) {
-        expr.nodes = nodes;
-        goto __final_expr_parser;
+    if( exprlen == 1 ) {
+        nodes.op = TokenKind::PLUS;
+        nodes.rhs = "0";
     }
 
-    check_next = (*ctx)[*index];
-    if( check_next.kind == TokenCtxKind::Common ) {
-        Token tkData = std::get<Token>(check_next.content);
-        int pos = tkData.kind;
+    if( internal && *index >= ctx->size() ) {
+        expr.nodes = nodes;
+        *result = pNode(expr);
+        return true;
+    }
 
-        if( pos == TokenKind::SEMICOLON ) {
+    pContext check_next = (*ctx)[*index];
+    if( check_next.kind == TokenCtxKind::Common ) {
+        Token tk = std::get<Token>(check_next.content);
+
+        if( tk.kind == TokenKind::SEMICOLON ) {
             expr.nodes = nodes;
             (*index)++;
-            goto __final_expr_parser;
+            *result = pNode(expr);
+            return true;
         }
 
+        int pos = tk.kind;
         if(! (pos >= 7 && pos <= 15) ) return false;
 
-        *index -= 1;
+        *index += 1;
         unsigned long int old = *index;
         pNode result;
         if(! expression(&result, sym, index, ctx) ) return false;
 
         pExpressionNodes parent;
         parent.lhs = std::make_shared<pExpressionNodes>(nodes);
-        parent.op  = tkData.kind;
+        parent.op  = tk.kind;
         parent.rhs = std::make_shared<pExpression>(std::get<pExpression>(result.values));
 
         expr.nodes = parent;
     }
 
-    __final_expr_parser: {
-        *result = pNode(expr);
-        return true;
-    }
+    *result = pNode(expr);
+    return true;
 }
