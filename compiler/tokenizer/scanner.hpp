@@ -73,7 +73,7 @@ Scanner::read(std::vector<char> source, std::streamsize size)
             case '}': addSimple(&tokens, RIGHT_BRACKET); break;
 
             case '+':
-            if( str[++i] == '-' ) addSimple(&tokens, PLUS_PLUS);
+            if( str[++i] == '+' ) addSimple(&tokens, PLUS_PLUS);
             else { i--; addSimple(&tokens, PLUS); }
             break;
 
@@ -148,12 +148,9 @@ Scanner::read(std::vector<char> source, std::streamsize size)
 
                 while(i + 1 < size) {
                     char c2 = str[i + 1];
-                    if (std::isalnum(c2) || c2 == '_') {
-                        buffer << c2;
-                        i++;
-                    } else {
-                        break;
-                    }
+                    if(! (std::isalnum(c2) || c2 == '_') ) break;
+                    buffer << c2;
+                    i++;
                 }
 
                 if( i + 1 < size && str[i + 1] == '!') {
@@ -181,7 +178,7 @@ Scanner::read(std::vector<char> source, std::streamsize size)
                     buffer << c2;
                     i++;
                 }
-                else if (c2 == '.' && !isfloat) {
+                else if( c2 == '.' && !isfloat ) {
                     buffer << c2;
                     isfloat = true;
                     i++;

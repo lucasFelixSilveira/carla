@@ -17,6 +17,7 @@ enum TokenCtxKind {
     Block
 };
 
+
 struct pTokenCtx;
 using TokenContent = std::variant<Token, std::vector<pTokenCtx>>;
 
@@ -29,6 +30,8 @@ struct pTokenCtx {
 
     pTokenCtx(TokenCtxKind k, std::vector<pTokenCtx> b)
         : kind(k), content(std::move(b)) {}
+
+    pTokenCtx() = default;
 };
 
 using pContext = pTokenCtx;
@@ -100,10 +103,26 @@ struct pLambda {
         : pub(pub), argst(std::move(argst)), argsn(std::move(argsn)), body(body) {}
 };
 
+struct pExpression;
+
+struct pExpressionNodes {
+public:
+    bool block;
+    bool simpleRhs;
+    TokenKind op;
+
+    std::variant<std::string, std::shared_ptr<pExpressionNodes>, std::shared_ptr<pExpression>> lhs;
+    std::variant<std::string, std::shared_ptr<pExpressionNodes>, std::shared_ptr<pExpression>> rhs;
+
+    pExpressionNodes() = default;
+};
+
 struct pExpression {
-    std::variant<double, std::string, std::shared_ptr<pNode>> left;
-    std::string op;
-    std::variant<double, std::string, std::shared_ptr<pNode>> right;
+public:
+    std::string keyword;
+    pExpressionNodes nodes;
+
+    pExpression() = default;
 };
 
 // --------------------

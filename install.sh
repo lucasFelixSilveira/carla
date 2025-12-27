@@ -126,17 +126,7 @@ check_disk_space() {
 # ----------------------------------------------------------------------
 detect_shell() {
     local current_shell
-
-    # Try multiple methods to detect current shell
-    if [ -n "${BASH_VERSION:-}" ]; then
-        current_shell="bash"
-    elif [ -n "${ZSH_VERSION:-}" ]; then
-        current_shell="zsh"
-    else
-        current_shell=$(ps -p $$ -o comm= 2>/dev/null | sed 's/^-//' || basename "$SHELL")
-    fi
-
-    echo "$current_shell"
+    echo $(basename "$SHELL")
 }
 
 get_shell_rc() {

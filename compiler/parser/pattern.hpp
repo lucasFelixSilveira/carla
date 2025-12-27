@@ -4,6 +4,7 @@
 
 #include "../utils/result.hpp"
 #include "ast.hpp"
+#include "patterns/expression.hpp"
 #include "patterns/lambda.hpp"
 #include "patterns/declaration.hpp"
 #include "patterns/lambda.hpp"
@@ -16,6 +17,7 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     const pContext& context = (*ctx)[*index];
     if( context.kind == Block ) {
         if( lambda(result, sym, index, ctx) ) return Some{};
+        // else if( expression(result, sym, index, ctx) ) return Some{};
         else return Err{unknownPattern(ctx, index)};
     }
 
@@ -24,6 +26,8 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     switch(tk.kind) {
     case IDENTIFIER:
     if( declaration(result, sym, index, ctx) ) return Some{};
+    case NUMBER:
+    if( expression(result, sym, index, ctx) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};
     }
 

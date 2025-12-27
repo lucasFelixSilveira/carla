@@ -3,12 +3,15 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <ostream>
+#include <sstream>
 #include <variant>
 #include <vector>
 #include <string>
 #include "../parser/ast.hpp"
 #include "../tokenizer/token_kind.hpp"
+#include "../compiler_outputs.hpp"
 
 template<typename T>
 inline
@@ -57,11 +60,18 @@ void printNodes(const std::vector<pNode>& nodes, int indent = 0) {
     }
 }
 
+std::string printExpressionNodes(pExpressionNodes expr, int tabs, std::string keyword);
+
+std::string printExpression(pExpression expr, int tabs = 0, std::string keyword = "") {
+    return printExpressionNodes(expr.nodes, tabs, keyword);
+}
+
 void printNode(pNode node, int indent) {
     printIndent(indent);
     std::cout << "NodeKind: " << pKindStr(node.kind) << "\n";
 
-    std::visit([indent](auto&& arg) {
+    std::visit([&](auto&& arg) {
+        int ident = 0;
         using T = std::decay_t<decltype(arg)>;
 
         if constexpr (std::is_same_v<T, std::monostate>) {
@@ -76,7 +86,105 @@ void printNode(pNode node, int indent) {
             std::cout << "Lambda: pub = " << (arg.pub ? "true" : "false") << "\n";
             printIndent(indent);
             std::cout << "Args:\n";
-            // printNodes(arg.args, indent + 1);
+        } else if constexpr (std::is_same_v<T, pExpression>) {
+            std::cout << printExpression(std::get<pExpression>(node.values)) << "\n";
         }
     }, node.values);
+}
+
+std::string makeIndent(int indent) {
+    std::stringstream ss;
+    for( int i = 0; i > indent; --i ) ss << "  ";
+    return ss.str();
+}
+
+std::string printExpressionNodes(pExpressionNodes expr, int tabs=10, std::string keyword="") {
+    std::stringstream ss;
+
+    bool lhs_literal = std::holds_alternative<std::string>(expr.lhs);
+    bool rhs_literal = std::holds_alternative<std::string>(expr.rhs);
+
+
+    bool lhs_nodes = std::holds_alternative<std::shared_ptr<pExpressionNodes>>(expr.lhs);
+    bool rhs_nodes = std::holds_alternative<std::shared_ptr<pExpressionNodes>>(expr.rhs);
+
+    bool lhs_expr = std::holds_alternative<std::shared_ptr<pExpression>>(expr.lhs);
+    bool rhs_expr = std::holds_alternative<std::shared_ptr<pExpression>>(expr.rhs);
+
+    std::string op = tokenKindToString(expr.op);
+
+    if( lhs_literal && rhs_literal ) {
+        printIndent(tabs);
+        ss << std::get<std::string>(expr.lhs)
+           << " " << op << " "
+           << std::get<std::string>(expr.rhs) << " ";
+    }
+
+    if( lhs_literal && rhs_nodes ) {
+        ss << makeIndent(tabs)
+           << std::get<std::string>(expr.lhs)
+           << " " << op << " { "
+           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1)
+           << makeIndent(tabs) << "} ";
+    }
+
+    if( lhs_literal && rhs_expr ) {
+
+        auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
+
+        ss << makeIndent(tabs)
+           << std::get<std::string>(expr.lhs)
+           << " " << op << " "
+           << " { "
+           << printExpression(_expr, tabs-1)
+           << makeIndent(tabs) << "} ";
+    }
+
+    if( lhs_nodes && rhs_nodes ) {
+        ss << makeIndent(tabs)
+           << "{ "
+           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.lhs), tabs-1)
+           << makeIndent(tabs) << "} " << op << " { "
+           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1)
+           << makeIndent(tabs) << "} ";
+    }
+
+    if( lhs_nodes && rhs_expr ) {
+
+        auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
+
+        ss << makeIndent(tabs)
+           << "{ "
+           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.lhs), tabs-1)
+           << makeIndent(tabs) << "} " << op << " { "
+           << printExpression(_expr, tabs-1)
+           << makeIndent(tabs) << "} ";
+    }
+
+    if( lhs_expr && rhs_nodes ) {
+
+        auto _expr = *std::get<std::shared_ptr<pExpression>>(expr.lhs);
+
+        ss << makeIndent(tabs)
+           << "{ "
+           << printExpression(_expr, tabs-1)
+           << makeIndent(tabs) << "} " << op << " { "
+           << printExpressionNodes(*std::get<std::shared_ptr<pExpressionNodes>>(expr.rhs), tabs-1)
+           << makeIndent(tabs) << "} ";
+    }
+
+    if( lhs_expr && rhs_expr ) {
+
+        auto _expr1 = *std::get<std::shared_ptr<pExpression>>(expr.lhs);
+        auto _expr2 = *std::get<std::shared_ptr<pExpression>>(expr.rhs);
+
+        ss << makeIndent(tabs)
+           << "{ "
+           << printExpression(_expr1, tabs-1)
+           << makeIndent(tabs) << "} " << op << " { "
+           << printExpression(_expr2, tabs-1)
+           << makeIndent(tabs) << "} ";
+    }
+
+    return ss.str();
 }
