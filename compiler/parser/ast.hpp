@@ -65,6 +65,7 @@ enum pDeclaration_e {
     dHopeless,
     dHopefull,
     dArgument,
+    dUknownType
 };
 
 inline std::string pDeclarationStr(pDeclaration_e kind) {

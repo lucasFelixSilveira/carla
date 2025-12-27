@@ -1,5 +1,4 @@
 
-i32 main {
+i8 main {
 () @_
-_0 = alloc i32
 }

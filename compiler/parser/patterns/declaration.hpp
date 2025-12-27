@@ -69,3 +69,30 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
     default: return false;
     }
 }
+
+bool letdeclaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+    Token identifierToken = std::get<Token>((*ctx)[*index + 1].content);
+    if( identifierToken.kind != IDENTIFIER ) return false;
+    if( identifierToken.lexeme.empty() ) return false;
+
+    // Checagem do tipo da declaração
+    pContext symbol = (*ctx)[*index + 2];
+    if( symbol.kind != Common ) return false;
+    Token symbolToken = std::get<Token>(symbol.content);
+    switch(symbolToken.kind) {
+    case COLON_EQUAL: {
+        pDeclaration_e declarationType = dUknownType;
+
+        auto into = morgana::type::unknown().shared();
+        morgana::variable v(identifierToken.lexeme, into, true);
+        sym->addSymbol(identifierToken.lexeme, v.shared());
+
+        Symbol* type;
+        *result = pNode(declarationType, *type, identifierToken.lexeme, std::vector<pContext>());
+        *index += 2;
+        return true;
+    };
+
+    default: return false;
+    }
+}

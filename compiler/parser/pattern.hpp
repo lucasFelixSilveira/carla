@@ -24,6 +24,8 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     Token tk = std::get<Token>(context.content);
 
     switch(tk.kind) {
+    case LET:
+    if( letdeclaration(result, sym, index, ctx) ) return Some{};
     case IDENTIFIER:
     if( declaration(result, sym, index, ctx) ) return Some{};
     case NUMBER:
