@@ -52,12 +52,14 @@ rollback_install() {
                 rm -rf "$HOME/.carla"
                 info "Removed carla installation"
             fi
+            remove_from_path "$HOME/.carla/carla/build" "carla"
             ;;
         "morgana")
             if [ -d "$HOME/.morgana" ]; then
                 rm -rf "$HOME/.morgana"
                 info "Removed morgana installation"
             fi
+            remove_from_path "$HOME/.morgana/morgana/bin" "morgana"
             ;;
     esac
 }
@@ -148,14 +150,50 @@ backup_rc_file() {
 }
 
 # ----------------------------------------------------------------------
-#  PATH MANAGEMENT - ROBUST AND SAFE
+#  PATH MANAGEMENT - ROBUST AND SAFE WITH SINGLE ENTRY GUARANTEE
 # ----------------------------------------------------------------------
-add_to_path() {
+remove_from_path() {
     local dir="$1"
+    local component="$2"
     local current_shell=$(detect_shell)
     local shell_rc=$(get_shell_rc "$current_shell")
 
-    info "Adding $dir to PATH for $current_shell (RC: $shell_rc)"
+    if [ ! -f "$shell_rc" ]; then
+        return 0
+    fi
+
+    info "Cleaning old $component PATH entries from $shell_rc"
+
+    # Create temporary file
+    local temp_file=$(mktemp)
+
+    # Remove ALL entries related to this component (old format and new format)
+    awk -v dir="$dir" -v component="$component" '
+    BEGIN { skip = 0 }
+    /# Added by Carla installer.*'"$component"'/ { skip = 1; next }
+    /# Added by Carla installer/ && /'"$INSTALL_TIMESTAMP"'/ { print; next }
+    skip && /export PATH=.*:?\$/ { skip = 0; next }
+    skip { next }
+    /export PATH=.*'"$(basename "$dir")"'/ { next }
+    { print }
+    ' "$shell_rc" > "$temp_file"
+
+    # Copy back if different
+    if ! cmp -s "$shell_rc" "$temp_file"; then
+        mv "$temp_file" "$shell_rc"
+        success "Removed old $component entries from $shell_rc"
+    else
+        rm -f "$temp_file"
+    fi
+}
+
+add_to_path() {
+    local dir="$1"
+    local component="$2"
+    local current_shell=$(detect_shell)
+    local shell_rc=$(get_shell_rc "$current_shell")
+
+    info "Adding $dir to PATH for $component ($current_shell)"
 
     if [ ! -d "$dir" ]; then
         error "Directory does not exist: $dir"
@@ -168,23 +206,32 @@ add_to_path() {
     # Create RC file if it doesn't exist
     [ -f "$shell_rc" ] || touch "$shell_rc"
 
-    # Remove old entries from this installer
-    sed -i.bak "/# Added by Carla installer/d" "$shell_rc" 2>/dev/null || true
-    sed -i.bak "|export PATH=.*$dir|d" "$shell_rc" 2>/dev/null || true
+    # First, remove any existing entries for this component
+    remove_from_path "$dir" "$component"
 
-    # Add new entry with proper escaping
-    local escaped_dir=$(printf '%s\n' "$dir" | sed 's/[\\.*^$[]/\\&/g')
-
+    # Now add the new entry
     {
         echo ""
-        echo "# Added by Carla installer - $INSTALL_TIMESTAMP"
+        echo "# Added by Carla installer for $component - $INSTALL_TIMESTAMP"
         echo "export PATH=\"${dir}:\$PATH\""
     } >> "$shell_rc"
 
     # Add to current session
     export PATH="${dir}:$PATH"
 
-    success "Added $dir to PATH (session and $shell_rc)"
+    # Verify only one entry exists
+    local entry_count=$(grep -c "export PATH=.*${dir}" "$shell_rc" 2>/dev/null || echo "0")
+    if [ "$entry_count" -gt 1 ]; then
+        warning "Multiple entries found for $component, cleaning up..."
+        remove_from_path "$dir" "$component"
+        {
+            echo ""
+            echo "# Added by Carla installer for $component - $INSTALL_TIMESTAMP (cleaned)"
+            echo "export PATH=\"${dir}:\$PATH\""
+        } >> "$shell_rc"
+    fi
+
+    success "Added $dir to PATH for $component (session and $shell_rc)"
 }
 
 # ----------------------------------------------------------------------
@@ -202,6 +249,9 @@ install_morgana() {
         warning "Removing previous Morgana installation..."
         rm -rf "$base_dir"
     fi
+
+    # Clean old PATH entries first
+    remove_from_path "$bin_dir" "morgana"
 
     mkdir -p "$base_dir"
     pushd "$base_dir" >/dev/null
@@ -248,7 +298,7 @@ install_morgana() {
     popd >/dev/null
 
     # Add to PATH
-    add_to_path "$bin_dir"
+    add_to_path "$bin_dir" "morgana"
 
     # Verify installation
     if command -v morgana >/dev/null 2>&1; then
@@ -273,6 +323,9 @@ install_carla() {
         warning "Removing previous Carla installation..."
         rm -rf "$base_dir"
     fi
+
+    # Clean old PATH entries first
+    remove_from_path "$build_dir" "carla"
 
     mkdir -p "$base_dir"
     pushd "$base_dir" >/dev/null
@@ -319,7 +372,7 @@ install_carla() {
     popd >/dev/null
 
     # Add to PATH
-    add_to_path "$build_dir"
+    add_to_path "$build_dir" "carla"
 
     # Verify installation
     if command -v carla >/dev/null 2>&1; then
@@ -328,6 +381,40 @@ install_carla() {
     else
         error "Carla installation verification failed"
         rollback_install "carla"
+        return 1
+    fi
+}
+
+# ----------------------------------------------------------------------
+#  VERIFICATION FUNCTIONS
+# ----------------------------------------------------------------------
+verify_single_path_entry() {
+    local component="$1"
+    local expected_dir="$2"
+    local current_shell=$(detect_shell)
+    local shell_rc=$(get_shell_rc "$current_shell")
+    local entry_count=0
+
+    if [ ! -f "$shell_rc" ]; then
+        return 0
+    fi
+
+    # Count entries for this component
+    entry_count=$(grep -c "export PATH=.*$expected_dir" "$shell_rc" 2>/dev/null || echo "0")
+
+    if [ "$entry_count" -eq 1 ]; then
+        success "✓ Single PATH entry verified for $component"
+        return 0
+    elif [ "$entry_count" -eq 0 ]; then
+        warning "No PATH entry found for $component"
+        return 1
+    else
+        error "Multiple PATH entries found for $component ($entry_count entries)"
+
+        # Show the duplicate entries
+        info "Duplicate entries in $shell_rc:"
+        grep -n "export PATH=.*$expected_dir" "$shell_rc"
+
         return 1
     fi
 }
@@ -374,6 +461,16 @@ check_updates() {
 
 update_installation() {
     info "Updating installations..."
+
+    # Clean old PATH entries before update
+    local current_shell=$(detect_shell)
+    local shell_rc=$(get_shell_rc "$current_shell")
+
+    if [ -f "$shell_rc" ]; then
+        info "Cleaning old PATH entries before update..."
+        # Remove all installer entries except current timestamp
+        sed -i.bak "/# Added by Carla installer/d" "$shell_rc" 2>/dev/null || true
+    fi
 
     if [ -d "$HOME/.morgana" ]; then
         if ! install_morgana; then
@@ -504,6 +601,10 @@ EOF
 
     if command -v morgana >/dev/null 2>&1; then
         success "✓ Morgana is available in PATH"
+        # Verify single PATH entry
+        if ! verify_single_path_entry "morgana" "$HOME/.morgana/morgana/bin"; then
+            verification_passed=false
+        fi
     else
         error "✗ Morgana not found in PATH"
         verification_passed=false
@@ -511,6 +612,10 @@ EOF
 
     if command -v carla >/dev/null 2>&1; then
         success "✓ Carla is available in PATH"
+        # Verify single PATH entry
+        if ! verify_single_path_entry "carla" "$HOME/.carla/carla/build"; then
+            verification_passed=false
+        fi
     else
         error "✗ Carla not found in PATH"
         verification_passed=false

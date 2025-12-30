@@ -17,7 +17,7 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     const pContext& context = (*ctx)[*index];
     if( context.kind == Block ) {
         if( lambda(result, sym, index, ctx) ) return Some{};
-        // else if( expression(result, sym, index, ctx) ) return Some{};
+        else if( expression(result, sym, index, ctx) ) return Some{};
         else return Err{unknownPattern(ctx, index)};
     }
 
@@ -28,7 +28,10 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     if( letdeclaration(result, sym, index, ctx) ) return Some{};
     case IDENTIFIER:
     if( declaration(result, sym, index, ctx) ) return Some{};
+    else if( expression(result, sym, index, ctx) ) return Some{};
     case NUMBER:
+    if( expression(result, sym, index, ctx) ) return Some{};
+    case STRING:
     if( expression(result, sym, index, ctx) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};
     }

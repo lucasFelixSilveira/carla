@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <stack>
+#include <tuple>
 #include <variant>
 #include <vector>
 
@@ -12,15 +14,26 @@
 
 #define has(n) (i + n < nodes.size())
 
+enum reason {
+    var_declaration
+};
+
 std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool func) {
     Builder builder;
     Storage storage;
+
+    std::stack<std::tuple<reason, std::variant<std::shared_ptr<morgana::alloc>>>> expr_stack;
 
     long i = 0;
     for(; i < nodes.size(); i++ ) {
         pNode node = nodes[i];
 
         switch(node.kind) {
+            case NodeKind::NODE_EXPRESSION: {
+                morgana::operations op(storage, morgana::operations::operation::ADD, "2");
+                builder << op.string();
+            } break;
+
             case NodeKind::NODE_DECLARATION: {
 
                 if( (!func) && has(1) ) {
@@ -80,20 +93,27 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                 }
 
                 pDeclaration decl = std::get<pDeclaration>(node.values);
-                // comtime
+
+                // TODO! Comptime variables
                 if( decl.complement == dUknownType ) {
                     continue;
                 }
 
+                /* Just build the type with the templates and somestuff like that */
                 std::shared_ptr<morgana::type> type = builtin(&decl.type, assemble_special_symbol(&symbols, decl.ctx));
-
                 morgana::alloc ptr(storage, type);
-
                 builder << ptr.string();
+
+                /* Hopelesss declarations are not pushed onto the
+                 * stack and also don't need to be instantiated */
                 if( decl.complement == dHopeless ) continue;
 
+                /* Non-hopeless declarations need to be instantiated */
                 if( (!has(1)) || nodes[i + 1].kind != NodeKind::NODE_EXPRESSION )
                     CompilerOutputs::Fatal("A `hopefull` declaration needs a Expression before it!");
+
+                /* Push the declaration and its allocated memory onto the stack */
+                expr_stack.push({ var_declaration, ptr.shared() });
             } break;
             default: break;
         }

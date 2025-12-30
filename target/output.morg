@@ -2,4 +2,5 @@
 i8 main {
 () @_
 _0 = alloc i32
+_1 = add _0 2
 }

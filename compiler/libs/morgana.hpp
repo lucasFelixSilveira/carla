@@ -343,4 +343,45 @@ namespace morgana {
         }
     };
 
+    struct operations {
+        enum operation { ADD, SUB, MUL, DIV, MOD };
+        int addr;
+        operation op;
+        std::shared_ptr<alloc> dst;
+        std::string value;
+
+        operations(Storage& storage, operation op, std::shared_ptr<alloc> dst, std::string value) : op(op), dst(dst), value(value) {
+            addr = storage.local++;
+        }
+
+        operations(Storage& storage, operation op, std::string value) : op(op), dst(nullptr), value(value) {
+            addr = storage.local++;
+        }
+
+        /*
+            * Convert the op instruction to the string
+            * representation of the load instruction
+            * on Morgana IR
+            */
+        std::string string() {
+            std::stringstream ss;
+            ss << "_" << addr << " = ";
+
+            switch (op) {
+                case ADD: ss << "add"; break;
+                case SUB: ss << "sub"; break;
+                case MUL: ss << "mul"; break;
+                case DIV: ss << "div"; break;
+                case MOD: ss << "mod"; break;
+            }
+
+            ss << " ";
+            if( dst == nullptr )
+                 ss << "_" << (addr - 1);
+            else ss << "_" << dst->addr;
+            ss << " " << value << "\n";
+
+            return ss.str();
+        }
+    };
 };
