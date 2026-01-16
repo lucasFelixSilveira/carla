@@ -106,14 +106,14 @@ struct pLambda {
 
 struct pExpression;
 
+struct pExpressionNodes;
+using pExpressionValues = std::variant<std::string, std::shared_ptr<pExpressionNodes>, std::shared_ptr<pExpression>>;
+
 struct pExpressionNodes {
 public:
-    bool block;
-    bool simpleRhs;
     TokenKind op;
-
-    std::variant<std::string, std::shared_ptr<pExpressionNodes>, std::shared_ptr<pExpression>> lhs;
-    std::variant<std::string, std::shared_ptr<pExpressionNodes>, std::shared_ptr<pExpression>> rhs;
+    pExpressionValues lhs;
+    pExpressionValues rhs;
 
     pExpressionNodes() = default;
 };
@@ -121,9 +121,21 @@ public:
 struct pExpression {
 public:
     std::string keyword;
-    pExpressionNodes nodes;
+    // pExpressionNodes nodes;
+    morgana::expr::nodes nodes;
 
     pExpression() = default;
+};
+
+struct pExpressionFirst {
+public:
+    std::string keyword;
+    pExpressionNodes nodes;
+
+    /* Different pattern to codegen */
+    morgana::expr::nodes morgana;
+
+    pExpressionFirst() = default;
 };
 
 // --------------------

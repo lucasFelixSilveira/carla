@@ -2,5 +2,13 @@
 i8 main {
 () @_
 _0 = alloc i32
-_1 = add _0 2
+temp lhs 2
+temp rhs 4
+do mul, e0
+temp lhs 2
+temp rhs 3
+do mul, e1
+temp lhs e0
+temp rhs e1
+do add, e2
 }

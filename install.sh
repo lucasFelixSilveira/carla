@@ -134,9 +134,20 @@ detect_shell() {
 get_shell_rc() {
     local shell="$1"
     case "$shell" in
-        *bash)  echo "$HOME/.bashrc" ;;
-        *zsh)   echo "$HOME/.zshrc" ;;
-        *)      echo "$HOME/.profile" ;;
+        *bash)
+            echo "$HOME/.bashrc"
+            ;;
+        *zsh)
+            # Respeita ZDOTDIR se estiver definido
+            if [ -n "${ZDOTDIR:-}" ]; then
+                echo "${ZDOTDIR}/.zshrc"
+            else
+                echo "$HOME/.zshrc"
+            fi
+            ;;
+        *)
+            echo "$HOME/.profile"
+            ;;
     esac
 }
 
@@ -203,8 +214,16 @@ add_to_path() {
     # Backup RC file
     backup_rc_file "$shell_rc"
 
-    # Create RC file if it doesn't exist
-    [ -f "$shell_rc" ] || touch "$shell_rc"
+    # Create RC file if it doesn't exist (including parent directory for ZDOTDIR)
+    if [ ! -f "$shell_rc" ]; then
+        local rc_dir=$(dirname "$shell_rc")
+        if [ ! -d "$rc_dir" ]; then
+            mkdir -p "$rc_dir"
+            info "Created directory: $rc_dir"
+        fi
+        touch "$shell_rc"
+        info "Created RC file: $shell_rc"
+    fi
 
     # First, remove any existing entries for this component
     remove_from_path "$dir" "$component"
@@ -540,7 +559,14 @@ EOF
     check_disk_space
 
     local current_shell=$(detect_shell)
+    local shell_rc=$(get_shell_rc "$current_shell")
     info "Detected shell: $current_shell"
+    info "Using RC file: $shell_rc"
+    
+    # Mostra info sobre ZDOTDIR se estiver definido
+    if [ -n "${ZDOTDIR:-}" ]; then
+        info "ZDOTDIR is set to: $ZDOTDIR"
+    fi
 
     # Check if already installed
     local carla_installed=$(command -v carla >/dev/null 2>&1 && echo true || echo false)

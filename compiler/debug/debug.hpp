@@ -2,6 +2,8 @@
 
 #pragma once
 
+#if CARLA_DEBUG
+
 #include <iostream>
 #include <memory>
 #include <ostream>
@@ -12,6 +14,7 @@
 #include "../parser/ast.hpp"
 #include "../tokenizer/token_kind.hpp"
 #include "../compiler_outputs.hpp"
+
 
 template<typename T>
 inline
@@ -144,3 +147,5 @@ std::string printExpressionNodes(pExpressionNodes expr, int tabs=10, std::string
 
     return ss.str();
 }
+
+#endif

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#define CARLA_DEBUG true
+#define CARLA_DEBUG false
 
 struct CompilerOutputs {
 public:

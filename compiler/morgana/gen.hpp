@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <stack>
+#include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
@@ -30,8 +31,9 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
         switch(node.kind) {
             case NodeKind::NODE_EXPRESSION: {
-                morgana::operations op(storage, morgana::operations::operation::ADD, "2");
-                builder << op.string();
+                pExpression expr = std::get<pExpression>(node.values);
+                morgana::expr gen(storage);
+                builder << gen.make(expr.nodes.shared());
             } break;
 
             case NodeKind::NODE_DECLARATION: {
