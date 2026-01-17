@@ -63,7 +63,7 @@ main(int argc, char **argv)
 
         main.close();
 
-        CompilerOutputs::Log("Project initialized successfully!");
+        CompilerOutputs::Log("Project initialized successfully!\n");
         return 0;
     }
 

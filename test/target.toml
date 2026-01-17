@@ -1,0 +1,9 @@
+[target]
+name = "default"
+main = "src/main.crl"
+
+[extensors_repository]
+# You can add extensors from an external git repository!
+extensors = [
+	"git@github.com:Carla-Corp/extensors.git",
+]
