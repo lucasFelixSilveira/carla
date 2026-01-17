@@ -48,6 +48,8 @@ main(int argc, char **argv)
         file << "# You can add extensors from an external git repository!\n";
         file << "extensors = [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";
         file.close();
+
+        return 0;
     }
 
     /* checks if the file is accessible */
