@@ -2,20 +2,20 @@
 .globl _start
 _start:
 	call main
-	movq %rax, %rdi
-	movq $60, %rax
+	mov %rax, %rdi
+	mov $60, %rax
 	syscall
 
 .text
-.globl main
+.global main
 .type main, @function
 main:
 .LFP0:
-	pushq %rbp
-	movq %rsp, %rbp
-	subq $16, %rsp
-	movl $0, 0(%rbp)
+	push %rbp
+	mov %rsp, %rbp
+	sub $16, %rsp
+
 .LFE0:
-	movq %rbp, %rsp
-	popq %rbp
+	mov %rbp, %rsp
+	pop %rbp
 	ret

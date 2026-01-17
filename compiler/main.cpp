@@ -96,17 +96,12 @@ main(int argc, char **argv)
 
     /* Write Morgana IR to target/output.morg */
     std::ofstream outFile("target/output.morg");
-    if(! outFile.is_open() ) {
-        CompilerOutputs::Fatal("Failed to open output file target/output.morg");
-    }
+    if(! outFile.is_open() ) CompilerOutputs::Fatal("Failed to open output file target/output.morg");
     outFile << morgIR;
     outFile.close();
-    if( outFile.fail() ) {
-        CompilerOutputs::Fatal("Failed to write Morgana IR to target/output.morg");
-    }
+    if( outFile.fail() ) CompilerOutputs::Fatal("Failed to write Morgana IR to target/output.morg");
 
     std::filesystem::path absPath = std::filesystem::absolute("target/output.morg");
-    std::filesystem::path absPathC = std::filesystem::absolute("target/output.cpp");
     std::filesystem::path absPathBin = std::filesystem::absolute("target/output");
 
     /* calculate time of the **INTERNAL** compilation process */
@@ -122,22 +117,27 @@ main(int argc, char **argv)
     CompilerOutputs::Log(duration.str());
 
     std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object generated "
-              << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " (not compiled yet)";
+              << Colorizer::BOLD << Colorizer::DARK_GREY << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
     /* Compile Morgana IR to object file using morgc silently */
-    std::string morgcCommand = "morgana build -m " + absPath.string() + ((params.optimized) ? "-o" : "") + " > /dev/null 2>&1";
-    if( std::system(morgcCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to compile Morgana IR to object file using morgana");
-
-    /* Link object file to executable using clang silently */
-    std::string clangCommand = "g++ " + absPathC.string() + " -o " + absPathBin.string() + " > /dev/null 2>&1";
-    if( std::system(clangCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to link object file to executable using clang");
+    std::string morgcCommand = "morgana build -m " + absPath.string() + ((params.optimized) ? "-o" : "");
+    if( std::system(morgcCommand.c_str()) != 0 ) {
+        std::cout << "\033[B";
+        CompilerOutputs::ClearCurrentLine();
+        std::cout << "\033[A";
+        return -1;
+    }
 
     auto end = std::chrono::high_resolution_clock::now();
     auto ms = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
     float seconds = ms.count() / 1000000.0;
 
-    CompilerOutputs::ClearCurrentLine();
+    for( int i = 0; i < 3; i++ ) {
+        std::cout << "\033[A";
+        CompilerOutputs::ClearCurrentLine();
+    }
+
     duration.str("");
     duration << "Total " << Colorizer::BOLD_CYAN << "Carla" << Colorizer::RESET
              << " + " << Colorizer::BOLD_RED << "Morgana" << Colorizer::RESET
@@ -146,7 +146,7 @@ main(int argc, char **argv)
              << Colorizer::RESET << "\n";
     CompilerOutputs::Log(duration.str());
     std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object emitted "
-              << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
+              << Colorizer::BOLD << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
               << Colorizer::DARK_GREY << "(.exe)" << std::endl;
 
     if( params.command == "run" ) {
