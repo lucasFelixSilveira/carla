@@ -36,6 +36,19 @@ main(int argc, char **argv)
     if( argc < min_arguments ) CompilerOutputs::Fatal("You need enter with a action. If you don't know the acceptable actions, use: help.");
 
     CompilerParams params = CompilerParams::format(argc, argv);
+    if( params.command == "init" ) {
+        std::string targetDir = std::filesystem::current_path().string() + "/target.toml";
+        std::ofstream file(targetDir, std::ios::out);
+        if(! file.is_open() ) CompilerOutputs::Fatal("Failed to create target.toml");
+
+        file << "[target]\n";
+        file << "name = \"default\"\n";
+        file << "sources = \"src/main.crl\"\n\n";
+        file << "[extensors_repository]\n";
+        file << "# You can add extensors from an external git repository!\n";
+        file << "extensors = [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";
+        file.close();
+    }
 
     /* checks if the file is accessible */
     std::ifstream file(params.main, std::ios::binary | std::ios::ate);
@@ -118,6 +131,11 @@ main(int argc, char **argv)
     std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object emitted "
               << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
               << Colorizer::DARK_GREY << "(.exe)" << std::endl;
+
+    if( params.command == "run" ) {
+        std::string runCommand = absPathBin.string() + " > /dev/null 2>&1";
+        if( std::system(runCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to run executable");
+    }
 
     int success_code = 0;
     return success_code;
