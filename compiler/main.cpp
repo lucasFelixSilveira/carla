@@ -38,16 +38,30 @@ main(int argc, char **argv)
     CompilerParams params = CompilerParams::format(argc, argv);
     if( params.command == "init" ) {
         std::string targetDir = std::filesystem::current_path().string() + "/target.toml";
-        std::ofstream file(targetDir, std::ios::out);
-        if(! file.is_open() ) CompilerOutputs::Fatal("Failed to create target.toml");
+        std::ofstream target(targetDir, std::ios::out);
+        if(! target.is_open() ) CompilerOutputs::Fatal("Failed to create target.toml");
 
-        file << "[target]\n";
-        file << "name = \"default\"\n";
-        file << "sources = \"src/main.crl\"\n\n";
-        file << "[extensors_repository]\n";
-        file << "# You can add extensors from an external git repository!\n";
-        file << "extensors = [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";
-        file.close();
+        target << "[target]\n";
+        target << "name = \"default\"\n";
+        target << "main = \"src/main.crl\"\n\n";
+        target << "[extensors_repository]\n";
+        target << "# You can add extensors from an external git repository!\n";
+        target << "extensors = [\n";
+        target << "\t\"git@github.com:Carla-Corp/extensors.git\",\n";
+        target << "]\n";
+        target.close();
+
+        std::string srcDir = std::filesystem::current_path().string() + "/src";
+        MKDIR(srcDir.c_str());
+
+        std::string srcFile = srcDir + "/main.crl";
+        std::ofstream main(srcFile, std::ios::out);
+
+        main << "int32 main = () {\n";
+        main << "\treturn 0;\n";
+        main << "}\n";
+
+        main.close();
 
         return 0;
     }
