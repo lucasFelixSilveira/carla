@@ -5,7 +5,7 @@
       "name": "Debugging",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/carla",
+      "program": "${workspaceFolder}/a/a.out",
       "args": ["run"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

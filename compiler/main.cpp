@@ -42,11 +42,10 @@ main(int argc, char **argv)
         if(! target.is_open() ) CompilerOutputs::Fatal("Failed to create target.toml");
 
         target << "[target]\n";
-        target << "name = \"default\"\n";
         target << "main = \"src/main.crl\"\n\n";
-        target << "[extensors_repository]\n";
+        target << "[extensors]\n";
         target << "# You can add extensors from an external git repository!\n";
-        target << "extensors = [\n";
+        target << "repositories = [\n";
         target << "\t\"git@github.com:Carla-Corp/extensors.git\",\n";
         target << "]\n";
         target.close();

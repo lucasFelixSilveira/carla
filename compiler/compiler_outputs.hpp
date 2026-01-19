@@ -11,6 +11,7 @@ struct CompilerOutputs {
 public:
     static void Log(std::string log);
     static void Fatal(std::string log);
+    static void Warn(std::string log);
 
     static void ClearCurrentLine();
 };
@@ -39,6 +40,12 @@ void
 CompilerOutputs::Log(std::string log)
 {
     std::cout << "\r" << Colorizer::BOLD_GREEN << "[Carla]" << Colorizer::RESET << ": " << log;
+}
+
+void
+CompilerOutputs::Warn(std::string log)
+{
+    std::cout << "\r" << Colorizer::BOLD_YELLOW << "[Carla WARN]" << Colorizer::RESET << ": " << log;
 }
 
 void
