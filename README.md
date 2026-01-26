@@ -17,6 +17,7 @@ Unlike languages that are simple to embed, such as C, Carla has a different obje
 - Carla uses [**Morgana**](https://github.com/lucasFelixSilveira/morgana) as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
 
 # And the Carla CLI?
+<img width="200%" src="./assets/hi-there-carla.png">
 Carla have some CLI commands, like:
 - `build`: Build the project
 - `run`: Build and run the project
