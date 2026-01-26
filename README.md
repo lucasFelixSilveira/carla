@@ -17,15 +17,28 @@ Unlike languages that are simple to embed, such as C, Carla has a different obje
 - Carla uses [**Morgana**](https://github.com/lucasFelixSilveira/morgana) as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
 
 # And the Carla CLI?
-<img width="200%" src="./assets/hi-there-carla.png">
+
 Carla have some CLI commands, like:
 - `build`: Build the project
+<img width="300px" align="right" src="./assets/hi-there-carla.png">
+
 - `run`: Build and run the project
 - `init`: Create the `target.toml` file, and make an template project
 
 ### Compilation flags
 - `-v`: Build the project with verbose output
 - `-o`: Define the target architecture
+- `-m`: Define the main file
+
+### [**Morgana**](https://github.com/lucasFelixSilveira/morgana) also is important to know
+- `build`: Build the project
+- `install`: Use it to install a new extensor by the git did config on `target.toml`
+
+### Compilation flags
+- `-v`: Build the project with verbose output
+- `-o`: Define the target architecture
+- `-O`: Define the optimization flag as true
+- `-n`: Define the name of project for the Morgana Compiler
 - `-m`: Define the main file
 
 <div align="center">
