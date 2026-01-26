@@ -16,6 +16,8 @@ Unlike languages that are simple to embed, such as C, Carla has a different obje
 - Carla has an extensive core, but a 100% independent code generator. This allows us to optimize Carla for all possible platforms, whether CPUs/GPUs or even MCUs.
 - Carla uses [**Morgana**](https://github.com/lucasFelixSilveira/morgana) as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
 
+<br>
+
 # And the Carla CLI?
 
 Carla have some CLI commands, like:
