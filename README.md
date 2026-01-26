@@ -2,7 +2,7 @@
   <img width="200%" src="./assets/small.png">
   <h1>What is "Carla"?</h1>
   <p>Carla is a programming language project with a different approach than others.</p>
-  <a href="#carla-fundamentals">See more about the differences and fundamentals!</a>
+  <a href="#what-does-this-mean">See more about the differences and fundamentals!</a>
   
 </div>
 <br>
@@ -11,9 +11,9 @@
 <br>
 
 # And what is Carla's objective?
-Unlike languages that are simple to embed, such as C, Carla has a different objective. It aims to be complete, easily embedded, have EASY integration with all possible systems where the language can be embedded, and of course, direct community input within the language's code generation through 'Morgana extenders'.
+Unlike languages that are simple to embed, such as C, Carla has a different objective. It aims to be complete, easily embedded, have EASY integration with all possible systems where the language can be embedded, and of course, direct community input within the language's code generation through [Morgana extensors](https://github.com/Carla-Corp/extensors).
 
-What does this mean?
+### What does this mean?
 
 - Carla has an extensive core, but a 100% independent code generator. This allows us to optimize Carla for all possible platforms, whether CPUs/GPUs or even MCUs.
 - Carla uses Morgana as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
@@ -22,13 +22,11 @@ What does this mean?
 
 <div align="center">
 
-### Carla's concept is to be simple, modern and as close to C as possible.
-
 #
 
 <table>
-  <tr><img width="170px" src="./assets/small.png"></tr>
-  <!--<tr>
+  <tr><img width="15%" src="./assets/icon.png"></tr>
+  <tr>
     <!-- Documentation -->
     <td>Documentation</td>
     <td> 
@@ -36,7 +34,7 @@ What does this mean?
         <img src='https://img.shields.io/badge/Docs-v1-blue.svg'/>
       </a>
     </td>
-  </tr>-->
+  </tr>
   <tr>
     <!-- Carla protocol -->
     <td>Carla protocol</td>
@@ -48,6 +46,4 @@ What does this mean?
     </td>
   </tr>
 </table>
-
-<img width="75%" src="./assets/carla-girl.png">
 </div>
