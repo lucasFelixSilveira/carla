@@ -6,43 +6,19 @@
   
 </div>
 <br>
-
-- [CARLA YT VIDEO](https://youtu.be/gO_adPI3Pr4)
-```carla
-#include <stdio>
-
-int32 main = () {
-  io::println("Hello, world");
-  return 0;
-}
-```
 <br>
 <br>
 <br>
-
-# Carla Fundamentals
-### About
-Carla is a pattern created by a young programmer, who felt tired of languages ​​and their paradigms. Where, he was always very fond of fundamentalism and modernizing every little thing as much as possible. Inspired by the fundamentals of C, the beauty of Rust, and admired by the Heskell difference, he started the **Carla** project.
-
-### Fundamentals  
-- Practicality
-- Modernity 
-- Fundamentalism
-- Mathematical ease
 
 # And what is Carla's objective?
-Carla's true objective is to draw attention to the "Carla protocol". Therefore, some standards that, if followed, could change the direction of current computing.
+Unlike languages that are simple to embed, such as C, Carla has a different objective. It aims to be complete, easily embedded, have EASY integration with all possible systems where the language can be embedded, and of course, direct community input within the language's code generation through 'Morgana extenders'.
+
+What does this mean?
+
+- Carla has an extensive core, but a 100% independent code generator. This allows us to optimize Carla for all possible platforms, whether CPUs/GPUs or even MCUs.
+- Carla uses Morgana as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
 
 ### What was the initial spark for the creation of Carla?
-
-Have you ever entered a Discord, Telegram or Whatsapp chat and seen a lot of people struggling with JavaScript, Python, Ruby? This is exactly what served as the snap.
-
-### After all, what is the purpose?
-If you are tired of using programming every day, for example, if you want your code not to break, put an `try` in the code, and it will not give a **Segmentation fault**.
-
-In other words, don't surrender to the current schedule. Opt for the rational programming choice, Carla Protocol. It doesn't make sense to program without knowing how much memory is used to allocate a pointer, and things like that.
-
-#
 
 <div align="center">
 
@@ -52,7 +28,7 @@ In other words, don't surrender to the current schedule. Opt for the rational pr
 
 <table>
   <tr><img width="170px" src="./assets/small.png"></tr>
-  <tr>
+  <!--<tr>
     <!-- Documentation -->
     <td>Documentation</td>
     <td> 
@@ -60,16 +36,7 @@ In other words, don't surrender to the current schedule. Opt for the rational pr
         <img src='https://img.shields.io/badge/Docs-v1-blue.svg'/>
       </a>
     </td>
-  </tr>
-  <tr>
-    <!-- License -->
-    <td>License</td>
-    <td> 
-      <a href="./LICENSE">
-        <img src='https://img.shields.io/badge/License-MIT-yellow.svg'/>
-      </a>
-    </td>
-  </tr>
+  </tr>-->
   <tr>
     <!-- Carla protocol -->
     <td>Carla protocol</td>
@@ -81,5 +48,6 @@ In other words, don't surrender to the current schedule. Opt for the rational pr
     </td>
   </tr>
 </table>
-See what a language needs to fit into the carla protocol
+
+<img width="75%" src="./assets/carla-girl.png">
 </div>
