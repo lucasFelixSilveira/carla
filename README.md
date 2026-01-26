@@ -1,13 +1,14 @@
 <div align="center">
-  <img width="200%" src="./assets/small.png">
   <h1>What is "Carla"?</h1>
+</div>
+<img width="90px" align="right" src="./assets/icon.png">
+<div align="center">
   <p>Carla is a programming language project with a different approach than others.</p>
   <a href="#what-does-this-mean">See more about the differences and fundamentals!</a>
-  
 </div>
-<br>
-<br>
-<br>
+
+<br> 
+<img width="200%" src="./assets/small.png">
 <br>
 
 # And what is Carla's objective?
@@ -16,16 +17,24 @@ Unlike languages that are simple to embed, such as C, Carla has a different obje
 ### What does this mean?
 
 - Carla has an extensive core, but a 100% independent code generator. This allows us to optimize Carla for all possible platforms, whether CPUs/GPUs or even MCUs.
-- Carla uses Morgana as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
+- Carla uses [Morgana](https://github.com/lucasFelixSilveira/morgana) as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
 
-### What was the initial spark for the creation of Carla?
+# And the Carla CLI?
+Carla have some CLI commands, like:
+- `build`: Build the project
+- `run`: Build and run the project
+- `init`: Create the `target.toml` file, and make an template project
+
+- **flags** 
+  - `-v`: Build the project with verbose output
+  - `-o`: Define the target architecture
+  - `-m`: Define the main file
 
 <div align="center">
 
 #
 
 <table>
-  <tr><img width="15%" src="./assets/icon.png"></tr>
   <tr>
     <!-- Documentation -->
     <td>Documentation</td>
