@@ -1,8 +1,5 @@
 <div align="center">
   <h1>What is "Carla"?</h1>
-</div>
-<img width="90px" align="right" src="./assets/icon.png">
-<div align="center">
   <p>Carla is a programming language project with a different approach than others.</p>
   <a href="#what-does-this-mean">See more about the differences and fundamentals!</a>
 </div>
@@ -12,12 +9,12 @@
 <br>
 
 # And what is Carla's objective?
-Unlike languages that are simple to embed, such as C, Carla has a different objective. It aims to be complete, easily embedded, have EASY integration with all possible systems where the language can be embedded, and of course, direct community input within the language's code generation through [Morgana extensors](https://github.com/Carla-Corp/extensors).
+Unlike languages that are simple to embed, such as C, Carla has a different objective. It aims to be complete, easily embedded, have EASY integration with all possible systems where the language can be embedded, and of course, direct community input within the language's code generation through [**Morgana extensors**](https://github.com/Carla-Corp/extensors).
 
 ### What does this mean?
 
 - Carla has an extensive core, but a 100% independent code generator. This allows us to optimize Carla for all possible platforms, whether CPUs/GPUs or even MCUs.
-- Carla uses [Morgana](https://github.com/lucasFelixSilveira/morgana) as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
+- Carla uses [**Morgana**](https://github.com/lucasFelixSilveira/morgana) as her machine code generator backend. This means: Much more creative freedom for the language! Without being tied to the constraints of LLVM and/or MLIR.
 
 # And the Carla CLI?
 Carla have some CLI commands, like:
@@ -25,10 +22,10 @@ Carla have some CLI commands, like:
 - `run`: Build and run the project
 - `init`: Create the `target.toml` file, and make an template project
 
-- **flags** 
-  - `-v`: Build the project with verbose output
-  - `-o`: Define the target architecture
-  - `-m`: Define the main file
+### Compilation flags
+- `-v`: Build the project with verbose output
+- `-o`: Define the target architecture
+- `-m`: Define the main file
 
 <div align="center">
 
