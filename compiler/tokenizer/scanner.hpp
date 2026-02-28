@@ -28,6 +28,7 @@ Scanner::read(std::vector<char> source, std::streamsize size)
         {"return", RETURN},
         {"break", BREAK},
         {"continue", CONTINUE},
+        {"gpio", GPIO},
 
         {"struct", STRUCT},
         {"enum", ENUM},

@@ -1,1 +1,1 @@
-./build/carla run -m main.crl
+./build/carla run -m main.crl -o avr

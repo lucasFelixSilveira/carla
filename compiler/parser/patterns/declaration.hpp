@@ -43,7 +43,6 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
     if( identifierToken.kind != IDENTIFIER ) return false;
     if( identifierToken.lexeme.empty() ) return false;
 
-
     // Checagem do tipo da declaração
     pContext symbol = (*ctx)[*index + 1 + jumped];
     if( symbol.kind != Common ) return false;
@@ -70,7 +69,8 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
     }
 }
 
-bool letdeclaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool keywordDeclaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+    Token keyword = std::get<Token>((*ctx)[*index].content);
     Token identifierToken = std::get<Token>((*ctx)[*index + 1].content);
     if( identifierToken.kind != IDENTIFIER ) return false;
     if( identifierToken.lexeme.empty() ) return false;
@@ -88,7 +88,7 @@ bool letdeclaration(pNode *result, Symt *sym, long unsigned int *index, const st
         sym->addSymbol(identifierToken.lexeme, v.shared());
 
         Symbol* type;
-        *result = pNode(declarationType, *type, identifierToken.lexeme, std::vector<pContext>());
+        *result = pNode(declarationType, *type, identifierToken.lexeme, std::vector<pContext>(), keyword.kind);
         *index += 2;
         return true;
     };

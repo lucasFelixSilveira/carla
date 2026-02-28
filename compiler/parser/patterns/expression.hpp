@@ -11,7 +11,8 @@
 
 #define LAST_KEYWORD TokenKind::END_KEYWORDS
 
-bool contains(const std::array<std::string, 2>& vec, const std::string& str) {
+template <size_t N>
+bool contains(const std::array<std::string, N>& vec, const std::string& str) {
     return std::find(vec.begin(), vec.end(), str) != vec.end();
 }
 //  (1 + 2) + ((2+(3-4))+ )
@@ -132,13 +133,13 @@ std::vector<pExpression> exprs;
 bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx, bool internal=false) {
     pContext data = (*ctx)[*index];
 
-    std::array<std::string, 2> exprKeywords = { "try", "if" };
+    std::array<std::string, 3> exprKeywords = { "try", "if", "gpio" };
 
     pExpression expr;
 
     if( data.kind == TokenCtxKind::Common ) {
         std::string lexame = std::get<Token>(data.content).lexeme;
-        if( contains(exprKeywords, lexame) ) {
+        if( contains<3>(exprKeywords, lexame) ) {
             expr.keyword = lexame;
             *index += 1;
         }

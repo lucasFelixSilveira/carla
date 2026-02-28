@@ -25,7 +25,8 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
 
     switch(tk.kind) {
     case LET:
-    if( letdeclaration(result, sym, index, ctx) ) return Some{};
+    case CONST:
+    if( keywordDeclaration(result, sym, index, ctx) ) return Some{};
     case IDENTIFIER:
     if( declaration(result, sym, index, ctx) ) return Some{};
     else if( expression(result, sym, index, ctx) ) return Some{};

@@ -34,6 +34,18 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                 pExpression expr = std::get<pExpression>(node.values);
                 morgana::expr gen(storage);
                 builder << gen.make(expr.nodes.shared());
+
+                /* Ignore all bellow if expression stack is empty */
+                if( expr_stack.size() == 0 ) break;
+
+                auto [ why, dest ] = expr_stack.top();
+                expr_stack.pop();
+
+                if( why == var_declaration ) {
+                    auto allocation = std::get<std::shared_ptr<morgana::alloc>>(dest);
+                    morgana::store s(allocation, gen.addr);
+                    builder << s.string();
+                }
             } break;
 
             case NodeKind::NODE_DECLARATION: {
@@ -76,8 +88,9 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                          * renaming of the arguments
                          */
                         Context ctx;
-                        morgana::desconstruct d(morgana::mics::that, lambda.argsn);
-                        ctx << d.string();
+                        // morgana::desconstruct d(morgana::mics::that, lambda.argsn);
+                        // ctx << d.string();
+
                         ctx << generateMorganaCode(stmt, symbols, true);
 
                         /*

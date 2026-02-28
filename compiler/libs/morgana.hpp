@@ -15,37 +15,7 @@
 #include "morgana/context.hpp"
 #include "morgana/storage.hpp"
 
-#define OPERATION_ORDER_FIXER(mul)                                   \
-    for( (dl = dlayers.at(i++)); i < dlayers.size(); )               \
-    if( (dl.op % mul) == 0 ) {                                       \
-        cp.push_back(operations {                                    \
-            .layer = dl.layer,                                       \
-            .lhs = dl.data,                                          \
-            .rhs = dlayers.at(i++).data,                             \
-            .op = dl.op                                              \
-        });                                                          \
-        if( (i + 1) < dlayers.size() )                               \
-            dl = dlayers.at(i++);                                    \
-    } else dl = dlayers.at(i++);
-
-#define TEMP_CHECK_SIDE(side)                                        \
-    if( std::regex_match(data.side, digit) ) {                       \
-        ss << "temp " << strside().side << " " << data.side << " \n";   \
-    }                                                                \
-    else if( std::regex_match(data.side, id) ) {                     \
-        ss << "temp " << strside().side << " " << data.side << " \n";   \
-    }
-
-class strside {
-public:
-    std::string lhs = "lhs";
-    std::string rhs = "rhs";
-
-    strside() = default;
-};
-
 namespace morgana {
-
     using dynamic = std::monostate;
     using non_size = std::variant<dynamic, int>;
 
@@ -89,9 +59,6 @@ namespace morgana {
             return t;
         }
 
-        /*
-         *
-         */
         static type clone(Storage& storage, type& t) {
             type clone = t;
             clone.radical = radical::Alias;
@@ -193,13 +160,17 @@ namespace morgana {
          */
         std::string string() {
             std::stringstream ss;
-            ss << "\n" << return_type->string() << " " << name << " ";
+            ss << "\n" << return_type->string() << " " << name << "(";
 
+            int i = 0;
             for( auto argument : arguments ) {
-                ss << argument->string() << " ";
+                ss << argument->string();
+                if(i++ < arguments.size() - 1) {
+                    ss << ", ";
+                }
             }
 
-            ss << "{\n" << body << "}\n";
+            ss << ") {\n" << body << "}\n";
             return ss.str();
         }
     };
@@ -310,9 +281,11 @@ namespace morgana {
     struct store {
         int addr;
         long long int value;
+        std::string generic_value;
 
-        store(int addr, long long int value) : addr(addr), value(value) {}
-        store(std::shared_ptr<alloc> allocation, long long int value) : addr(allocation->addr), value(value) {}
+        store(int addr, long long int value) : addr(addr), value(value), generic_value("") {}
+        store(std::shared_ptr<alloc> allocation, long long int value) : addr(allocation->addr), value(value), generic_value("") {}
+        store(std::shared_ptr<alloc> allocation, std::string generic_value) : addr(allocation->addr), generic_value(generic_value) {}
 
         /*
          * Make a Shared pointer type without a large code
@@ -328,7 +301,8 @@ namespace morgana {
          */
         std::string string() {
             std::stringstream ss;
-            ss << "store _" << addr << ' ' << value << '\n';
+            if( generic_value.empty() ) ss << "store _" << addr << ' ' << value << '\n';
+            else ss << "store _" << addr << ' ' << generic_value << '\n';
             return ss.str();
         }
     };
@@ -379,10 +353,9 @@ namespace morgana {
 
     struct expr {
         Storage& storage;
+        std::string addr;
 
-        enum operand {
-            add = 1, sub = 2, mul = 3, div = 4, mod = 5
-        };
+        enum operand { add, sub, mul, div, mod };
 
         std::array<std::tuple<std::string, operand>, 5> op_names = {
             std::tuple<std::string, operand> {"+", operand::add},
@@ -421,41 +394,39 @@ namespace morgana {
 
     private:
         void recursivemakecall(std::shared_ptr<nodes> node, int layer = 0) {
-            // Coleta primeiro os nós filhos recursivamente
-            if (std::holds_alternative<std::shared_ptr<nodes>>(node->lhs)) {
+            if( std::holds_alternative<std::shared_ptr<nodes>>(node->lhs) ) {
                 recursivemakecall(std::get<std::shared_ptr<nodes>>(node->lhs), layer + 1);
             }
 
-            if (std::holds_alternative<std::shared_ptr<nodes>>(node->rhs)) {
+            if( std::holds_alternative<std::shared_ptr<nodes>>(node->rhs) ) {
                 recursivemakecall(std::get<std::shared_ptr<nodes>>(node->rhs), layer + 1);
             }
 
-            // Depois coleta o nó atual
             std::string lhs_data, rhs_data;
 
             if (std::holds_alternative<std::string>(node->lhs)) {
                 lhs_data = std::get<std::string>(node->lhs);
             } else {
-                lhs_data = "temp"; // Resultado de operação anterior
+                lhs_data = "temp";
             }
 
             if (std::holds_alternative<std::string>(node->rhs)) {
                 rhs_data = std::get<std::string>(node->rhs);
             } else {
-                rhs_data = "temp"; // Resultado de operação anterior
+                rhs_data = "temp";
             }
 
             dlayers.push_back(data_layer {
                 .op = node->op,
                 .layer = layer,
-                .data = lhs_data, // lhs do nó atual
+                .data = lhs_data,
                 .node = node
             });
 
             dlayers.push_back(data_layer {
                 .op = node->op,
                 .layer = layer,
-                .data = rhs_data, // rhs do nó atual
+                .data = rhs_data,
                 .node = node
             });
         }
@@ -464,13 +435,10 @@ namespace morgana {
             switch(op) {
                 case operand::mul:
                 case operand::div:
-                case operand::mod:
-                    return 2;
+                case operand::mod: return 2;
                 case operand::add:
-                case operand::sub:
-                    return 1;
-                default:
-                    return 0;
+                case operand::sub: return 1;
+                default: return 0;
             }
         }
 
@@ -498,32 +466,26 @@ namespace morgana {
             std::stringstream ss;
             dlayers.clear();
 
-            // Coleta todas as operações mantendo a estrutura hierárquica
             std::vector<operations> all_ops;
             collectOperations(root_node, all_ops, 0);
 
-            // Ordena por prioridade (maior primeiro) e depois por camada (mais profunda primeiro)
             std::sort(all_ops.begin(), all_ops.end(),
                 [this](const operations& a, const operations& b) {
                     int prioA = getPriority(a.op);
                     int prioB = getPriority(b.op);
 
-                    if (prioA != prioB) {
-                        return prioA > prioB; // Prioridade maior primeiro
-                    }
-                    return a.layer > b.layer; // Camada mais profunda primeiro
+                    if( prioA != prioB ) return prioA > prioB;
+                    return a.layer > b.layer;
                 });
 
-            // Processa as operações na ordem correta
             std::unordered_map<std::shared_ptr<nodes>, std::string> node_to_temp;
             int temp_counter = storage.exprcount;
 
-            for (const auto& op : all_ops) {
+            for( const auto& op : all_ops ) {
                 std::string lhs_val = op.lhs;
                 std::string rhs_val = op.rhs;
 
-                // Se lhs é um nó, pega o resultado temporário dele
-                if (std::holds_alternative<std::shared_ptr<nodes>>(op.node->lhs)) {
+                if( std::holds_alternative<std::shared_ptr<nodes>>(op.node->lhs) ) {
                     auto child_node = std::get<std::shared_ptr<nodes>>(op.node->lhs);
                     auto it = node_to_temp.find(child_node);
                     if (it != node_to_temp.end()) {
@@ -531,8 +493,7 @@ namespace morgana {
                     }
                 }
 
-                // Se rhs é um nó, pega o resultado temporário dele
-                if (std::holds_alternative<std::shared_ptr<nodes>>(op.node->rhs)) {
+                if( std::holds_alternative<std::shared_ptr<nodes>>(op.node->rhs) ) {
                     auto child_node = std::get<std::shared_ptr<nodes>>(op.node->rhs);
                     auto it = node_to_temp.find(child_node);
                     if (it != node_to_temp.end()) {
@@ -542,10 +503,9 @@ namespace morgana {
 
                 std::string temp_name = "e" + std::to_string(temp_counter++);
                 node_to_temp[op.node] = temp_name;
+                ss << temp_name << " = " << opToString(op.op) << " " << lhs_val << ' ' << rhs_val << '\n';
 
-                ss << "temp lhs " << lhs_val << '\n';
-                ss << "temp rhs " << rhs_val << '\n';
-                ss << "do " << opToString(op.op) << ", " << temp_name << '\n';
+                addr = temp_name;
             }
 
             storage.exprcount = temp_counter;
@@ -554,16 +514,14 @@ namespace morgana {
 
     private:
         void collectOperations(std::shared_ptr<nodes> node, std::vector<operations>& ops, int layer) {
-            // Coleta operações dos filhos primeiro
-            if (std::holds_alternative<std::shared_ptr<nodes>>(node->lhs)) {
+            if( std::holds_alternative<std::shared_ptr<nodes>>(node->lhs) ) {
                 collectOperations(std::get<std::shared_ptr<nodes>>(node->lhs), ops, layer + 1);
             }
 
-            if (std::holds_alternative<std::shared_ptr<nodes>>(node->rhs)) {
+            if( std::holds_alternative<std::shared_ptr<nodes>>(node->rhs) ) {
                 collectOperations(std::get<std::shared_ptr<nodes>>(node->rhs), ops, layer + 1);
             }
 
-            // Coleta a operação atual
             std::string lhs_str = std::holds_alternative<std::string>(node->lhs)
                 ? std::get<std::string>(node->lhs)
                 : "node_result";
@@ -582,18 +540,3 @@ namespace morgana {
         }
     };
 };
-
-/*
-x = 1 + (2 + (3 + (4 + 5)))
-
-    1 + ()
-        2 ()
-           3 ()
-              4 5
-
-x = (1 + 2) * (3*4) + 5
-    ()  *  ()
-  1+2   () + ()
-        3*4  5+0
-
-*/

@@ -12,7 +12,6 @@
 #include <ios>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include "parser/parser.hpp"
@@ -45,9 +44,7 @@ main(int argc, char **argv)
         target << "main = \"src/main.crl\"\n\n";
         target << "[extensors]\n";
         target << "# You can add extensors from an external git repository!\n";
-        target << "repositories = [\n";
-        target << "\t\"git@github.com:Carla-Corp/extensors.git\",\n";
-        target << "]\n";
+        target << "repositories = [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";
         target.close();
 
         std::string srcDir = std::filesystem::current_path().string() + "/src";
@@ -119,7 +116,9 @@ main(int argc, char **argv)
               << Colorizer::BOLD << Colorizer::DARK_GREY << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
     /* Compile Morgana IR to object file using morgc silently */
-    std::string morgcCommand = "morgana build -m " + absPath.string() + ((params.optimized) ? "-o" : "");
+    std::string target = ((params.target == "unknown") ? " -o " + params.target : "");
+    if( params.optimized ) target += "-optimized";
+    std::string morgcCommand = "morgana build -m " + absPath.string() + target;
     if( std::system(morgcCommand.c_str()) != 0 ) {
         std::cout << "\033[B";
         CompilerOutputs::ClearCurrentLine();

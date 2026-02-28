@@ -1,14 +1,6 @@
 
-i8 main {
-() @_
+i8 main() {
 _0 = alloc i32
-temp lhs 2
-temp rhs 4
-do mul, e0
-temp lhs 2
-temp rhs 3
-do mul, e1
-temp lhs e0
-temp rhs e1
-do add, e2
+e0 = mul 7 2
+store _0 e0
 }
