@@ -404,13 +404,13 @@ namespace morgana {
 
             std::string lhs_data, rhs_data;
 
-            if (std::holds_alternative<std::string>(node->lhs)) {
+            if( std::holds_alternative<std::string>(node->lhs) ) {
                 lhs_data = std::get<std::string>(node->lhs);
             } else {
                 lhs_data = "temp";
             }
 
-            if (std::holds_alternative<std::string>(node->rhs)) {
+            if( std::holds_alternative<std::string>(node->rhs) ) {
                 rhs_data = std::get<std::string>(node->rhs);
             } else {
                 rhs_data = "temp";

@@ -23,8 +23,6 @@ Unlike languages that are simple to embed, such as C, Carla has a different obje
 Carla have some CLI commands, like:
 - `build`: Build the project
 - `run`: Build and run the project
-<img width="240px" align="right" src="./assets/hi-there-carla.png">
-
 - `init`: Create the `target.toml` file, and make an template project
 
 ### Compilation flags

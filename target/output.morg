@@ -2,5 +2,7 @@
 i8 main() {
 _0 = alloc i32
 e0 = mul 7 2
-store _0 e0
+e1 = mul 32 3
+e2 = add e0 e1
+store _0 e2
 }
