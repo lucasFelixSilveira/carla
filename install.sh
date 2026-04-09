@@ -284,8 +284,8 @@ install_morgana() {
 
     pushd morgana >/dev/null
 
-    if [ ! -f "build.sh" ]; then
-        error "build.sh not found in Morgana repository"
+    if [ ! -f "build_x86_64.sh" ]; then
+        error "build_x86_64.sh not found in Morgana repository"
         popd >/dev/null
         popd >/dev/null
         return 1
@@ -562,7 +562,7 @@ EOF
     local shell_rc=$(get_shell_rc "$current_shell")
     info "Detected shell: $current_shell"
     info "Using RC file: $shell_rc"
-    
+
     # Mostra info sobre ZDOTDIR se estiver definido
     if [ -n "${ZDOTDIR:-}" ]; then
         info "ZDOTDIR is set to: $ZDOTDIR"

@@ -8,6 +8,7 @@
 #include "patterns/lambda.hpp"
 #include "patterns/declaration.hpp"
 #include "patterns/lambda.hpp"
+#include "patterns/macros.hpp"
 #include "../compiler_outputs.hpp"
 #include "../tokenizer/token_kind.hpp"
 #include <sstream>
@@ -24,6 +25,8 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     Token tk = std::get<Token>(context.content);
 
     switch(tk.kind) {
+    case START:
+    if( startMacro(result, sym, index, ctx) ) return Some{};
     case LET:
     case CONST:
     if( keywordDeclaration(result, sym, index, ctx) ) return Some{};

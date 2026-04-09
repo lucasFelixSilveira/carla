@@ -1,3 +1,4 @@
+comptime _start
 
 i8 main() {
 _0 = alloc i32

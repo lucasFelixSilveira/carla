@@ -130,6 +130,15 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                 /* Push the declaration and its allocated memory onto the stack */
                 expr_stack.push({ var_declaration, ptr.shared() });
             } break;
+
+            case NodeKind::NODE_MACRO: {
+                Macro macro = std::get<Macro>(node.values);
+                switch(macro.kind) {
+                    case Macro::options::start: { builder << "comptime _start\n"; } break;
+                    default: break;
+                }
+            } break;
+
             default: break;
         }
     }

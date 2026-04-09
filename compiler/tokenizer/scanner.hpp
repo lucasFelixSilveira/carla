@@ -46,6 +46,7 @@ Scanner::read(std::vector<char> source, std::streamsize size)
         {"mut", MUT},
         {"return", RETURN},
 
+        {"@_start", START},
         {"@type", TYPE},
         {"@use", USE},
         {"@import", IMPORT}

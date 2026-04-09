@@ -44,7 +44,9 @@ enum NodeKind {
     NODE_LAMBDA,
     NODE_CALL,
 
-    NODE_EXPRESSION
+    NODE_EXPRESSION,
+
+    NODE_MACRO
 };
 
 inline std::string pKindStr(NodeKind kind) {
@@ -139,6 +141,18 @@ public:
     pExpressionFirst() = default;
 };
 
+struct Macro {
+    std::variant<std::monostate> values;
+    enum class options { start };
+    options kind;
+
+    Macro(options opt) : kind(opt), values() {}
+
+    static Macro start() {
+        return Macro(Macro::options::start);
+    }
+};
+
 // --------------------
 // Nó da AST
 // --------------------
@@ -146,7 +160,8 @@ using pValues = std::variant<
     std::monostate,
     pDeclaration,
     pLambda,
-    pExpression
+    pExpression,
+    Macro
 >;
 
 
@@ -165,5 +180,9 @@ struct pNode {
     // expressão
     pNode(const pExpression& expr)
         : kind(NODE_EXPRESSION), values(expr) {}
+
+    pNode(const Macro macro)
+        : kind(NODE_MACRO), values(macro) {}
+
     pNode() = default;
 };
