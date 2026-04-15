@@ -46,7 +46,8 @@ enum NodeKind {
 
     NODE_EXPRESSION,
 
-    NODE_MACRO
+    NODE_MACRO,
+    NODE_RETURN
 };
 
 inline std::string pKindStr(NodeKind kind) {
@@ -124,7 +125,6 @@ public:
 struct pExpression {
 public:
     std::string keyword;
-    // pExpressionNodes nodes;
     morgana::expr::nodes nodes;
 
     pExpression() = default;
@@ -153,6 +153,11 @@ struct Macro {
     }
 };
 
+struct RetStatement {
+    bool hopeless;
+    RetStatement(bool hopeless) : hopeless(hopeless) {}
+};
+
 // --------------------
 // Nó da AST
 // --------------------
@@ -161,7 +166,8 @@ using pValues = std::variant<
     pDeclaration,
     pLambda,
     pExpression,
-    Macro
+    Macro,
+    RetStatement
 >;
 
 
@@ -183,6 +189,9 @@ struct pNode {
 
     pNode(const Macro macro)
         : kind(NODE_MACRO), values(macro) {}
+
+    pNode(const RetStatement ret)
+        : kind(NODE_RETURN), values(ret) {}
 
     pNode() = default;
 };

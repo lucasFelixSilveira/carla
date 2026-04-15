@@ -1,1 +1,1 @@
-./build/carla run -m main.crl -o x86_64
+./build/carla run -o x86_64

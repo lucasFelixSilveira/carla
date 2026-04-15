@@ -21,6 +21,7 @@
 # include <direct.h>
 # define MKDIR(dir) _mkdir(dir)
 #else
+# include <sys/wait.h>
 # include <unistd.h>
 # define MKDIR(dir) mkdir(dir, 0700)
 #endif
@@ -148,8 +149,23 @@ main(int argc, char **argv)
               << Colorizer::DARK_GREY << "(.exe)" << std::endl;
 
     if( params.command == "run" ) {
-        std::string runCommand = absPathBin.string() + " > /dev/null 2>&1";
-        if( std::system(runCommand.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to run executable");
+        std::string runCommand = "./" + std::filesystem::relative(absPathBin.string()).string();
+        std::cout << Colorizer::DARK_GREY << "   └─ " << Colorizer::BOLD_YELLOW << "Running " << std::endl;
+
+        int result = std::system(runCommand.c_str());
+        int exitCode = 0;
+
+        #ifdef _WIN32
+            exitCode = result;
+        #else
+            if( WIFEXITED(result) ) exitCode = WEXITSTATUS(result);
+            else exitCode = result;
+        #endif
+
+        if( params.verbose ) {
+            CompilerOutputs::ClearCurrentLine();
+            CompilerOutputs::Log("Executable ran and left with " + std::to_string(exitCode) + "\n");
+        }
     }
 
     int success_code = 0;

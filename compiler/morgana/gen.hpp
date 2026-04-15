@@ -16,14 +16,15 @@
 #define has(n) (i + n < nodes.size())
 
 enum reason {
-    var_declaration
+    var_declaration,
+    return_statement
 };
 
 std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool func) {
     Builder builder;
     Storage storage;
 
-    std::stack<std::tuple<reason, std::variant<std::shared_ptr<morgana::alloc>>>> expr_stack;
+    std::stack<std::tuple<reason, std::variant<morgana::dynamic, std::shared_ptr<morgana::alloc>>>> expr_stack;
 
     long i = 0;
     for(; i < nodes.size(); i++ ) {
@@ -36,7 +37,11 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                 builder << gen.make(expr.nodes.shared());
 
                 /* Ignore all bellow if expression stack is empty */
-                if( expr_stack.size() == 0 ) break;
+                if( expr_stack.size() == 0 ) {
+                    morgana::ret r(gen.addr);
+                    builder << r.string();
+                    continue;
+                };
 
                 auto [ why, dest ] = expr_stack.top();
                 expr_stack.pop();
@@ -45,6 +50,11 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                     auto allocation = std::get<std::shared_ptr<morgana::alloc>>(dest);
                     morgana::store s(allocation, gen.addr);
                     builder << s.string();
+                }
+
+                if( why == return_statement ) {
+                    morgana::ret r(gen.addr);
+                    builder << r.string();
                 }
             } break;
 
@@ -137,6 +147,25 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                     case Macro::options::start: { builder << "comptime _start\n"; } break;
                     default: break;
                 }
+            } break;
+
+            case NodeKind::NODE_RETURN: {
+                std::cout << "return statement\n";
+                RetStatement ret = std::get<RetStatement>(node.values);
+
+                if( ret.hopeless ) {
+                    morgana::ret r;
+                    builder << r.string();
+                    continue;
+                }
+
+                /* Non-hopeless declarations need to be instantiated */
+                if( (!has(1)) || nodes[i + 1].kind != NodeKind::NODE_EXPRESSION )
+                    CompilerOutputs::Fatal("A `hopefull` declaration needs a Expression before it!");
+
+                /* Push the declaration and its allocated memory onto the stack */
+                expr_stack.push({ return_statement, morgana::dynamic() });
+
             } break;
 
             default: break;

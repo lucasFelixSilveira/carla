@@ -1,3 +1,6 @@
+@_start
+
 int32 main = () {
-	return 0;
+    int32 x = 3 + 2;
+    return 7 * 2;
 }

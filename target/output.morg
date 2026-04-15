@@ -1,9 +1,13 @@
 comptime _start
 
-i8 main() {
+i32 main() {
 _0 = alloc i32
-e0 = mul 7 2
-e1 = mul 32 3
+e0 = add 3 0
+e1 = add 2 0
 e2 = add e0 e1
 store _0 e2
+e3 = add 7 0
+e4 = add 2 0
+e5 = mul e3 e4
+ret e4
 }

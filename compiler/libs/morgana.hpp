@@ -366,17 +366,13 @@ namespace morgana {
         };
 
         struct nodes;
-
         using values = std::variant<std::shared_ptr<nodes>, std::string>;
 
         struct nodes {
-        public:
             operand op;
             values lhs;
             values rhs;
-
             nodes() = default;
-
             std::shared_ptr<nodes> shared() {
                 return std::make_shared<nodes>(*this);
             }
@@ -393,44 +389,6 @@ namespace morgana {
         expr(Storage& storage) : storage(storage) {};
 
     private:
-        void recursivemakecall(std::shared_ptr<nodes> node, int layer = 0) {
-            if( std::holds_alternative<std::shared_ptr<nodes>>(node->lhs) ) {
-                recursivemakecall(std::get<std::shared_ptr<nodes>>(node->lhs), layer + 1);
-            }
-
-            if( std::holds_alternative<std::shared_ptr<nodes>>(node->rhs) ) {
-                recursivemakecall(std::get<std::shared_ptr<nodes>>(node->rhs), layer + 1);
-            }
-
-            std::string lhs_data, rhs_data;
-
-            if( std::holds_alternative<std::string>(node->lhs) ) {
-                lhs_data = std::get<std::string>(node->lhs);
-            } else {
-                lhs_data = "temp";
-            }
-
-            if( std::holds_alternative<std::string>(node->rhs) ) {
-                rhs_data = std::get<std::string>(node->rhs);
-            } else {
-                rhs_data = "temp";
-            }
-
-            dlayers.push_back(data_layer {
-                .op = node->op,
-                .layer = layer,
-                .data = lhs_data,
-                .node = node
-            });
-
-            dlayers.push_back(data_layer {
-                .op = node->op,
-                .layer = layer,
-                .data = rhs_data,
-                .node = node
-            });
-        }
-
         int getPriority(operand op) {
             switch(op) {
                 case operand::mul:
@@ -454,6 +412,7 @@ namespace morgana {
         }
 
     public:
+        std::stringstream ss;
         struct operations {
             int layer;
             std::string lhs;
@@ -462,81 +421,42 @@ namespace morgana {
             std::shared_ptr<nodes> node;
         };
 
-        std::string make(std::shared_ptr<nodes> root_node) {
-            std::stringstream ss;
-            dlayers.clear();
+        std::string make_node(std::shared_ptr<nodes> node, int& temp) {
+            if(! node ) return "";
 
-            std::vector<operations> all_ops;
-            collectOperations(root_node, all_ops, 0);
+            std::string lhs, rhs;
 
-            std::sort(all_ops.begin(), all_ops.end(),
-                [this](const operations& a, const operations& b) {
-                    int prioA = getPriority(a.op);
-                    int prioB = getPriority(b.op);
+            if( std::holds_alternative<std::string>(node->lhs) ) lhs = std::get<std::string>(node->lhs);
+            else lhs = make_node(std::get<std::shared_ptr<nodes>>(node->lhs), temp);
 
-                    if( prioA != prioB ) return prioA > prioB;
-                    return a.layer > b.layer;
-                });
+            if( std::holds_alternative<std::string>(node->rhs) ) rhs = std::get<std::string>(node->rhs);
+            else rhs = make_node(std::get<std::shared_ptr<nodes>>(node->rhs), temp);
 
-            std::unordered_map<std::shared_ptr<nodes>, std::string> node_to_temp;
-            int temp_counter = storage.exprcount;
+            std::string name = "e" + std::to_string(temp++);
+            ss << name << " = " << opToString(node->op) << " " << lhs << " " << rhs << "\n";
 
-            for( const auto& op : all_ops ) {
-                std::string lhs_val = op.lhs;
-                std::string rhs_val = op.rhs;
-
-                if( std::holds_alternative<std::shared_ptr<nodes>>(op.node->lhs) ) {
-                    auto child_node = std::get<std::shared_ptr<nodes>>(op.node->lhs);
-                    auto it = node_to_temp.find(child_node);
-                    if (it != node_to_temp.end()) {
-                        lhs_val = it->second;
-                    }
-                }
-
-                if( std::holds_alternative<std::shared_ptr<nodes>>(op.node->rhs) ) {
-                    auto child_node = std::get<std::shared_ptr<nodes>>(op.node->rhs);
-                    auto it = node_to_temp.find(child_node);
-                    if (it != node_to_temp.end()) {
-                        rhs_val = it->second;
-                    }
-                }
-
-                std::string temp_name = "e" + std::to_string(temp_counter++);
-                node_to_temp[op.node] = temp_name;
-                ss << temp_name << " = " << opToString(op.op) << " " << lhs_val << ' ' << rhs_val << '\n';
-
-                addr = temp_name;
-            }
-
-            storage.exprcount = temp_counter;
-            return ss.str();
+            addr = name;
+            return name;
         }
 
-    private:
-        void collectOperations(std::shared_ptr<nodes> node, std::vector<operations>& ops, int layer) {
-            if( std::holds_alternative<std::shared_ptr<nodes>>(node->lhs) ) {
-                collectOperations(std::get<std::shared_ptr<nodes>>(node->lhs), ops, layer + 1);
-            }
+        std::string make(std::shared_ptr<nodes> root) {
+            int temp = storage.exprcount;
+            make_node(root, temp);
+            storage.exprcount = temp;
+            return ss.str();
+        }
+    };
 
-            if( std::holds_alternative<std::shared_ptr<nodes>>(node->rhs) ) {
-                collectOperations(std::get<std::shared_ptr<nodes>>(node->rhs), ops, layer + 1);
-            }
+    struct ret {
+        std::string addr;
 
-            std::string lhs_str = std::holds_alternative<std::string>(node->lhs)
-                ? std::get<std::string>(node->lhs)
-                : "node_result";
+        ret() : addr("") {}
+        ret(std::string addr) : addr(addr) {}
 
-            std::string rhs_str = std::holds_alternative<std::string>(node->rhs)
-                ? std::get<std::string>(node->rhs)
-                : "node_result";
-
-            ops.push_back(operations {
-                .layer = layer,
-                .lhs = lhs_str,
-                .rhs = rhs_str,
-                .op = node->op,
-                .node = node
-            });
+        std::string string() {
+            std::stringstream ss;
+            ss << "ret " << addr << "\n";
+            return ss.str();
         }
     };
 };

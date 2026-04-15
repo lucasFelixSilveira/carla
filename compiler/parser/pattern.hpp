@@ -9,6 +9,7 @@
 #include "patterns/declaration.hpp"
 #include "patterns/lambda.hpp"
 #include "patterns/macros.hpp"
+#include "patterns/simple_statements.hpp"
 #include "../compiler_outputs.hpp"
 #include "../tokenizer/token_kind.hpp"
 #include <sstream>
@@ -27,6 +28,8 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     switch(tk.kind) {
     case START:
     if( startMacro(result, sym, index, ctx) ) return Some{};
+    case RETURN:
+    if( returnStatement(result, sym, index, ctx) ) return Some{};
     case LET:
     case CONST:
     if( keywordDeclaration(result, sym, index, ctx) ) return Some{};

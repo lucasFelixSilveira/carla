@@ -292,9 +292,9 @@ install_morgana() {
     fi
 
     info "Building Morgana..."
-    chmod +x build.sh
+    chmod +x build_x86_64.sh
 
-    if ! ./build.sh >> "$LOG_FILE" 2>&1; then
+    if ! ./build_x86_64.sh >> "$LOG_FILE" 2>&1; then
         error "Morgana build failed - check log: $LOG_FILE"
         popd >/dev/null
         popd >/dev/null
