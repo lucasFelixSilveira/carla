@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdio>
 #include <memory>
 #include <stack>
 #include <string>
@@ -17,7 +18,8 @@
 
 enum reason {
     var_declaration,
-    return_statement
+    return_statement,
+    puts_statement
 };
 
 std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool func) {
@@ -32,29 +34,47 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
         switch(node.kind) {
             case NodeKind::NODE_EXPRESSION: {
-                pExpression expr = std::get<pExpression>(node.values);
-                morgana::expr gen(storage);
-                builder << gen.make(expr.nodes.shared());
+                auto [keyword, expr, block] = std::get<pExpression>(node.values);
+
+                std::string comptime_string;
+                if( std::holds_alternative<morgana::expr::single_expr>(expr) ) {
+                    auto single = std::get<morgana::expr::single_expr>(expr);
+                    if( single.constant ) { comptime_string = single.value; }
+                }
+
+                if( expr_stack.size() > 0 ) {
+                    auto [ why, dest ] = expr_stack.top();
+                    if( why == puts_statement ) {
+                        morgana::puts p(storage, comptime_string);
+                        builder << p.string();
+                    }
+                }
+
+                // morgana::expr gen(storage);
+                // builder << gen.make(expr.nodes.shared());
 
                 /* Ignore all bellow if expression stack is empty */
                 if( expr_stack.size() == 0 ) {
-                    morgana::ret r(gen.addr);
-                    builder << r.string();
-                    continue;
+                    // morgana::ret r(gen.addr);
+                    // builder << r.string();
+                    // continue;
                 };
 
                 auto [ why, dest ] = expr_stack.top();
                 expr_stack.pop();
 
                 if( why == var_declaration ) {
-                    auto allocation = std::get<std::shared_ptr<morgana::alloc>>(dest);
-                    morgana::store s(allocation, gen.addr);
-                    builder << s.string();
+                    // auto allocation = std::get<std::shared_ptr<morgana::alloc>>(dest);
+                    // morgana::store s(allocation, gen.addr);
+                    // builder << s.string();
                 }
 
                 if( why == return_statement ) {
-                    morgana::ret r(gen.addr);
-                    builder << r.string();
+                    // morgana::ret r(gen.addr);
+                    // builder << r.string();
+                }
+
+                if( why == puts_statement ) {
                 }
             } break;
 
@@ -151,7 +171,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
             case NodeKind::NODE_RETURN: {
                 std::cout << "return statement\n";
-                RetStatement ret = std::get<RetStatement>(node.values);
+                SimpleStatement ret = std::get<SimpleStatement>(node.values);
 
                 if( ret.hopeless ) {
                     morgana::ret r;
@@ -165,6 +185,16 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
                 /* Push the declaration and its allocated memory onto the stack */
                 expr_stack.push({ return_statement, morgana::dynamic() });
+
+            } break;
+
+            case NodeKind::NODE_PUTS: {
+                /* Non-hopeless declarations need to be instantiated */
+                if( (!has(1)) || nodes[i + 1].kind != NodeKind::NODE_EXPRESSION )
+                    CompilerOutputs::Fatal("A `hopefull` declaration needs a Expression before it!");
+
+                /* Push the declaration and its allocated memory onto the stack */
+                expr_stack.push({ puts_statement, morgana::dynamic() });
 
             } break;
 

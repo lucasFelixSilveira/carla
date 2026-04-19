@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
     if( params.command == "run" ) {
         std::string runCommand = "./" + std::filesystem::relative(absPathBin.string()).string();
-        std::cout << Colorizer::DARK_GREY << "   └─ " << Colorizer::BOLD_YELLOW << "Running " << std::endl;
+        std::cout << Colorizer::DARK_GREY << "   └─ " << Colorizer::BOLD_YELLOW << "Running " << Colorizer::RESET << std::endl;
 
         int result = std::system(runCommand.c_str());
         int exitCode = 0;

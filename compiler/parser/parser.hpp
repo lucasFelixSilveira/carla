@@ -8,7 +8,6 @@
 #include "symbols.hpp"
 #include "../tokenizer/token.hpp"
 #include "../tokenizer/token_kind.hpp"
-#include "../debug/debug.hpp"
 #include "../utils/result.hpp"
 #include "../compiler_outputs.hpp"
 

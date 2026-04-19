@@ -30,6 +30,8 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     if( startMacro(result, sym, index, ctx) ) return Some{};
     case RETURN:
     if( returnStatement(result, sym, index, ctx) ) return Some{};
+    case PUTS:
+    if( putsStatement(result, sym, index, ctx) ) return Some{};
     case LET:
     case CONST:
     if( keywordDeclaration(result, sym, index, ctx) ) return Some{};

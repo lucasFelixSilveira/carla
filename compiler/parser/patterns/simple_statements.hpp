@@ -9,10 +9,22 @@ bool returnStatement(pNode *result, Symt *sym, long unsigned int *index, const s
     (*index)++;
 
     if( after.kind == Common && std::get<Token>(after.content).kind == TokenKind::SEMICOLON ) {
-        *result = pNode(RetStatement(true));
+        result->~pNode();
+        new(result) pNode(NODE_RETURN, SimpleStatement(true));
         return true;
     }
 
-    *result = pNode(RetStatement(false));
+    result->~pNode();
+    new(result) pNode(NODE_RETURN, SimpleStatement(false));
+    return true;
+}
+
+
+bool putsStatement(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+    pContext after = (*ctx)[*index + 1];
+    (*index)++;
+
+    result->~pNode();
+    new(result) pNode(NODE_PUTS, SimpleStatement(true));
     return true;
 }

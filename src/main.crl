@@ -1,6 +1,5 @@
 @_start
 
 int32 main = () {
-    int32 x = 3 + 2;
-    return 7 * 2;
+    puts "Hello, world!\n";
 }

@@ -60,7 +60,8 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
         morgana::variable v(identifierToken.lexeme, into, true);
         sym->addSymbol(identifierToken.lexeme, v.shared());
 
-        *result = pNode(declarationType, *type, identifierToken.lexeme, specialCtx);
+        result->~pNode();
+        new(result) pNode(declarationType, *type, identifierToken.lexeme, specialCtx);
         *index += 2 + ptrSize;
         return true;
     };
@@ -88,7 +89,8 @@ bool keywordDeclaration(pNode *result, Symt *sym, long unsigned int *index, cons
         sym->addSymbol(identifierToken.lexeme, v.shared());
 
         Symbol* type;
-        *result = pNode(declarationType, *type, identifierToken.lexeme, std::vector<pContext>(), keyword.kind);
+        result->~pNode();
+        new(result) pNode(declarationType, *type, identifierToken.lexeme, std::vector<pContext>(), keyword.kind);
         *index += 2;
         return true;
     };

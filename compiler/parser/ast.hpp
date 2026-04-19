@@ -47,7 +47,8 @@ enum NodeKind {
     NODE_EXPRESSION,
 
     NODE_MACRO,
-    NODE_RETURN
+    NODE_RETURN,
+    NODE_PUTS
 };
 
 inline std::string pKindStr(NodeKind kind) {
@@ -108,37 +109,14 @@ struct pLambda {
         : pub(pub), argst(std::move(argst)), argsn(std::move(argsn)), body(body) {}
 };
 
-struct pExpression;
-
-struct pExpressionNodes;
-using pExpressionValues = std::variant<std::string, std::shared_ptr<pExpressionNodes>, std::shared_ptr<pExpression>>;
-
-struct pExpressionNodes {
-public:
-    TokenKind op;
-    pExpressionValues lhs;
-    pExpressionValues rhs;
-
-    pExpressionNodes() = default;
-};
 
 struct pExpression {
-public:
-    std::string keyword;
-    morgana::expr::nodes nodes;
+    std::string name;
+    morgana::expr::root root;
+    std::vector<pContext> ctx;
 
-    pExpression() = default;
-};
-
-struct pExpressionFirst {
-public:
-    std::string keyword;
-    pExpressionNodes nodes;
-
-    /* Different pattern to codegen */
-    morgana::expr::nodes morgana;
-
-    pExpressionFirst() = default;
+    pExpression(const std::string& name, morgana::expr::root root, std::vector<pContext> ctx)
+        : name(name), root(root), ctx(ctx) {}
 };
 
 struct Macro {
@@ -153,9 +131,9 @@ struct Macro {
     }
 };
 
-struct RetStatement {
+struct SimpleStatement {
     bool hopeless;
-    RetStatement(bool hopeless) : hopeless(hopeless) {}
+    SimpleStatement(bool hopeless) : hopeless(hopeless) {}
 };
 
 // --------------------
@@ -167,7 +145,7 @@ using pValues = std::variant<
     pLambda,
     pExpression,
     Macro,
-    RetStatement
+    SimpleStatement
 >;
 
 
@@ -184,14 +162,14 @@ struct pNode {
         : kind(NODE_LAMBDA), values(pLambda(pub, std::move(argst), std::move(argsn), body)) {}
 
     // expressão
-    pNode(const pExpression& expr)
+    pNode(pExpression& expr)
         : kind(NODE_EXPRESSION), values(expr) {}
 
     pNode(const Macro macro)
         : kind(NODE_MACRO), values(macro) {}
 
-    pNode(const RetStatement ret)
-        : kind(NODE_RETURN), values(ret) {}
+    pNode(const NodeKind kind, const SimpleStatement ret)
+        : kind(kind), values(ret) {}
 
     pNode() = default;
 };

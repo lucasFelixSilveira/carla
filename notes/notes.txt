@@ -1,0 +1,7 @@
+"Hello, world!" / ", " // => [2]int8* {"Hello", "world!"}
+"Hello," + " world!" // => int8* "Hello, world"
+
+"Hello, world!" - ", world" // => "Hello!"
+"Hello, world!" - ("world" : "earth") // => "Hello, earth!"
+"Hello, world, world!" *- = ", world" // => "Hello!"
+"Hello, world! " - ("world" : "earth") // => "Hello, earth!"

@@ -355,96 +355,33 @@ namespace morgana {
         Storage& storage;
         std::string addr;
 
-        enum operand { add, sub, mul, div, mod };
+        enum operand { add, sub, mul, div, mod, none };
 
-        std::array<std::tuple<std::string, operand>, 5> op_names = {
+        std::array<std::tuple<std::string, operand>, 6> op_names = {
             std::tuple<std::string, operand> {"+", operand::add},
             std::tuple<std::string, operand> {"-", operand::sub},
             std::tuple<std::string, operand> {"*", operand::mul},
             std::tuple<std::string, operand> {"/", operand::div},
-            std::tuple<std::string, operand> {"%", operand::mod}
+            std::tuple<std::string, operand> {"%", operand::mod},
+            std::tuple<std::string, operand> {"_", operand::none}
         };
 
         struct nodes;
-        using values = std::variant<std::shared_ptr<nodes>, std::string>;
+        struct single_expr;
+        struct binary_expr;
 
-        struct nodes {
-            operand op;
-            values lhs;
-            values rhs;
-            nodes() = default;
-            std::shared_ptr<nodes> shared() {
-                return std::make_shared<nodes>(*this);
-            }
+        using root = std::variant<single_expr, binary_expr>;
+
+        struct single_expr {
+            bool constant;
+            std::string value;
         };
 
-        struct data_layer {
+        struct binary_expr {
+            root& lhs;
+            root& rhs;
             operand op;
-            int layer;
-            std::string data;
-            std::shared_ptr<nodes> node;
         };
-
-        std::vector<data_layer> dlayers;
-        expr(Storage& storage) : storage(storage) {};
-
-    private:
-        int getPriority(operand op) {
-            switch(op) {
-                case operand::mul:
-                case operand::div:
-                case operand::mod: return 2;
-                case operand::add:
-                case operand::sub: return 1;
-                default: return 0;
-            }
-        }
-
-        std::string opToString(operand op) {
-            switch(op) {
-                case operand::add: return "add";
-                case operand::sub: return "sub";
-                case operand::mul: return "mul";
-                case operand::div: return "div";
-                case operand::mod: return "mod";
-                default: return "unknown";
-            }
-        }
-
-    public:
-        std::stringstream ss;
-        struct operations {
-            int layer;
-            std::string lhs;
-            std::string rhs;
-            operand op;
-            std::shared_ptr<nodes> node;
-        };
-
-        std::string make_node(std::shared_ptr<nodes> node, int& temp) {
-            if(! node ) return "";
-
-            std::string lhs, rhs;
-
-            if( std::holds_alternative<std::string>(node->lhs) ) lhs = std::get<std::string>(node->lhs);
-            else lhs = make_node(std::get<std::shared_ptr<nodes>>(node->lhs), temp);
-
-            if( std::holds_alternative<std::string>(node->rhs) ) rhs = std::get<std::string>(node->rhs);
-            else rhs = make_node(std::get<std::shared_ptr<nodes>>(node->rhs), temp);
-
-            std::string name = "e" + std::to_string(temp++);
-            ss << name << " = " << opToString(node->op) << " " << lhs << " " << rhs << "\n";
-
-            addr = name;
-            return name;
-        }
-
-        std::string make(std::shared_ptr<nodes> root) {
-            int temp = storage.exprcount;
-            make_node(root, temp);
-            storage.exprcount = temp;
-            return ss.str();
-        }
     };
 
     struct ret {
@@ -456,6 +393,22 @@ namespace morgana {
         std::string string() {
             std::stringstream ss;
             ss << "ret " << addr << "\n";
+            return ss.str();
+        }
+    };
+
+    struct puts {
+        std::string addr;
+        std::string data;
+
+        puts(Storage& storage, std::string data) : data(data) {
+            addr = std::to_string(storage.addr++);
+        }
+
+        std::string string() {
+            std::stringstream ss;
+            ss << "_" << addr << " = constant " << data << "\n"
+               << "puts _" << addr << "\n";
             return ss.str();
         }
     };

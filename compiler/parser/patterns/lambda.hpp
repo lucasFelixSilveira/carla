@@ -55,7 +55,8 @@ bool lambda(pNode *result, Symt *sym, long unsigned int *index, const std::vecto
         internal++;
     }
 
-    *result = pNode(NODE_LAMBDA, argst, argsn, body);
+    result->~pNode();
+    new(result) pNode(NODE_LAMBDA, argst, argsn, body);
     *index += 2;
     return true;
 }
