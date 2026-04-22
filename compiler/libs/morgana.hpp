@@ -1,10 +1,8 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <iostream>
 #include <memory>
-#include <regex>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -12,7 +10,6 @@
 #include <variant>
 #include <vector>
 
-#include "morgana/context.hpp"
 #include "morgana/storage.hpp"
 
 namespace morgana {
@@ -38,12 +35,13 @@ namespace morgana {
         int addr;
         non_size length;
         int bits;
-        bool pointer;
+        bool pointer = false, _void = false;
         bool vector;
 
         static std::unordered_map<std::string, int> addrs;
     public:
-        type(enum radical radical, int bits): radical(radical), bits(bits), pointer(false), vector(false) {}
+        type(enum radical radical, int bits): radical(radical), bits(bits), pointer(false), vector(false), _void(false) {}
+        type(std::string x) : pointer(x == "ptr"), _void(x == "void") {}
 
         /*
          * Constructor for integer type.
@@ -51,6 +49,16 @@ namespace morgana {
          */
         static type integer(int bits) {
             type t(radical::Integer, bits);
+            return t;
+        }
+
+        static type ptr() {
+            type t("ptr");
+            return t;
+        }
+
+        static type void_t() {
+            type t("void");
             return t;
         }
 
@@ -76,15 +84,6 @@ namespace morgana {
 
         int bytes() const {
             return bits / 8;
-        }
-
-        /*
-         * Constructor for pointer type.
-         * - Used for create a simple pointer
-         */
-        type& ptr() {
-            pointer = true;
-            return *this;
         }
 
         /*
@@ -114,6 +113,9 @@ namespace morgana {
          * of the type in Morgana IR language.
          */
         std::string string() {
+            if( pointer ) return "ptr";
+            if( _void ) return "void";
+
             std::stringstream ss;
             if( vector ) ss << "[";
             if( vector && std::holds_alternative<dynamic>(length) ) ss << "*:";
@@ -126,7 +128,6 @@ namespace morgana {
             }
 
             if( vector ) ss << "]";
-            if( pointer ) ss << "*";
             return ss.str();
         }
     };
@@ -284,6 +285,7 @@ namespace morgana {
         std::string generic_value;
 
         store(int addr, long long int value) : addr(addr), value(value), generic_value("") {}
+        store(int addr, std::string value) : addr(addr), generic_value(value) {}
         store(std::shared_ptr<alloc> allocation, long long int value) : addr(allocation->addr), value(value), generic_value("") {}
         store(std::shared_ptr<alloc> allocation, std::string generic_value) : addr(allocation->addr), generic_value(generic_value) {}
 
@@ -303,6 +305,24 @@ namespace morgana {
             std::stringstream ss;
             if( generic_value.empty() ) ss << "store _" << addr << ' ' << value << '\n';
             else ss << "store _" << addr << ' ' << generic_value << '\n';
+            return ss.str();
+        }
+    };
+
+    struct identifier {
+        static std::string from(int addr) {
+            return "_" + std::to_string(addr);
+        }
+    };
+    struct constant {
+        int addr;
+        Storage& storage;
+        std::string value;
+        constant(Storage& storage, std::string value) : addr(storage.local++), storage(storage), value(value) {}
+
+        std::string string() {
+            std::stringstream ss;
+            ss << "_" << addr << " = constant " << value << "\n";
             return ss.str();
         }
     };

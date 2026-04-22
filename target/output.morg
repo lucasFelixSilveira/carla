@@ -1,6 +1,7 @@
 comptime _start
 
-i32 main() {
-_0 = constant "Hello, world!\n"
-puts _0
+void main() {
+_0 = alloc ptr
+_1 = constant "Hello, world! My name is Lucas"
+store _0 _1
 }

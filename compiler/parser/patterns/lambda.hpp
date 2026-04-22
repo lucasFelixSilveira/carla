@@ -10,7 +10,6 @@
 #include "components/special_symbols.hpp"
 
 bool lambda(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
-
     pContext arguments = (*ctx)[*index];
     if(! std::holds_alternative<std::vector<pContext>>(arguments.content) ) return false;
     const auto& blockContent = std::get<std::vector<pContext>>(arguments.content);

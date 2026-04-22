@@ -12,15 +12,11 @@ main:
 .LFP0:
 	pushq %rbp
 	movq %rsp, %rbp
-	movq $1, %rax
-	movq $1, %rdi
-	movq $.fn0._0, %rsi
-	movq $17, %rdx
-	syscall
+	movq $.fn0._1, -8(%rbp)
 .LFE0:
 	.size main, .LFE0 - main
 	movq %rdi, %rax
 	leave
 	ret
 .data
-	.fn0._0: .string "Hello, world!\n"
+	.fn0._1: .string "Hello, world! My name is Lucas"

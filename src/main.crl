@@ -1,5 +1,5 @@
 @_start
 
-int32 main = () {
-    puts "Hello, world!\n";
+void main = () {
+    string msg = "Hello, world! " + "My name is Lucas";
 }

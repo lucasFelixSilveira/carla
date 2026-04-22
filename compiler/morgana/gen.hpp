@@ -42,39 +42,23 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                     if( single.constant ) { comptime_string = single.value; }
                 }
 
-                if( expr_stack.size() > 0 ) {
-                    auto [ why, dest ] = expr_stack.top();
-                    if( why == puts_statement ) {
-                        morgana::puts p(storage, comptime_string);
-                        builder << p.string();
-                    }
-                }
-
-                // morgana::expr gen(storage);
-                // builder << gen.make(expr.nodes.shared());
-
-                /* Ignore all bellow if expression stack is empty */
-                if( expr_stack.size() == 0 ) {
-                    // morgana::ret r(gen.addr);
-                    // builder << r.string();
-                    // continue;
-                };
+                if( expr_stack.size() == 0 ) {};
 
                 auto [ why, dest ] = expr_stack.top();
-                expr_stack.pop();
+                if( why == puts_statement ) {
+                    morgana::puts p(storage, comptime_string);
+                    builder << p.string();
+                }
 
                 if( why == var_declaration ) {
-                    // auto allocation = std::get<std::shared_ptr<morgana::alloc>>(dest);
-                    // morgana::store s(allocation, gen.addr);
-                    // builder << s.string();
-                }
+                    auto val = std::get<std::shared_ptr<morgana::alloc>>(dest);
+                    if(! comptime_string.empty() ) {
+                        morgana::constant c(storage, comptime_string);
+                        morgana::store s(val->addr, morgana::identifier::from(c.addr));
 
-                if( why == return_statement ) {
-                    // morgana::ret r(gen.addr);
-                    // builder << r.string();
-                }
-
-                if( why == puts_statement ) {
+                        builder << c.string();
+                        builder << s.string();
+                    }
                 }
             } break;
 
