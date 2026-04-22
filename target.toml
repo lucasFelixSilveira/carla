@@ -2,8 +2,8 @@
 main = "src/main.crl"
 
 [ffi]
-enabled = true
-export = [ "println" ]
+enabled = false
+export = [  ]
 path = "src/core.c"
 
 [extensors]

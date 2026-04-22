@@ -9,11 +9,13 @@
 #include <vector>
 #include <iomanip>
 
+#include "../compiler_outputs.hpp"
 #include "../libs/morgana.hpp"
 
 struct special;
 
 using Symbol = std::variant<
+    std::monostate,
     std::shared_ptr<special>,
     std::shared_ptr<morgana::type>,
     std::shared_ptr<morgana::variable>,
@@ -80,6 +82,8 @@ inline Symbol* Symt::findSymbol(const std::string& name) {
             return &found->second;
         }
     }
+
+    CompilerOutputs::Fatal("cannot find symbol: " + name);
     return nullptr;
 }
 

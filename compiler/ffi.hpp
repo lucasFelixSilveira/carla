@@ -12,7 +12,10 @@ void load_ffi(Symt& symbols, CompilerParams& params) {
         CompilerOutputs::Warn("Error in target.toml: " + std::get<0>(err) + "\n");
     } else {
         bool ffi_enabled = reader.check<bool>("enabled", ffi);
-        if(! ffi_enabled ) return;
+        if(! ffi_enabled ) {
+            params.ffi = false;
+            return;
+        }
 
         std::string ffi_path;
         std::vector<std::string> ffi_exports;

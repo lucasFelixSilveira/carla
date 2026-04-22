@@ -79,8 +79,6 @@ bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::v
     auto token = std::get<Token>(first.content);
     if( is_identifier(token.lexeme) ) {
         auto symbol = sym->findSymbol(token.lexeme);
-        sym->dump();
-        std::cout << "dump from " << token.lexeme << "\n";
         if(! std::holds_alternative<morgana::ffi_callable>(*symbol) ) return false;
 
         auto var = std::get<morgana::ffi_callable>(*symbol);
