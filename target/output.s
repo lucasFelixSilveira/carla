@@ -13,6 +13,8 @@ main:
 	pushq %rbp
 	movq %rsp, %rbp
 	movq $.fn0._1, -8(%rbp)
+	movq -8(%rbp), %rdi
+	call println
 .LFE0:
 	.size main, .LFE0 - main
 	movq %rdi, %rax

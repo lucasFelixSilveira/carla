@@ -2,7 +2,6 @@
 
 #include "../ast.hpp"
 #include "../symbols.hpp"
-#include <cstdio>
 #include <iostream>
 #include <vector>
 
@@ -10,5 +9,18 @@ bool startMacro(pNode *result, Symt *sym, long unsigned int *index, const std::v
     *index += 1;
     result->~pNode();
     new(result) pNode(Macro::start());
+    return true;
+}
+
+bool externStatement(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+    auto identifier = (*ctx)[++(*index)];
+    if( identifier.kind != Common ) return false;
+
+    auto token = std::get<Token>(identifier.content);
+    std::cout << "\nextern: " << token.lexeme << std::endl;
+
+    (*index)++;
+    result->~pNode();
+    new(result) pNode(Macro::extern_(token.lexeme));
     return true;
 }

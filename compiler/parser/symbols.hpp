@@ -16,7 +16,8 @@ struct special;
 using Symbol = std::variant<
     std::shared_ptr<special>,
     std::shared_ptr<morgana::type>,
-    std::shared_ptr<morgana::variable>
+    std::shared_ptr<morgana::variable>,
+    morgana::ffi_callable
 >;
 
 struct special {
@@ -102,6 +103,8 @@ inline void Symt::dump() const {
             std::cout << "  " << std::setw(12) << std::left << name << " : ";
             if (std::holds_alternative<std::shared_ptr<morgana::type>>(sym)) {
                 std::cout << "<type>";
+            } else if (std::holds_alternative<morgana::ffi_callable>(sym)) {
+                std::cout << "<c_ffi>";
             } else if (std::holds_alternative<std::shared_ptr<morgana::variable>>(sym)) {
                 std::cout << "<variable>";
             } else {

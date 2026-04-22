@@ -2,4 +2,5 @@
 
 void main = () {
     string msg = "Hello, world! " + "My name is Lucas";
+    println(msg);
 }

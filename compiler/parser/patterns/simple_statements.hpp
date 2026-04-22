@@ -19,7 +19,6 @@ bool returnStatement(pNode *result, Symt *sym, long unsigned int *index, const s
     return true;
 }
 
-
 bool putsStatement(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
     pContext after = (*ctx)[*index + 1];
     (*index)++;

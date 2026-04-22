@@ -2,8 +2,12 @@
 
 #include "../ast.hpp"
 #include "../symbols.hpp"
+#include <cstdio>
+#include <iostream>
+#include <memory>
 #include <regex>
 #include <string>
+#include <variant>
 #include <vector>
 
 #define LAST_KEYWORD TokenKind::END_KEYWORDS
@@ -15,11 +19,16 @@ bool contains(const std::vector<T> vec, T val) {
     return false;
 }
 
-std::pair<bool, std::string> try_comptime(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
-    auto is_string = [&](const std::string str) { return std::regex_match(str, std::regex("\\\".*\\\"")); };
-    auto is_number = [&](const std::string str) { return std::regex_match(str, std::regex("[0-9]+(\\.[0.9]+)?")); };
-    auto is_identifier = [&](const std::string str) { return std::regex_match(str, std::regex("[A-Za-z_][A-Za-z0-9_]*")); };
+inline bool is_string(const std::string str)
+{ return std::regex_match(str, std::regex("\\\".*\\\"")); };
 
+inline bool is_number(const std::string str)
+{ return std::regex_match(str, std::regex("[0-9]+(\\.[0.9]+)?")); };
+
+inline bool is_identifier(const std::string str)
+{ return std::regex_match(str, std::regex("[A-Za-z_][A-Za-z0-9_]*")); };
+
+std::pair<bool, std::string> try_comptime(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
     std::string value;
     std::string lexame;
     auto first = (*ctx)[(*index)++];
@@ -61,6 +70,57 @@ bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::v
         result->~pNode();
         new(result) pNode(expr);
         return true;
+    }
+
+    *index = old - 1;
+    auto first = (*ctx)[(*index)++];
+    if( first.kind != TokenCtxKind::Common ) return false;
+
+    auto token = std::get<Token>(first.content);
+    if( is_identifier(token.lexeme) ) {
+        auto symbol = sym->findSymbol(token.lexeme);
+        sym->dump();
+        std::cout << "dump from " << token.lexeme << "\n";
+        if(! std::holds_alternative<morgana::ffi_callable>(*symbol) ) return false;
+
+        auto var = std::get<morgana::ffi_callable>(*symbol);
+        morgana::expr::root root;
+
+        bool lhs_call = false;
+        std::vector<pTokenCtx> args;
+        auto next = (*ctx)[(*index)++];
+        if( next.kind == TokenCtxKind::Block ) {
+            args = std::get<std::vector<pTokenCtx>>(next.content);
+            lhs_call = true;
+            next = (*ctx)[(*index)++];
+        }
+
+        if( next.kind != TokenCtxKind::Common ) return false;
+        auto operator_tk = std::get<Token>(next.content);
+        switch(operator_tk.kind) {
+            case SEMICOLON: {
+                if( lhs_call ) {
+                    std::vector<std::string> ssargs;
+                    for( auto arg : args ) {
+                        if( arg.kind != TokenCtxKind::Common ) return false;
+                        auto token = std::get<Token>(arg.content);
+                        if( token.lexeme == ")" ) break;
+                        if( token.lexeme == "," ) continue;
+                        ssargs.push_back(token.lexeme);
+                    }
+
+                    root = morgana::expr::call_expr { token.lexeme, ssargs };
+                    auto expr = pExpression { "", root, std::vector<pContext>() };
+
+                    result->~pNode();
+                    new(result) pNode(expr);
+                    return true;
+                }
+            } break;
+            default: return false;
+        }
+
+        return false;
     }
 
     return false;

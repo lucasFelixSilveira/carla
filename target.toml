@@ -1,6 +1,11 @@
 [target]
 main = "src/main.crl"
 
+[ffi]
+enabled = true
+export = [ "println" ]
+path = "src/core.c"
+
 [extensors]
 # You can add extensors from an external git repository!
 repositories = [ "git@github.com:Carla-Corp/extensors.git" ]

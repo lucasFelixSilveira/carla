@@ -1,1 +1,1 @@
-./build/carla build -o x86_64
+./build/carla build -o x86_64-linux

@@ -1,5 +1,6 @@
 #include "charset.hpp"
 #include "compiler_outputs.hpp"
+#include "ffi.hpp"
 #include "params.hpp"
 #include "tokenizer/scanner.hpp"
 #include "tokenizer/token.hpp"
@@ -54,8 +55,9 @@ main(int argc, char **argv)
         std::string srcFile = srcDir + "/main.crl";
         std::ofstream main(srcFile, std::ios::out);
 
-        main << "int32 main = () {\n";
-        main << "\treturn 0;\n";
+        main << "@_start\n";
+        main << "void main = () {\n";
+        main << "\tputs \"Hello, world\";\n";
         main << "}\n";
 
         main.close();
@@ -81,6 +83,7 @@ main(int argc, char **argv)
     /* Parser phase */
     Symt symbols;
     charset(symbols);
+    load_ffi(symbols, params);
     auto irNodes = Parser::parse(symbols, tokens);
 
     /* Code Generation phase */
@@ -117,8 +120,8 @@ main(int argc, char **argv)
               << Colorizer::BOLD << Colorizer::DARK_GREY << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
     /* Compile Morgana IR to object file using morgc silently */
-    std::string target = ((params.target == "unknown") ? " -o " + params.target : "");
-    if( params.optimized ) target += "-optimized";
+    std::string target = ((params.target != "unknown") ? " -o " + params.target : "");
+    if( params.ffi ) target += " -ffi -cpath " + params.c_path;
     std::string morgcCommand = "morgana build -m " + absPath.string() + target;
     if( std::system(morgcCommand.c_str()) != 0 ) {
         std::cout << "\033[B";

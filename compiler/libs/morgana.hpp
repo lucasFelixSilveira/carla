@@ -309,11 +309,34 @@ namespace morgana {
         }
     };
 
+    struct call {
+        std::string func;
+        std::vector<std::string> args;
+
+        call(std::string func, std::vector<std::string> args) : func(func), args(args) {}
+        std::string string() {
+            std::stringstream ss;
+            ss << "call " << func << "(";
+            for( size_t i = 0; i < args.size(); ++i ) {
+                if( i > 0 ) ss << ", ";
+                ss << args[i];
+            }
+            ss << ")\n";
+            return ss.str();
+        }
+    };
+
+    struct ffi_callable {
+        std::string path;
+        ffi_callable(std::string path) : path(path) {}
+    };
+
     struct identifier {
         static std::string from(int addr) {
             return "_" + std::to_string(addr);
         }
     };
+
     struct constant {
         int addr;
         Storage& storage;
@@ -335,14 +358,10 @@ namespace morgana {
     struct load {
         int allocation_addr;
         int addr;
+        Storage& storage;
 
-        load(Storage& storage, int addr) : allocation_addr(addr) {
-            addr = storage.local++;
-        }
-
-        load(Storage& storage, std::shared_ptr<alloc> allocation) : allocation_addr(allocation->addr) {
-            addr = storage.local++;
-        }
+        load(Storage& storage, int addr) : allocation_addr(addr), storage(storage), addr(storage.local++) {}
+        load(Storage& storage, std::shared_ptr<alloc> allocation) : allocation_addr(allocation->addr), storage(storage), addr(storage.local++) {}
 
         /*
          * Make a Shared pointer type without a large code
@@ -389,8 +408,9 @@ namespace morgana {
         struct nodes;
         struct single_expr;
         struct binary_expr;
+        struct call_expr;
 
-        using root = std::variant<single_expr, binary_expr>;
+        using root = std::variant<call_expr, single_expr, binary_expr>;
 
         struct single_expr {
             bool constant;
@@ -401,6 +421,11 @@ namespace morgana {
             root& lhs;
             root& rhs;
             operand op;
+        };
+
+        struct call_expr {
+            std::string func;
+            std::vector<std::string> args;
         };
     };
 

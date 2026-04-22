@@ -12,7 +12,6 @@
 #include "patterns/simple_statements.hpp"
 #include "../compiler_outputs.hpp"
 #include "../tokenizer/token_kind.hpp"
-#include <cstdio>
 #include <sstream>
 
 template<typename T, typename X>

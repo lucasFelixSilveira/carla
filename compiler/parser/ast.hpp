@@ -120,15 +120,19 @@ struct pExpression {
 };
 
 struct Macro {
-    using values_t = std::variant<std::monostate>;
+    using values_t = std::variant<std::monostate, std::string>;
     values_t values;
-    enum class options { start };
+    enum class options { start, extern_ };
     options kind;
 
     Macro(options opt, values_t values=std::monostate()) : kind(opt), values(values) {}
 
     static Macro start() {
         return Macro(Macro::options::start);
+    }
+
+    static Macro extern_(std::string data) {
+        return Macro(Macro::options::extern_, data);
     }
 };
 
