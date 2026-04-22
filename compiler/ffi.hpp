@@ -36,5 +36,8 @@ void load_ffi(Symt& symbols, CompilerParams& params) {
         for( std::string identifier : ffi_exports ) {
             symbols.addSymbol(identifier, morgana::ffi_callable(ffi_path));
         }
+
+        params.ffi = true;
+        params.c_path = ffi_path;
     }
 }
