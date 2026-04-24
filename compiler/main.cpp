@@ -44,6 +44,12 @@ main(int argc, char **argv)
 
         target << "[target]\n";
         target << "main = \"src/main.crl\"\n\n";
+        target << "# To enable FFI, set enabled to true and provide a path to the C file.\n";
+        target << "# Remember to export any functions you want to use\n";
+        target << "[ffi]\n";
+        target << "enabled = false\n";
+        target << "path = \"\"\n";
+        target << "export = []\n\n";
         target << "[extensors]\n";
         target << "# You can add extensors from an external git repository!\n";
         target << "repositories = [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";

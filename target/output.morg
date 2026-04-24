@@ -1,9 +1,1 @@
 comptime _start
-
-void main() {
-_0 = alloc ptr
-_1 = constant "Hello, world! My name is Lucas"
-store _0 _1
-_2 = load _0
-call println(_2)
-}

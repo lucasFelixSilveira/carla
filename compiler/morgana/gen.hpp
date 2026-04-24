@@ -23,12 +23,12 @@ enum reason {
     puts_statement
 };
 
-std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool func) {
-    Builder builder;
-    Storage storage;
-    std::unordered_map<std::string, long long> addr_record;
+std::unordered_map<std::string, long long> addr_record;
+std::stack<std::tuple<reason, std::variant<morgana::dynamic, std::shared_ptr<morgana::alloc>>>> expr_stack;
 
-    std::stack<std::tuple<reason, std::variant<morgana::dynamic, std::shared_ptr<morgana::alloc>>>> expr_stack;
+std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool func, Storage *storage=nullptr) {
+    Builder builder;
+    if( storage == nullptr ) storage = new Storage();
 
     long i = 0;
     for(; i < nodes.size(); i++ ) {
@@ -36,7 +36,12 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
         switch(node.kind) {
             case NodeKind::NODE_EXPRESSION: {
-                auto [keyword, expr, block] = std::get<pExpression>(node.values);
+                auto [keyword, expr, block, fake] = std::get<pExpression>(node.values);
+
+                if(! std::holds_alternative<std::monostate>(fake) ) {
+                    auto fake_nodes = std::get<std::vector<pNode>>(fake);
+                    builder << generateMorganaCode(fake_nodes, symbols, func, storage);
+                }
 
                 if( std::holds_alternative<morgana::expr::call_expr>(expr) ) {
                     auto call = std::get<morgana::expr::call_expr>(expr);
@@ -44,7 +49,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
                     std::vector<std::string> args;
                     for( const auto& arg : call.args ) {
                         if( addr_record.find(arg) != addr_record.end() ) {
-                            morgana::load l(storage, addr_record.at(arg));
+                            morgana::load l(*storage, addr_record.at(arg));
                             builder << l.string();
                             args.push_back("_" + std::to_string(l.addr));
                         } else { args.push_back(arg); }
@@ -63,14 +68,14 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
                 auto [ why, dest ] = expr_stack.top();
                 if( why == puts_statement ) {
-                    morgana::puts p(storage, comptime_string);
+                    morgana::puts p(*storage, comptime_string);
                     builder << p.string();
                 }
 
                 if( why == var_declaration ) {
                     auto val = std::get<std::shared_ptr<morgana::alloc>>(dest);
                     if(! comptime_string.empty() ) {
-                        morgana::constant c(storage, comptime_string);
+                        morgana::constant c(*storage, comptime_string);
                         morgana::store s(val->addr, morgana::identifier::from(c.addr));
 
                         builder << c.string();
@@ -147,7 +152,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt symbols, bool fun
 
                 /* Just build the type with the templates and somestuff like that */
                 std::shared_ptr<morgana::type> type = builtin(&decl.type, assemble_special_symbol(&symbols, decl.ctx));
-                morgana::alloc ptr(storage, type);
+                morgana::alloc ptr(*storage, type);
                 addr_record.insert({ decl.name, ptr.addr });
                 builder << ptr.string();
 

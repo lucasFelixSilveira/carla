@@ -114,9 +114,10 @@ struct pExpression {
     std::string name;
     morgana::expr::root root;
     std::vector<pContext> ctx;
+    std::variant<std::monostate, std::vector<pNode>> fake_nodes;
 
-    pExpression(const std::string& name, morgana::expr::root root, std::vector<pContext> ctx)
-        : name(name), root(root), ctx(ctx) {}
+    pExpression(const std::string& name, morgana::expr::root root, std::vector<pContext> ctx, std::variant<std::monostate, std::vector<pNode>> fake_nodes)
+        : name(name), root(root), ctx(ctx), fake_nodes(fake_nodes) {}
 };
 
 struct Macro {

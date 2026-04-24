@@ -411,16 +411,19 @@ namespace morgana {
         struct call_expr;
 
         using root = std::variant<call_expr, single_expr, binary_expr>;
+        enum expr_type { string, numeric, nil };
 
         struct single_expr {
             bool constant;
             std::string value;
+            expr_type type;
         };
 
         struct binary_expr {
             root& lhs;
             root& rhs;
             operand op;
+            expr_type type;
         };
 
         struct call_expr {
