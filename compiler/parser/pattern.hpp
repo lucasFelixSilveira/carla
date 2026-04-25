@@ -33,7 +33,7 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     case PUTS:
     if( putsStatement(result, sym, index, ctx) ) return Some{};
     case LET:
-    case CONST:
+    case _CONST:
     if( keywordDeclaration(result, sym, index, ctx) ) return Some{};
     case IDENTIFIER:
     if( declaration(result, sym, index, ctx) ) return Some{};
