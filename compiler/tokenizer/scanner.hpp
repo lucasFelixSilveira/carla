@@ -33,12 +33,12 @@ Scanner::read(std::vector<char> source, std::streamsize size)
         {"struct", STRUCT},
         {"enum", ENUM},
 
-        {"false", FALSE},
-        {"true", TRUE},
+        {"false", _FALSE},
+        {"true", _TRUE},
         {"nil", NIL},
 
         {"our", OUR},
-        {"const", CONST},
+        {"const", _CONST},
         {"if", IF},
         {"else", ELSE},
         {"sizeof", SIZEOF},
