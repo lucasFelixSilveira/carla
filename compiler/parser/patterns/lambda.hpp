@@ -9,7 +9,7 @@
 
 #include "components/special_symbols.hpp"
 
-bool lambda(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool lambda(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     pContext arguments = (*ctx)[*index];
     if(! std::holds_alternative<std::vector<pContext>>(arguments.content) ) return false;
     const auto& blockContent = std::get<std::vector<pContext>>(arguments.content);
@@ -32,7 +32,7 @@ bool lambda(pNode *result, Symt *sym, long unsigned int *index, const std::vecto
         if( (type = sym->findSymbol(typeTk.lexeme)) == nullptr ) return false;
         if(! (std::holds_alternative<std::shared_ptr<morgana::type>>(*type) || std::holds_alternative<std::shared_ptr<special>>(*type)) ) return false;
 
-        unsigned long int *sext = &internal;
+        size_t *sext = &internal;
         int jumped = check_special(type, sym, &blockContent, sext, specialCtx) ? 1 : 0;
 
         const pContext& idCtx = blockContent[internal + jumped + 1];

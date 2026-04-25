@@ -4,7 +4,7 @@
 #include "../symbols.hpp"
 #include <vector>
 
-bool returnStatement(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool returnStatement(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     pContext after = (*ctx)[*index + 1];
     (*index)++;
 
@@ -19,7 +19,7 @@ bool returnStatement(pNode *result, Symt *sym, long unsigned int *index, const s
     return true;
 }
 
-bool putsStatement(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool putsStatement(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     pContext after = (*ctx)[*index + 1];
     (*index)++;
 

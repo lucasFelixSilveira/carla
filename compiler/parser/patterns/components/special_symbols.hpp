@@ -15,9 +15,9 @@ std::shared_ptr<morgana::type> builtin(Symbol* symbol, std::function<std::shared
     return nullptr;
 }
 
-bool parse_components_special(Symbol* symbol, Symt *sym, long unsigned int current, long unsigned int *index, const std::vector<pContext>* ctx);
+bool parse_components_special(Symbol* symbol, Symt *sym, size_t current, size_t *index, const std::vector<pContext>* ctx);
 
-bool check_special(Symbol *symbol, Symt *sym, const std::vector<pContext>* ctx, long unsigned int *index, std::vector<pContext>& stmt) {
+bool check_special(Symbol *symbol, Symt *sym, const std::vector<pContext>* ctx, size_t *index, std::vector<pContext>& stmt) {
     if( std::holds_alternative<std::shared_ptr<special>>(*symbol) ) {
         if(! parse_components_special(symbol, sym, *index, index, ctx) ) return false;
         stmt = std::get<std::vector<pContext>>((*ctx)[*index + 1].content);
@@ -27,7 +27,7 @@ bool check_special(Symbol *symbol, Symt *sym, const std::vector<pContext>* ctx, 
     return false;
 }
 
-bool parse_components_special(Symbol* symbol, Symt *sym, long unsigned int current, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool parse_components_special(Symbol* symbol, Symt *sym, size_t current, size_t *index, const std::vector<pContext>* ctx) {
     auto s = std::get<std::shared_ptr<special>>(*symbol);
 
     // Keywords não são tipos.

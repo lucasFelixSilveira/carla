@@ -11,7 +11,7 @@
 #include <vector>
 
 // Declaração comum, onde já se sabe o tipo futuro ou o tipo do valor/resultado.
-bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool declaration(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     std::vector<pContext> specialCtx;
     Token tk = std::get<Token>((*ctx)[*index].content);
     Symbol* type;
@@ -70,7 +70,7 @@ bool declaration(pNode *result, Symt *sym, long unsigned int *index, const std::
     }
 }
 
-bool keywordDeclaration(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool keywordDeclaration(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     Token keyword = std::get<Token>((*ctx)[*index].content);
     Token identifierToken = std::get<Token>((*ctx)[*index + 1].content);
     if( identifierToken.kind != IDENTIFIER ) return false;

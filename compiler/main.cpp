@@ -127,7 +127,7 @@ main(int argc, char **argv)
 
     /* Compile Morgana IR to object file using morgc silently */
     std::string target = ((params.target != "unknown") ? " -o " + params.target : "");
-    if( params.ffi ) target += " -ffi -cpath " + std::string(std::filesystem::absolute(params.c_path));
+    if( params.ffi ) target += " -ffi -cpath " + std::filesystem::absolute(params.c_path).string();
     if( params.verbose ) target += " -v";
     std::string morgcCommand = "morgana build -m " + absPath.string() + target;
     if( params.verbose ) CompilerOutputs::Warn("Runnig morgana as " + morgcCommand);

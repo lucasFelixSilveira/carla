@@ -27,9 +27,9 @@ inline bool is_number(const std::string str)
 inline bool is_identifier(const std::string str)
 { return std::regex_match(str, std::regex("[A-Za-z_][A-Za-z0-9_]*")); };
 
-bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx);
+bool expression(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx);
 
-std::tuple<bool, std::string, morgana::expr::expr_type> try_comptime(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+std::tuple<bool, std::string, morgana::expr::expr_type> try_comptime(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     std::string value;
     std::string lexame;
     auto first = (*ctx)[(*index)++];
@@ -105,7 +105,7 @@ std::tuple<bool, std::tuple<std::vector<pNode>, std::vector<std::string>>> argum
     return { true, { fake_nodes, fake_identifiers } };
 }
 
-bool expression(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool expression(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     size_t old = *index;
     auto [ success, value, type ] = try_comptime(result, sym, index, ctx);
 

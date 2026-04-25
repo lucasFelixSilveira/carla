@@ -5,14 +5,14 @@
 #include <iostream>
 #include <vector>
 
-bool startMacro(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool startMacro(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     *index += 1;
     result->~pNode();
     new(result) pNode(Macro::start());
     return true;
 }
 
-bool externStatement(pNode *result, Symt *sym, long unsigned int *index, const std::vector<pContext>* ctx) {
+bool externStatement(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
     auto identifier = (*ctx)[++(*index)];
     if( identifier.kind != Common ) return false;
 
