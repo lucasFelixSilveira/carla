@@ -69,7 +69,7 @@ std::tuple<bool, std::string, morgana::expr::expr_type> try_comptime(pNode *resu
 
 unsigned long long times = 0, pos = 0;
 std::tuple<bool, std::tuple<std::vector<pNode>, std::vector<std::string>>> arguments(Symt *sym, std::vector<pContext> args) {
-    long unsigned int index = 0;
+    size_t index = 0;
 
     std::vector<pNode> fake_nodes;
     std::vector<std::string> fake_identifiers;

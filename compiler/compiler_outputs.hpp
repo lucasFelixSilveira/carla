@@ -5,6 +5,10 @@
 #include <iostream>
 #include <string>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #define CARLA_DEBUG false
 
 struct CompilerOutputs {
