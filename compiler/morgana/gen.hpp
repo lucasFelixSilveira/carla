@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdio>
 #include <memory>
 #include <stack>
 #include <string>

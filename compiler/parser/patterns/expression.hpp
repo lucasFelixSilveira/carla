@@ -41,8 +41,10 @@ std::tuple<bool, std::string, morgana::expr::expr_type> try_comptime(pNode *resu
 
     std::vector<TokenKind> operators({ SEMICOLON, COMMA, PLUS });
 
-    if( (*index) + 1 >= ctx->size() ) return {
-        true, value, is_string(value) ? morgana::expr::string : morgana::expr::nil
+    if( (*index) + 1 > ctx->size() ) return {
+        true,
+        value,
+        is_string(value) ? morgana::expr::string : morgana::expr::nil
     };
 
     auto second = (*ctx)[(*index)++];

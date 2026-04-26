@@ -1,5 +1,5 @@
 @_start
 
 void main = () {
-    puts "Hello, world" + "";
+    puts "pinto\n\ncaralho\n";
 }

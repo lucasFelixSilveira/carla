@@ -1,6 +1,6 @@
 comptime _start
 
 void main() {
-_0 = constant "Hello, world"
+_0 = constant "pinto\n\ncaralho\n"
 puts _0
 }

@@ -15,7 +15,7 @@ main:
 	movq $1, %rax
 	movq $1, %rdi
 	movq $.fn0._0, %rsi
-	movq $14, %rdx
+	movq $16, %rdx
 	syscall
 .LFE0:
 	.size main, .LFE0 - main
@@ -23,4 +23,4 @@ main:
 	leave
 	ret
 .data
-	.fn0._0: .string "Hello, world"
+	.fn0._0: .string "pinto\n\ncaralho\n"
