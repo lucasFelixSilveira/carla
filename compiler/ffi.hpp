@@ -5,7 +5,7 @@
 #include "parser/symbols.hpp"
 #include "toml/reader.hpp"
 void load_ffi(Symt& symbols, CompilerParams& params) {
-    TOMLReader reader("carla", "target.toml");
+    TOMLReader reader("carla", std::filesystem::current_path().string() + "/target.toml");
     auto ffi = reader.get(TOMLReader::Expr("ffi", "enabled"));
     if( std::holds_alternative<TOMLReader::Error>(ffi) ) {
         auto err = std::get<TOMLReader::Error>(ffi);
