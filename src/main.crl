@@ -1,1 +1,5 @@
 @_start
+
+void main = () {
+    puts "Hello, world" + "";
+}

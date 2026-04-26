@@ -19,9 +19,11 @@
 #include "morgana/gen.hpp"
 
 #ifdef _WIN32
+# define NIL_FD " > NUL 2>&1 "
 # include <direct.h>
 # define MKDIR(dir) _mkdir(dir)
 #else
+# define NIL_FD " > /dev/null 2>&1 "
 # include <sys/wait.h>
 # include <unistd.h>
 # define MKDIR(dir) mkdir(dir, 0700)
@@ -96,9 +98,7 @@ main(int argc, char **argv)
     std::string morgIR = generateMorganaCode(irNodes, symbols, false);
 
     /* Create target directory if it doesn't exist */
-    struct stat st = {0};
-    std::string createFolder = "mkdir target > /dev/null 2>&1";
-    if( stat("target", &st) == -1 && std::system(createFolder.c_str()) != 0 ) CompilerOutputs::Fatal("Failed to create target directory");
+    MKDIR((std::filesystem::current_path().string() + "/target").c_str());
 
     /* Write Morgana IR to target/output.morg */
     std::ofstream outFile("target/output.morg");

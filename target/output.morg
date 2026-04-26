@@ -1,1 +1,6 @@
 comptime _start
+
+void main() {
+_0 = constant "Hello, world"
+puts _0
+}
