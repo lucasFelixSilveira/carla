@@ -157,7 +157,7 @@ main(int argc, char **argv)
     CompilerOutputs::Log(duration.str());
     std::cout << Colorizer::DARK_GREY << "└─ " << Colorizer::RESET << "Morgana Object emitted "
               << Colorizer::BOLD << Colorizer::DARK_GREY << "|" << Colorizer::BOLD_YELLOW << " ./target/output "
-              << Colorizer::DARK_GREY << "(.exe)" << std::endl;
+              << Colorizer::DARK_GREY << "(.exe)" << Colorizer::RESET << std::endl;
 
     if( params.command == "run" ) {
         std::string runCommand = "./" + std::filesystem::relative(absPathBin.string()).string();
