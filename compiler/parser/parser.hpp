@@ -31,12 +31,6 @@ inline bool Parser::isEOF(Token tk) {
 std::vector<pNode> Parser::parse(Symt& symbols, std::vector<Token>& tks) {
     std::vector<pContext> ctx = genCTX(tks);
 
-#   if CARLA_DEBUG
-    for( size_t i = 0; i < ctx.size(); ++i ) {
-        printCtx(ctx[i], "", i == ctx.size() - 1);
-    }
-#   endif
-
     std::vector<pNode> nodes;
     Result syntax = checkSyntax(symbols, &nodes, ctx, true);
     if(! isSuccess(syntax) ) CompilerOutputs::Fatal(err(syntax));
@@ -101,11 +95,6 @@ Result Parser::checkSyntax(Symt& symbols, std::vector<pNode> *nodes, std::vector
 
         CompilerOutputs::Fatal(err(match));
     }
-
-
-#   if CARLA_DEBUG
-    printNodes(*nodes);
-#   endif
 
     return Some{};
 }

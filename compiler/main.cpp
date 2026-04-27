@@ -126,10 +126,10 @@ main(int argc, char **argv)
               << Colorizer::BOLD << Colorizer::DARK_GREY << Colorizer::BOLD_YELLOW << " (not compiled yet)";
 
     /* Compile Morgana IR to object file using morgc silently */
-    std::string target = ((params.target != "unknown") ? " -o " + params.target : "");
-    if( params.ffi ) target += " -ffi -cpath " + std::filesystem::absolute(params.c_path).string();
-    if( params.verbose ) target += " -v";
-    std::string morgcCommand = "morgana build -m " + absPath.string() + target;
+    std::string flgs = ((params.target != "unknown") ? " -o " + params.target : "");
+    if( params.ffi ) flgs += " -ffi -cpath " + std::filesystem::absolute(params.c_path).string();
+    if( params.verbose ) flgs += " -v";
+    std::string morgcCommand = "morgana build -m " + absPath.string() + flgs;
     if( params.verbose ) CompilerOutputs::Warn("Runnig morgana as " + morgcCommand);
     if( std::system(morgcCommand.c_str()) != 0 ) {
         std::cout << "\033[B";

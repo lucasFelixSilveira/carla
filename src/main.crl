@@ -1,5 +1,0 @@
-@_start
-
-void main = () {
-    puts "pinto\n\ncaralho\n";
-}
