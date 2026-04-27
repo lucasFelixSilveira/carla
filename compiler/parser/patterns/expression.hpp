@@ -3,6 +3,7 @@
 #include "../ast.hpp"
 #include "../symbols.hpp"
 #include <cstdio>
+#include <optional>
 #include <regex>
 #include <string>
 #include <tuple>

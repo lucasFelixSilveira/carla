@@ -19,7 +19,7 @@ Result pattern(pNode *result, Symt *sym, T index, X ctx) {
     const pContext& context = (*ctx)[*index];
     if( context.kind == Block ) {
         if( lambda(result, sym, index, ctx) ) return Some{};
-        else if( expression(result, sym, index, ctx) ) return Some{};
+        else if( expression(result, sym, index, ctx, true) ) return Some{};
         else return Err{unknownPattern(ctx, index)};
     }
 

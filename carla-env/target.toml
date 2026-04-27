@@ -1,0 +1,13 @@
+[target]
+main = "src/main.crl"
+
+# To enable FFI, set enabled to true and provide a path to the C file.
+# Remember to export any functions you want to use
+[ffi]
+enabled = false
+path = ""
+export = []
+
+[extensors]
+# You can add extensors from an external git repository!
+repositories = [ "git@github.com:Carla-Corp/extensors.git" ]
