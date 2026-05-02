@@ -1,61 +1,44 @@
 #pragma once
+#include "../nodes/lambda.hpp"
+#include "../pattern.hpp"
+#include "type.hpp"
+#include <iostream>
+#include <tuple>
 
-#include "../ast.hpp"
-#include "../symbols.hpp"
-#include <cstddef>
-#include <memory>
-#include <variant>
-#include <vector>
+bool lambda(CARLA_PATTERN_ARGUMENTS) {
+    CARLA_PATTERN_STARTS(bool, false);
+    CARLA_GET_NEXT(first, _default);
+    if( first.kind != Block ) CARLA_RETURN_DEFAULT;
+    auto arguments = std::get<std::vector<pContext>>(first.content);
+    std::vector<std::tuple<carla::Type, std::string>> t;
 
-#include "components/special_symbols.hpp"
+    size_t i = 0;
+    while(i < arguments.size()) {
+        auto [success, s, str] = typement(result, sym, &i, &arguments);
+        if(! success ) CARLA_RETURN_DEFAULT;
 
-bool lambda(pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx) {
-    pContext arguments = (*ctx)[*index];
-    if(! std::holds_alternative<std::vector<pContext>>(arguments.content) ) return false;
-    const auto& blockContent = std::get<std::vector<pContext>>(arguments.content);
+        CARLA_INDEX_NEXT(identifier, _default, (&arguments), (&i));
+        if( identifier.kind != Common ) CARLA_RETURN_DEFAULT;
+        auto tk = std::get<Token>(identifier.content);
+        if( tk.kind != IDENTIFIER ) CARLA_RETURN_DEFAULT;
 
-    pContext body = (*ctx)[*index + 1];
-    if( arguments.kind != Block || body.kind != Block ) return false;
+        t.push_back({ carla::Type(str, s), tk.lexeme });
 
-    morgana::function::args argst;
-    morgana::desconstruct::values argsn;
-    size_t internal = 0;
+        if( (i + 1) < arguments.size() ) {
+            CARLA_INDEX_NEXT(comma, _default, (&arguments), (&i));
+            if( comma.kind != Common ) CARLA_RETURN_DEFAULT;
 
-    while(internal < blockContent.size()) {
-        std::vector<pContext> specialCtx;
-        if( internal + 1 >= blockContent.size() ) return false;
-
-        Symbol* type;
-        const pContext& typeCtx = blockContent[internal];
-        if( typeCtx.kind != Common || !std::holds_alternative<Token>(typeCtx.content) ) return false;
-        Token typeTk = std::get<Token>(typeCtx.content);
-        if( (type = sym->findSymbol(typeTk.lexeme)) == nullptr ) return false;
-        if(! (std::holds_alternative<std::shared_ptr<morgana::type>>(*type) || std::holds_alternative<std::shared_ptr<special>>(*type)) ) return false;
-
-        size_t *sext = &internal;
-        int jumped = check_special(type, sym, &blockContent, sext, specialCtx) ? 1 : 0;
-
-        const pContext& idCtx = blockContent[internal + jumped + 1];
-        if( idCtx.kind != Common || !std::holds_alternative<Token>(idCtx.content) ) return false;
-        Token idTk = std::get<Token>(idCtx.content);
-        if( idTk.kind != IDENTIFIER || idTk.lexeme.empty() ) return false;
-
-        std::shared_ptr<morgana::type> into = builtin(type, assemble_special_symbol(sym, specialCtx));
-
-        argst.push_back(into);
-        argsn.push_back(idTk.lexeme);
-
-        internal += 2 + jumped;
-        if( internal >= blockContent.size() ) break;
-
-        const pContext& symbol = blockContent[internal];
-        if( symbol.kind != Common || !std::holds_alternative<Token>(symbol.content) ) return false;
-        if( std::get<Token>(symbol.content).kind != COMMA ) return false;
-        internal++;
+            auto tk = std::get<Token>(comma.content);
+            if( tk.kind != COMMA ) CARLA_RETURN_DEFAULT;
+        }
     }
 
-    result->~pNode();
-    new(result) pNode(NODE_LAMBDA, argst, argsn, body);
-    *index += 2;
+    /* TODO: Attributes */
+
+    CARLA_GET_NEXT(body, _default);
+    if( body.kind != Block ) CARLA_RETURN_DEFAULT;
+    auto vBody = std::get<std::vector<pContext>>(body.content);
+
+    *result = carla::Lambda(t, vBody);
     return true;
 }

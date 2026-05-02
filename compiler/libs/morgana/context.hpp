@@ -1,12 +1,11 @@
 #pragma once
-#include <sstream>
 
+#include <sstream>
+#include <string>
 struct Context {
     std::stringstream ss;
-
-    Context() = default;
-
-    Context& operator<<(const std::string& str);
-
-    std::string string();
+    std::string string() const { return ss.str(); }
+    void operator<<(std::string str) { ss << str; }
+    Context() : ss() {}
+    ~Context() {}
 };

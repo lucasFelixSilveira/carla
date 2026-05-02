@@ -358,7 +358,7 @@ install_carla() {
 
     pushd carla >/dev/null
 
-    if [ ! -f "build.sh" ]; then
+    if [ ! -f "scripts/build.sh" ]; then
         error "build.sh not found in Carla repository"
         popd >/dev/null
         popd >/dev/null
@@ -366,9 +366,9 @@ install_carla() {
     fi
 
     info "Building Carla..."
-    chmod +x build.sh
+    chmod +x ./scripts/build.sh
 
-    if ! ./build.sh >> "$LOG_FILE" 2>&1; then
+    if ! ./scripts/build.sh >> "$LOG_FILE" 2>&1; then
         error "Carla build failed - check log: $LOG_FILE"
         popd >/dev/null
         popd >/dev/null

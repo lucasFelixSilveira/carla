@@ -9,7 +9,7 @@
 #include <windows.h>
 #endif
 
-#define CARLA_DEBUG true
+#define CARLA_DEBUG false
 
 struct CompilerOutputs {
 public:

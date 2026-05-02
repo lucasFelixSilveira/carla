@@ -1,25 +1,19 @@
 #pragma once
 
-#include <iostream>
-#include <memory>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <iomanip>
 
 #include "../compiler_outputs.hpp"
-#include "../libs/morgana.hpp"
+#include "../libs/morgana/types.hpp"
 
 struct special;
 
 using Symbol = std::variant<
     std::monostate,
-    std::shared_ptr<special>,
-    std::shared_ptr<morgana::type>,
-    std::shared_ptr<morgana::variable>,
-    morgana::ffi_callable
+    morgana::type
 >;
 
 struct special {
@@ -34,12 +28,10 @@ struct special {
 
 using Symbols = std::tuple<int, std::vector<std::unordered_map<std::string, Symbol>>>;
 
-// === Classe Symt ===
 struct Symt {
 public:
     void entry();
     void exit();
-    void dump() const;
 
     void addSymbol(const std::string& name, const Symbol& symbol);
     void removeSymbol(const std::string& name);
@@ -76,47 +68,13 @@ inline void Symt::removeSymbol(const std::string& name) {
 
 inline Symbol* Symt::findSymbol(const std::string& name) {
     auto& scopes = std::get<1>(symbols);
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
+    for( auto it = scopes.rbegin(); it != scopes.rend(); ++it ) {
         auto found = it->find(name);
-        if (found != it->end()) {
+        if( found != it->end() ) {
             return &found->second;
         }
     }
 
     CompilerOutputs::Fatal("cannot find symbol: " + name);
     return nullptr;
-}
-
-inline void Symt::dump() const {
-    const auto& scopes = std::get<1>(symbols);
-
-    std::cout << "========================================\n";
-    std::cout << " SYMBOL TABLE DUMP (" << scopes.size() << " scope(s))\n";
-    std::cout << "========================================\n";
-
-    for (size_t i = 0; i < scopes.size(); ++i) {
-        const auto& scope = scopes[i];
-        std::cout << "Scope #" << i << " (depth " << i << "):\n";
-
-        if (scope.empty()) {
-            std::cout << "  (empty)\n";
-            continue;
-        }
-
-        for (const auto& [name, sym] : scope) {
-            std::cout << "  " << std::setw(12) << std::left << name << " : ";
-            if (std::holds_alternative<std::shared_ptr<morgana::type>>(sym)) {
-                std::cout << "<type>";
-            } else if (std::holds_alternative<morgana::ffi_callable>(sym)) {
-                std::cout << "<c_ffi>";
-            } else if (std::holds_alternative<std::shared_ptr<morgana::variable>>(sym)) {
-                std::cout << "<variable>";
-            } else {
-                std::cout << "<unknown>";
-            }
-            std::cout << "\n";
-        }
-    }
-
-    std::cout << "========================================\n";
 }

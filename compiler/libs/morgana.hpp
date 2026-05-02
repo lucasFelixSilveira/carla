@@ -1,463 +1,50 @@
 #pragma once
 
-#include <array>
+#include "morgana/context.hpp"
+#include "morgana/types.hpp"
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
-#include <tuple>
-#include <unordered_map>
-#include <variant>
-#include <vector>
 
-#include "morgana/storage.hpp"
+#include "./morgana/storage.hpp"
+#include "./morgana/context.hpp"
+#include "./morgana/types.hpp"
+
+#define morgana_func(id, args, block) \
+    std::string id args {             \
+        std::stringstream ss;         \
+        do block while(0);            \
+        return ss.str();              \
+    }
 
 namespace morgana {
-    using dynamic = std::monostate;
-    using non_size = std::variant<dynamic, int>;
+    morgana_func(alloc, (
+        Storage *storage,
+        morgana::type type
+    ), {
+        size_t i = storage->variable.top();
+        size_t added = 1;
+        ss << "_" << i << " = alloc " << type_string(type) << '\n';
+        storage->variable.pop();
+        storage->variable.push(i + added);
+    });
 
-    enum radical { Integer = 0, Alias = 1, Unknown = 2 };
-
-    /*
-     * This class represents a type in the IR.
-     * Where you can build your own types, such as arrays, structs, etc.
-     *
-     * Example:
-     *
-     *     type int32 = type::integer(32);
-     *     type int32_ptr = int32.ptr();
-     *     type int32_array = int32.vec(10);
-     *     type int32_array_ptr = int32_array.ptr();
-     */
-    struct type {
-    private:
-        enum radical radical;
-        int addr;
-        non_size length;
-        int bits;
-        bool pointer = false, _void = false;
-        bool vector;
-
-        static std::unordered_map<std::string, int> addrs;
-    public:
-        type(enum radical radical, int bits): radical(radical), bits(bits), pointer(false), vector(false), _void(false) {}
-        type(std::string x) : pointer(x == "ptr"), _void(x == "void") {}
-
-        /*
-         * Constructor for integer type.
-         * - You only need to specify the number of bits.
-         */
-        static type integer(int bits) {
-            type t(radical::Integer, bits);
-            return t;
+    morgana_func(function, (
+        Storage *storage,
+        std::string name,
+        morgana::type ret,
+        std::vector<morgana::type> args,
+        Context& context
+    ), {
+        size_t i = storage->variable.top();
+        size_t added = 1;
+        ss << type_string(ret) << " " << name << "(";
+        for( size_t i = 0; i < args.size(); i++ ) {
+            ss << type_string(args[i]);
+            if( i < args.size() - 1 ) ss << ", ";
         }
-
-        static type ptr() {
-            type t("ptr");
-            return t;
-        }
-
-        static type void_t() {
-            type t("void");
-            return t;
-        }
-
-        static type unknown() {
-            type t(radical::Unknown, (sizeof(char*) * 8));
-            return t;
-        }
-
-        static type clone(Storage& storage, type& t) {
-            type clone = t;
-            clone.radical = radical::Alias;
-            clone.addr = storage.addr++;
-            clone.pointer = false;
-            clone.vector = false;
-
-            storage.aliases.push_back({ clone.addr, t.string() });
-            return clone;
-        }
-
-        enum radical get_radical() const {
-            return radical;
-        }
-
-        int bytes() const {
-            return bits / 8;
-        }
-
-        /*
-         * Constructor for vector type.
-         * - You can create a simple array type (vector) with a given size.
-         *   But, the size is not required. If not specified, the vector will be dynamic.
-         * ================================================================
-         * - WARNING!:
-         * Keep in mind: The "dynamic size" is not dynamic. It means that the size will
-         * be determined at compile time.
-         */
-        type& vec(non_size size) {
-            length = size;
-            vector = true;
-            return *this;
-        }
-
-        /*
-         * Make a Shared pointer type without a large code
-         */
-        std::shared_ptr<type> shared() {
-            return std::make_shared<type>(*this);
-        }
-
-        /*
-         * Convert the type class to the string representation
-         * of the type in Morgana IR language.
-         */
-        std::string string() {
-            if( pointer ) return "ptr";
-            if( _void ) return "void";
-
-            std::stringstream ss;
-            if( vector ) ss << "[";
-            if( vector && std::holds_alternative<dynamic>(length) ) ss << "*:";
-            if( vector && std::holds_alternative<int>(length) ) ss << std::get<int>(length) << ":";
-
-            if( radical == Integer) {
-                ss << "i" << bits;
-            } else if( radical == Alias ) {
-                ss << "a" << addr;
-            }
-
-            if( vector ) ss << "]";
-            return ss.str();
-        }
-    };
-
-    /*
-     * Convert the function class to the string representation
-     * of the function and their body in Morgana IR language.
-     */
-    struct function {
-        std::string name;
-        std::shared_ptr<type> return_type;
-
-        std::vector<std::shared_ptr<type>> arguments;
-
-        std::string body;
-
-        using args = std::vector<std::shared_ptr<type>>;
-
-        function(std::string name, std::shared_ptr<type> return_type, args arguments, std::string body) : name(name), return_type(return_type), arguments(arguments), body(body) {}
-
-        /*
-         * Make a Shared pointer type without a large code
-         */
-        std::shared_ptr<function> shared() {
-            return std::make_shared<function>(*this);
-        }
-
-        /*
-         * Convert the type class to the string representation
-         * of the function and their body in Morgana IR language.
-         */
-        std::string string() {
-            std::stringstream ss;
-            ss << "\n" << return_type->string() << " " << name << "(";
-
-            int i = 0;
-            for( auto argument : arguments ) {
-                ss << argument->string();
-                if(i++ < arguments.size() - 1) {
-                    ss << ", ";
-                }
-            }
-
-            ss << ") {\n" << body << "}\n";
-            return ss.str();
-        }
-    };
-
-    /*
-     * That is the options of miscellaneous in
-     * Morgana IR language.
-     */
-    enum mics {
-        that
-    };
-
-
-    /*
-     * Util class for symbol table of your langugage
-     */
-    struct variable {
-        std::string name;
-        std::shared_ptr<morgana::type> type;
-        bool mut;
-
-        variable(std::string name, std::shared_ptr<morgana::type> type, bool mut) : name(name), type(type), mut(mut) {}
-
-        /*
-         * Make a Shared pointer type without a large code
-         */
-        std::shared_ptr<variable> shared() {
-            return std::make_shared<variable>(*this);
-        }
-    };
-
-    /*
-     * Class to make a desconstructor of something
-     */
-    struct desconstruct {
-        using data = std::variant<std::string>;
-        using values = std::vector<morgana::desconstruct::data>;
-        values contents;
-        mics option;
-
-        desconstruct(mics option, std::vector<data> contents) : option(option), contents(contents) {};
-
-        /*
-         * Convert the deconstructor class to the string representation
-         * of some deconstructor in Morgana IR language.
-         */
-        std::string string() {
-            std::stringstream ss;
-
-            switch(option) {
-                case mics::that: {
-                    ss << "(";
-                    for( auto value : contents ) {
-                        ss << std::get<std::string>(value) << ", ";
-                    }
-                    ss << ") @_\n";
-                } break;
-            }
-
-            return ss.str();
-        }
-    };
-
-    /*
-     * Convert the alloc class to the string representation
-     * of some alloc instruction in Morgana IR language.
-     */
-    struct alloc {
-        std::shared_ptr<type> info;
-        long long addr = 0;
-
-        alloc(Storage& storage, std::shared_ptr<type> info) : info(info) {
-            addr = storage.local++;
-        }
-
-        /*
-         * Make a Shared pointer type without a large code
-         */
-        std::shared_ptr<alloc> shared() {
-            return std::make_shared<alloc>(*this);
-        }
-
-        /*
-         * Save the address of the alloc instruction
-         */
-        alloc& save(int* copy) {
-            *copy = addr;
-            return *this;
-        }
-
-        /*
-         * Convert the alloc instruction to the string
-         * representation of the alloc instruction
-         * on Morgana IR
-         */
-        std::string string() {
-            std::stringstream ss;
-            ss << '_' << addr << " = alloc " << info->string() << '\n';
-            return ss.str();
-        }
-    };
-
-    /*
-     * Convert the store instruction to the string
-     * representation of the store instruction
-     * on Morgana IR
-     */
-    struct store {
-        int addr;
-        long long int value;
-        std::string generic_value;
-
-        store(int addr, long long int value) : addr(addr), value(value), generic_value("") {}
-        store(int addr, std::string value) : addr(addr), generic_value(value) {}
-        store(std::shared_ptr<alloc> allocation, long long int value) : addr(allocation->addr), value(value), generic_value("") {}
-        store(std::shared_ptr<alloc> allocation, std::string generic_value) : addr(allocation->addr), generic_value(generic_value) {}
-
-        /*
-         * Make a Shared pointer type without a large code
-         */
-        std::shared_ptr<store> shared() {
-            return std::make_shared<store>(*this);
-        }
-
-        /*
-         * Convert the store instruction to the string
-         * representation of the store instruction
-         * on Morgana IR
-         */
-        std::string string() {
-            std::stringstream ss;
-            if( generic_value.empty() ) ss << "store _" << addr << ' ' << value << '\n';
-            else ss << "store _" << addr << ' ' << generic_value << '\n';
-            return ss.str();
-        }
-    };
-
-    struct call {
-        std::string func;
-        std::vector<std::string> args;
-
-        call(std::string func, std::vector<std::string> args) : func(func), args(args) {}
-        std::string string() {
-            std::stringstream ss;
-            ss << "call " << func << "(";
-            for( size_t i = 0; i < args.size(); ++i ) {
-                if( i > 0 ) ss << ", ";
-                ss << args[i];
-            }
-            ss << ")\n";
-            return ss.str();
-        }
-    };
-
-    struct ffi_callable {
-        std::string path;
-        ffi_callable(std::string path) : path(path) {}
-    };
-
-    struct identifier {
-        static std::string from(int addr) {
-            return "_" + std::to_string(addr);
-        }
-    };
-
-    struct constant {
-        int addr;
-        Storage& storage;
-        std::string value;
-        constant(Storage& storage, std::string value) : addr(storage.local++), storage(storage), value(value) {}
-
-        std::string string() {
-            std::stringstream ss;
-            ss << "_" << addr << " = constant " << value << "\n";
-            return ss.str();
-        }
-    };
-
-    /*
-     * Convert the load instruction to the string
-     * representation of the load instruction
-     * on Morgana IR
-     */
-    struct load {
-        int allocation_addr;
-        int addr;
-        Storage& storage;
-
-        load(Storage& storage, int addr) : allocation_addr(addr), storage(storage), addr(storage.local++) {}
-        load(Storage& storage, std::shared_ptr<alloc> allocation) : allocation_addr(allocation->addr), storage(storage), addr(storage.local++) {}
-
-        /*
-         * Make a Shared pointer type without a large code
-         */
-        std::shared_ptr<load> shared() {
-            return std::make_shared<load>(*this);
-        }
-
-        /*
-         * Save the address of the load instruction
-         */
-        load& save(int* copy) {
-            *copy = addr;
-            return *this;
-        }
-
-        /*
-         * Convert the load instruction to the string
-         * representation of the load instruction
-         * on Morgana IR
-         */
-        std::string string() {
-            std::stringstream ss;
-            ss << "_" << addr << " = load " << '_' << allocation_addr << '\n';
-            return ss.str();
-        }
-    };
-
-    struct expr {
-        Storage& storage;
-        std::string addr;
-
-        enum operand { add, sub, mul, div, mod, none };
-
-        std::array<std::tuple<std::string, operand>, 6> op_names = {
-            std::tuple<std::string, operand> {"+", operand::add},
-            std::tuple<std::string, operand> {"-", operand::sub},
-            std::tuple<std::string, operand> {"*", operand::mul},
-            std::tuple<std::string, operand> {"/", operand::div},
-            std::tuple<std::string, operand> {"%", operand::mod},
-            std::tuple<std::string, operand> {"_", operand::none}
-        };
-
-        struct nodes;
-        struct single_expr;
-        struct binary_expr;
-        struct call_expr;
-
-        using root = std::variant<call_expr, single_expr, binary_expr>;
-        enum expr_type { string, numeric, nil };
-
-        struct single_expr {
-            bool constant;
-            std::string value;
-            expr_type type;
-        };
-
-        struct binary_expr {
-            root& lhs;
-            root& rhs;
-            operand op;
-            expr_type type;
-        };
-
-        struct call_expr {
-            std::string func;
-            std::vector<std::string> args;
-        };
-    };
-
-    struct ret {
-        std::string addr;
-
-        ret() : addr("") {}
-        ret(std::string addr) : addr(addr) {}
-
-        std::string string() {
-            std::stringstream ss;
-            ss << "ret " << addr << "\n";
-            return ss.str();
-        }
-    };
-
-    struct puts {
-        std::string addr;
-        std::string data;
-
-        puts(Storage& storage, std::string data) : data(data) {
-            addr = std::to_string(storage.addr++);
-        }
-
-        std::string string() {
-            std::stringstream ss;
-            ss << "_" << addr << " = constant " << data << "\n"
-               << "puts _" << addr << "\n";
-            return ss.str();
-        }
-    };
-};
+        ss << ") {\n" << context.string() << "\n}";
+        storage->variable.pop();
+        storage->variable.push(i + added);
+    });
+}
