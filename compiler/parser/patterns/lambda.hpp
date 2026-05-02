@@ -2,7 +2,6 @@
 #include "../nodes/lambda.hpp"
 #include "../pattern.hpp"
 #include "type.hpp"
-#include <iostream>
 #include <tuple>
 
 bool lambda(CARLA_PATTERN_ARGUMENTS) {

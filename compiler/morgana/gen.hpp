@@ -1,6 +1,5 @@
 #pragma once
 
-#include <variant>
 #include <vector>
 
 #include "../parser/node.hpp"
@@ -19,6 +18,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
         pNode node = nodes[index];
 
         switch(node.index()) {
+            case COMPTIME_START: builder << morgana::comptime("_start"); break;
             case DECLARATION: {
                 auto decl = std::get<carla::Decl>(node);
 

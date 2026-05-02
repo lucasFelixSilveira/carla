@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <optional>
 #include <sstream>
 #include <tuple>
@@ -99,7 +98,6 @@ typement(CARLA_PATTERN_ARGUMENTS) {
                 levels++;
             }
         }
-
     }
 
     if( is_ptr ) { t.emplace(morgana::ptr()); }

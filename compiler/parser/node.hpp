@@ -2,11 +2,13 @@
 
 #include <variant>
 #include "nodes/declaration.hpp"
+#include "nodes/start.hpp"
 #include "nodes/lambda.hpp"
 
 #define CARLA_PNODE_CASE \
     X(carla::Decl, DECLARATION) \
-    X(carla::Lambda, LAMBDA)
+    X(carla::Lambda, LAMBDA) \
+    X(carla::Start, COMPTIME_START)
 
 #define X(type, ...) , type
 using pNode = std::variant<std::monostate CARLA_PNODE_CASE>;

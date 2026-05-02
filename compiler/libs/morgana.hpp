@@ -38,13 +38,19 @@ namespace morgana {
     ), {
         size_t i = storage->variable.top();
         size_t added = 1;
-        ss << type_string(ret) << " " << name << "(";
+        ss << '\n' << type_string(ret) << " " << name << "(";
         for( size_t i = 0; i < args.size(); i++ ) {
             ss << type_string(args[i]);
             if( i < args.size() - 1 ) ss << ", ";
         }
-        ss << ") {\n" << context.string() << "\n}";
+        ss << ") {\n" << context.string() << "\n}\n";
         storage->variable.pop();
         storage->variable.push(i + added);
+    });
+
+    morgana_func(comptime, (
+        std::string identifier
+    ), {
+        ss << "comptime " << identifier << "\n";
     });
 }

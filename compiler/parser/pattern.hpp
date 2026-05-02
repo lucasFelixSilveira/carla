@@ -30,7 +30,7 @@
 #include "../tokenizer/token_kind.hpp"
 
 #include "./patterns/declaration.hpp"
-#include "./patterns/type.hpp"
+#include "patterns/macros.hpp"
 #include "./patterns/lambda.hpp"
 
 #include <cstddef>
@@ -49,8 +49,8 @@ Result pattern(CARLA_PATTERN_ARGUMENTS) {
     Token tk = std::get<Token>(context.content);
 
     switch(tk.kind) {
-    // case START:
-    // if( startMacro(result, sym, index, ctx) ) return Some{};
+    case START:
+    if( macros(CARLA_PATTERN_EXPORT, tk.kind) ) return Some{};
     // case RETURN:
     // if( returnStatement(result, sym, index, ctx) ) return Some{};
     // case PUTS:
