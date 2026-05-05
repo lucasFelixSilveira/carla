@@ -15,12 +15,14 @@ typedef enum TokenKind {
 
     BANG, BANG_EQUAL,
     EQUAL, EQUAL_EQUAL,
-    GREATER, GREATER_EQUAL, GREATER_GREATER,
-    LESS, LESS_EQUAL, LESS_LESS,
+    GREATER, GREATER_EQUAL, SHIFT_RIGHT,
+    LESS, LESS_EQUAL, SHIFT_LEFT,
+    SLASH_SLASH,
 
     IDENTIFIER, STRING, NUMBER, INCLUDE,
 
     AND, OR, NIL, _FALSE, _TRUE,
+    XOR, LAND, LOR, LNOT,
 
     RETURN, PUTS, AUTO, OUR, FOR, STRUCT, ENUM, BREAK, CONTINUE, GPIO, IF, _CONST, ELSE, SIZEOF, LET, MUT, END_KEYWORDS,
 
@@ -84,10 +86,10 @@ std::string tokenKindToString(TokenKind kind) {
         case EQUAL_EQUAL:       return "EQUAL_EQUAL";
         case GREATER:           return "GREATER";
         case GREATER_EQUAL:     return "GREATER_EQUAL";
-        case GREATER_GREATER:   return "GREATER_GREATER";
+        case SHIFT_RIGHT:   return "GREATER_GREATER";
         case LESS:              return "LESS";
         case LESS_EQUAL:        return "LESS_EQUAL";
-        case LESS_LESS:         return "LESS_LESS";
+        case SHIFT_LEFT:         return "LESS_LESS";
 
         case IDENTIFIER:        return "IDENTIFIER";
         case STRING:            return "STRING";
@@ -99,6 +101,11 @@ std::string tokenKindToString(TokenKind kind) {
         case NIL:               return "NIL";
         case _FALSE:             return "FALSE";
         case _TRUE:              return "TRUE";
+
+        case XOR:               return "XOR";
+        case LAND:              return "LAND";
+        case LOR:               return "LOR";
+        case LNOT:              return "LNOT";
 
         case RETURN:            return "RETURN";
         case PUTS:              return "PUTS";

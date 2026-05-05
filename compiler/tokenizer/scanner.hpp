@@ -94,13 +94,13 @@ Scanner::read(std::vector<char> source, std::streamsize size)
 
             case '>':
             if( str[++i] == '=' ) addSimple(&tokens, GREATER_EQUAL);
-            else if( str[i] == '>' ) addSimple(&tokens, GREATER_GREATER);
+            else if( str[i] == '>' ) addSimple(&tokens, SHIFT_RIGHT);
             else { i--; addSimple(&tokens, GREATER); }
             break;
 
             case '<':
             if( str[++i] == '=' ) addSimple(&tokens, LESS_EQUAL);
-            else if( str[i] == '<' ) addSimple(&tokens, LESS_LESS);
+            else if( str[i] == '<' ) addSimple(&tokens, SHIFT_LEFT);
             else { i--; addSimple(&tokens, LESS); }
             break;
 

@@ -13,7 +13,7 @@
 #define CARLA_PATTERN_STARTS(return_t, data) size_t backup = *index; \
                                              return_t _default = data;
 
-#define CARLA_RETURN_DEFAULT { (*index) = backup; return _default; }
+#define CARLA_RETURN_DEFAULT do { (*index) = backup; return _default; } while(0)
 
 #define CARLA_GET_NEXT(id, val) if( *index >= ctx->size() ) return val; \
                                 auto id = (*ctx)[(*index)++]
@@ -30,7 +30,8 @@
 #include "../tokenizer/token_kind.hpp"
 
 #include "./patterns/declaration.hpp"
-#include "patterns/macros.hpp"
+#include "./patterns/expression.hpp"
+#include "./patterns/macros.hpp"
 #include "./patterns/lambda.hpp"
 
 #include <cstddef>
@@ -60,11 +61,9 @@ Result pattern(CARLA_PATTERN_ARGUMENTS) {
     // // if( keywordDeclaration(result, sym, index, ctx) ) return Some{};
     case IDENTIFIER:
     if( declaration(CARLA_PATTERN_EXPORT) ) return Some{};
-    // else if( expression(result, sym, index, ctx, true) ) return Some{};
-    // case NUMBER:
-    // if( expression(result, sym, index, ctx, true) ) return Some{};
-    // case STRING:
-    // if( expression(result, sym, index, ctx, true) ) return Some{};
+    case NUMBER:
+    case STRING:
+    if( expression(CARLA_PATTERN_EXPORT) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};
     }
 
