@@ -1,4 +1,4 @@
 @_start
 void main = () {
-    string x = 12 + 3 * 7;
+    int32 x = 12 + 3 * 7 + 13 - "penis";
 }
