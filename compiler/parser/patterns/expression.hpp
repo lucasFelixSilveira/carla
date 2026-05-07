@@ -55,10 +55,12 @@ bool expression(CARLA_PATTERN_ARGUMENTS) {
         switch(val.index()) {
             case EXPR_INTEGER: {
                 int data = std::get<size_t>(val);
+                std::cout << "Integer: " << data << "\n";
                 expr.emplace(carla::Expr::make_integer(data));
             } break;
             case EXPR_STRING: {
                 std::string data = std::get<std::string>(val);
+                std::cout << "String: " << data << "\n";
                 expr.emplace(carla::Expr::make_string(data));
             } break;
         }
@@ -114,7 +116,7 @@ std::tuple<bool, size_t> interpreter_integer(CARLA_PATTERN_ARGUMENTS, carla::Exp
             case carla::ExprContext::Value: {
                 auto ctx = std::get<pContext>(ast.content);
                 auto val = std::get<Token>(ctx.content);
-                if( val.kind != NUMBER ) throw std::runtime_error("_");
+                if( val.kind != INTEGER ) throw std::runtime_error("_");
                 return std::stoll(val.lexeme);
             } break;
             case carla::ExprContext::Block: {

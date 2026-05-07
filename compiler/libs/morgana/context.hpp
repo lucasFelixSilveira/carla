@@ -7,5 +7,5 @@ struct Context {
     std::string string() const { return ss.str(); }
     void operator<<(std::string str) { ss << str; }
     Context() : ss() {}
-    ~Context() {}
+    ~Context() = default;
 };

@@ -43,7 +43,7 @@ namespace morgana {
             ss << type_string(args[i]);
             if( i < args.size() - 1 ) ss << ", ";
         }
-        ss << ") {\n" << context.string() << "\n}\n";
+        ss << ") {\n" << context.string() << "}\n";
         storage->variable.pop();
         storage->variable.push(i + added);
     });
@@ -52,5 +52,19 @@ namespace morgana {
         std::string identifier
     ), {
         ss << "comptime " << identifier << "\n";
+    });
+
+    morgana_func(puts, (
+        Storage *storage,
+        std::string string
+    ), {
+        size_t i = storage->variable.top();
+        size_t added = 1;
+
+        ss << "_" << i << " = constant \"" << string << "\"\n"
+           << "puts _" << i << "\n";
+
+        storage->variable.pop();
+        storage->variable.push(i + added);
     });
 }

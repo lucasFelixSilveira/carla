@@ -65,8 +65,11 @@ Scanner::read(std::vector<char> source, std::streamsize size)
             case ',': addSimple(&tokens, COMMA); break;
 
             case '*': addSimple(&tokens, STAR); break;
-            case '/': addSimple(&tokens, SLASH); break;
             case ';': addSimple(&tokens, SEMICOLON); break;
+            case '/':
+            if( str[++i] == '/' ) addSimple(&tokens, SLASH_SLASH);
+            else { i--; addSimple(&tokens, SLASH); }
+            break;
 
             case '(': addSimple(&tokens, LEFT_PAREN); break;
             case ')': addSimple(&tokens, RIGHT_PAREN); break;
@@ -189,7 +192,7 @@ Scanner::read(std::vector<char> source, std::streamsize size)
                 else break;
             }
 
-            addBuffer(&tokens, NUMBER, buffer.str());
+            addBuffer(&tokens, isfloat ? FLOAT : INTEGER, buffer.str());
 
             buffer.str("");
             buffer.clear();

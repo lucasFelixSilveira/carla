@@ -32,6 +32,7 @@
 #include "./patterns/declaration.hpp"
 #include "./patterns/expression.hpp"
 #include "./patterns/macros.hpp"
+#include "./patterns/statement.hpp"
 #include "./patterns/lambda.hpp"
 
 #include <cstddef>
@@ -53,16 +54,12 @@ Result pattern(CARLA_PATTERN_ARGUMENTS) {
     switch(tk.kind) {
     case START:
     if( macros(CARLA_PATTERN_EXPORT, tk.kind) ) return Some{};
-    // case RETURN:
-    // if( returnStatement(result, sym, index, ctx) ) return Some{};
-    // case PUTS:
-    // if( putsStatement(result, sym, index, ctx) ) return Some{};
-    // // case LET:
-    // // case _CONST:
-    // // if( keywordDeclaration(result, sym, index, ctx) ) return Some{};
+    case PUTS:
+    if( statement(CARLA_PATTERN_EXPORT, "puts") ) return Some{};
     case IDENTIFIER:
     if( declaration(CARLA_PATTERN_EXPORT) ) return Some{};
-    case NUMBER:
+    case INTEGER:
+    case FLOAT:
     case STRING:
     if( expression(CARLA_PATTERN_EXPORT) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};

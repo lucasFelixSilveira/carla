@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include <vector>
 
 #include "../parser/node.hpp"
@@ -42,12 +43,27 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
                     Context ctx;
                     ctx << generateMorganaCode(statement, symbols, true);
                     builder << morgana::function(&storage, decl.identiifer, decl.type.morgana, types, ctx);
-                    ctx.~Context();
                     index++;
                     continue;
                 }
 
                 break;
+            } break;
+            case STATEMENT: {
+                auto stmt = std::get<carla::Stmt>(node);
+                switch(stmt.data) {
+                    case carla::STMT_PUTS: {
+                        auto err = [](){ CompilerOutputs::Fatal("Expected a static expression after puts statement"); };
+                        if( (index + 1) >= nodes.size() ) err();
+
+                        auto expr = std::get<carla::Expr>(nodes[index + 1]);
+                        if(! expr.is_static ) err();
+
+                        if(! std::holds_alternative<std::string>(expr.data) ) err();
+                        builder << morgana::puts(&storage, std::get<std::string>(expr.data));
+                        index++;
+                    } break;
+                }
             } break;
         }
     }
