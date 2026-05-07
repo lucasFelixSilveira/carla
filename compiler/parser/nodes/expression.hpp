@@ -9,6 +9,10 @@
 #include "../node.hpp"
 
 namespace carla {
+
+    struct ExprContext;
+    using InterpreterResult = std::variant<std::monostate, size_t, std::string>;
+    using ExprBlock = std::vector<carla::ExprContext>;
     struct ExprContext {
         enum Kind { Value, Node, Block } kind;
         std::variant<pContext, pNode, std::vector<ExprContext>> content;

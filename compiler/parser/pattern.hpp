@@ -44,6 +44,7 @@ Result pattern(CARLA_PATTERN_ARGUMENTS) {
     if( context.kind == Block ) {
         if( lambda(CARLA_PATTERN_EXPORT) ) return Some{};
         else if( declaration(CARLA_PATTERN_EXPORT) ) return Some{};
+        else if( expression(CARLA_PATTERN_EXPORT) ) return Some{};
         else return Err{unknownPattern(ctx, index)};
     }
 

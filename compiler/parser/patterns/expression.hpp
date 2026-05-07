@@ -2,7 +2,10 @@
 
 #include "../pattern.hpp"
 #include "../nodes/expression.hpp"
+#include <functional>
 #include <iostream>
+#include <tuple>
+#include <variant>
 #include <vector>
 
 size_t precedence(TokenKind kind) {
@@ -35,12 +38,66 @@ std::tuple<bool, pNode> parse_node(CARLA_PATTERN_ARGUMENTS) {
 }
 
 std::tuple<bool, carla::ExprContext> make_ast(CARLA_PATTERN_ARGUMENTS);
+std::tuple<bool, carla::InterpreterResult> interpreter(CARLA_PATTERN_ARGUMENTS, carla::ExprContext& ast);
 
 bool expression(CARLA_PATTERN_ARGUMENTS) {
     CARLA_PATTERN_STARTS(bool, false);
     CARLA_PEEK_NEXT(first, _default);
-    auto [success, ast] = make_ast(CARLA_PATTERN_EXPORT);
-    if(! success ) CARLA_RETURN_DEFAULT;
+    auto [success_ast, ast] = make_ast(CARLA_PATTERN_EXPORT);
+    if(! success_ast ) CARLA_RETURN_DEFAULT;
+
+
+    auto [success_interpreter, val] = interpreter(CARLA_PATTERN_EXPORT, ast);
+    if( success_interpreter ) {
+        std::cout << "pre-compiled string: " << std::get<std::string>(val) << std::endl;
+    }
+    return true;
+}
+
+
+std::tuple<bool, std::string> interpreter_string(CARLA_PATTERN_ARGUMENTS, carla::ExprContext& root) {
+    std::function<std::string(carla::ExprContext&)> string_interpreter = [&](carla::ExprContext& ast) -> std::string {
+        switch(ast.kind) {
+            case carla::ExprContext::Node: throw std::runtime_error("_");
+            case carla::ExprContext::Value: {
+                auto ctx = std::get<pContext>(ast.content);
+                auto val = std::get<Token>(ctx.content);
+                if( val.kind != STRING ) throw std::runtime_error("_");
+                return val.lexeme.substr(1, val.lexeme.size() - 2);
+            } break;
+            case carla::ExprContext::Block: {
+                auto block = std::get<carla::ExprBlock>(ast.content);
+
+                auto lhs = block[0],
+                     rhs = block[2],
+                     op  = block[1];
+
+                auto lhs_val = string_interpreter(lhs),
+                     rhs_val = string_interpreter(rhs);
+
+                auto ctx = std::get<pContext>(op.content);
+                auto op_tk = std::get<Token>(ctx.content);
+
+                std::string result;
+                switch(op_tk.kind) {
+                    case PLUS: result = lhs_val + rhs_val; break;
+                    default: throw std::runtime_error("_");
+                }
+
+                return result;
+            };
+        }
+    };
+
+    try { return std::make_tuple(true, string_interpreter(root)); }
+    catch(const std::exception& _) { return std::make_tuple(false, std::string()); }
+}
+
+std::tuple<bool, carla::InterpreterResult> interpreter(CARLA_PATTERN_ARGUMENTS, carla::ExprContext& ast) {
+    auto [str_success, str_result] = interpreter_string(CARLA_PATTERN_EXPORT, ast);
+    if( str_success ) return std::make_tuple(true, str_result);
+
+    return std::make_tuple(false, std::monostate());
 }
 
 void reduce_once(std::vector<carla::ExprContext>& values, std::vector<Token>& ops) {
