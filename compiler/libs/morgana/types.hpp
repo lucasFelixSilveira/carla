@@ -2,9 +2,9 @@
 
 #include <sstream>
 #include <string>
-#include <type_traits>
 #include <variant>
 #include <vector>
+
 namespace morgana {
     struct integer;
     struct ptr;

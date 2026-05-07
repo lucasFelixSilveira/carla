@@ -4,6 +4,8 @@
 #include "../nodes/expression.hpp"
 #include <functional>
 #include <iostream>
+#include <optional>
+#include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
@@ -46,17 +48,29 @@ bool expression(CARLA_PATTERN_ARGUMENTS) {
     auto [success_ast, ast] = make_ast(CARLA_PATTERN_EXPORT);
     if(! success_ast ) CARLA_RETURN_DEFAULT;
 
-
     auto [success_interpreter, val] = interpreter(CARLA_PATTERN_EXPORT, ast);
     if( success_interpreter ) {
-        std::cout << "pre-compiled string: " << std::get<std::string>(val) << std::endl;
+        const int EXPR_INTEGER = 1, EXPR_STRING = 2;
+        std::optional<carla::Expr> expr;
+        switch(val.index()) {
+            case EXPR_INTEGER: {
+                int data = std::get<size_t>(val);
+                expr.emplace(carla::Expr::make_integer(data));
+            } break;
+            case EXPR_STRING: {
+                std::string data = std::get<std::string>(val);
+                expr.emplace(carla::Expr::make_string(data));
+            } break;
+        }
+
+        result->~pNode();
+        new(result) pNode(expr.value());
     }
     return true;
 }
 
-
 std::tuple<bool, std::string> interpreter_string(CARLA_PATTERN_ARGUMENTS, carla::ExprContext& root) {
-    std::function<std::string(carla::ExprContext&)> string_interpreter = [&](carla::ExprContext& ast) -> std::string {
+    std::function<std::string(carla::ExprContext&)> interpreter = [&](carla::ExprContext& ast) -> std::string {
         switch(ast.kind) {
             case carla::ExprContext::Node: throw std::runtime_error("_");
             case carla::ExprContext::Value: {
@@ -72,8 +86,8 @@ std::tuple<bool, std::string> interpreter_string(CARLA_PATTERN_ARGUMENTS, carla:
                      rhs = block[2],
                      op  = block[1];
 
-                auto lhs_val = string_interpreter(lhs),
-                     rhs_val = string_interpreter(rhs);
+                auto lhs_val = interpreter(lhs),
+                     rhs_val = interpreter(rhs);
 
                 auto ctx = std::get<pContext>(op.content);
                 auto op_tk = std::get<Token>(ctx.content);
@@ -89,13 +103,63 @@ std::tuple<bool, std::string> interpreter_string(CARLA_PATTERN_ARGUMENTS, carla:
         }
     };
 
-    try { return std::make_tuple(true, string_interpreter(root)); }
+    try { return std::make_tuple(true, interpreter(root)); }
     catch(const std::exception& _) { return std::make_tuple(false, std::string()); }
+}
+
+std::tuple<bool, size_t> interpreter_integer(CARLA_PATTERN_ARGUMENTS, carla::ExprContext& root) {
+    std::function<size_t(carla::ExprContext&)> interpreter = [&](carla::ExprContext& ast) -> size_t {
+        switch(ast.kind) {
+            case carla::ExprContext::Node: throw std::runtime_error("_");
+            case carla::ExprContext::Value: {
+                auto ctx = std::get<pContext>(ast.content);
+                auto val = std::get<Token>(ctx.content);
+                if( val.kind != NUMBER ) throw std::runtime_error("_");
+                return std::stoll(val.lexeme);
+            } break;
+            case carla::ExprContext::Block: {
+                auto block = std::get<carla::ExprBlock>(ast.content);
+
+                auto lhs = block[0],
+                     rhs = block[2],
+                     op  = block[1];
+
+                auto lhs_val = interpreter(lhs),
+                     rhs_val = interpreter(rhs);
+
+                auto ctx = std::get<pContext>(op.content);
+                auto op_tk = std::get<Token>(ctx.content);
+
+                size_t result;
+                switch(op_tk.kind) {
+                    case PLUS: result = lhs_val + rhs_val; break;
+                    case MINUS: result = lhs_val - rhs_val; break;
+                    case STAR: result = lhs_val * rhs_val; break;
+                    case SLASH_SLASH: result = (lhs_val - lhs_val % rhs_val) / rhs_val; break;
+                    case SHIFT_LEFT: result = lhs_val << rhs_val; break;
+                    case SHIFT_RIGHT: result = lhs_val >> rhs_val; break;
+                    case XOR: result = lhs_val ^ rhs_val; break;
+                    case LAND: result = lhs_val & rhs_val; break;
+                    case LOR: result = lhs_val | rhs_val; break;
+                    case LNOT: result = ~lhs_val; break;
+                    default: throw std::runtime_error("_");
+                }
+
+                return result;
+            };
+        }
+    };
+
+    try { return std::make_tuple(true, interpreter(root)); }
+    catch(const std::exception& _) { return std::make_tuple(false, 0); }
 }
 
 std::tuple<bool, carla::InterpreterResult> interpreter(CARLA_PATTERN_ARGUMENTS, carla::ExprContext& ast) {
     auto [str_success, str_result] = interpreter_string(CARLA_PATTERN_EXPORT, ast);
     if( str_success ) return std::make_tuple(true, str_result);
+
+    auto [integer_success, integer_result] = interpreter_integer(CARLA_PATTERN_EXPORT, ast);
+    if( integer_success ) return std::make_tuple(true, integer_result);
 
     return std::make_tuple(false, std::monostate());
 }
@@ -176,7 +240,7 @@ std::tuple<bool, carla::ExprContext> make_ast(CARLA_PATTERN_ARGUMENTS) {
         auto [success, node] = parse_node(CARLA_PATTERN_EXPORT);
 
         if( success ) {
-            sub.push_back(carla::ExprContext::make_node(node));
+            sub.push_back(carla::ExprContext::make_node((void*)(&node)));
             continue;
         }
 
@@ -222,8 +286,8 @@ void print_expr_context(const carla::ExprContext& expr, int level) {
         } break;
 
         case carla::ExprContext::Node: {
-            auto& node = std::get<pNode>(expr.content);
-            std::cout << indent << "Node: " << node.index() << "\n";
+            auto& node = std::get<void*>(expr.content);
+            std::cout << indent << "Node: " << ((pNode*)node)->index() << "\n";
         } break;
 
         case carla::ExprContext::Block: {
