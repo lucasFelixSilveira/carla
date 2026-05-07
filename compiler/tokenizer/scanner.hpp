@@ -192,7 +192,7 @@ Scanner::read(std::vector<char> source, std::streamsize size)
                 else break;
             }
 
-            addBuffer(&tokens, isfloat ? FLOAT : INTEGER, buffer.str());
+            addBuffer(&tokens, isfloat ? _FLOAT : INTEGER, buffer.str());
 
             buffer.str("");
             buffer.clear();

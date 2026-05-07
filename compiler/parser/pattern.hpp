@@ -59,7 +59,7 @@ Result pattern(CARLA_PATTERN_ARGUMENTS) {
     case IDENTIFIER:
     if( declaration(CARLA_PATTERN_EXPORT) ) return Some{};
     case INTEGER:
-    case FLOAT:
+    case _FLOAT:
     case STRING:
     if( expression(CARLA_PATTERN_EXPORT) ) return Some{};
     default: return Err{unknownPattern(ctx, index)};

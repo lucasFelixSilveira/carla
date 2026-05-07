@@ -19,7 +19,7 @@ typedef enum TokenKind {
     LESS, LESS_EQUAL, SHIFT_LEFT,
     SLASH_SLASH,
 
-    IDENTIFIER, STRING, FLOAT, INTEGER, INCLUDE,
+    IDENTIFIER, STRING, _FLOAT, INTEGER, INCLUDE,
 
     AND, OR, NIL, _FALSE, _TRUE,
     XOR, LAND, LOR, LNOT,
@@ -94,7 +94,7 @@ std::string tokenKindToString(TokenKind kind) {
         case IDENTIFIER:        return "IDENTIFIER";
         case STRING:            return "STRING";
         case INTEGER:           return "INTEGER";
-        case FLOAT:             return "FLOAT";
+        case _FLOAT:             return "FLOAT";
         case INCLUDE:           return "INCLUDE";
 
         case AND:               return "AND";
