@@ -5,6 +5,7 @@
 #include "ctx.hpp"
 #include "node.hpp"
 #include "symbols.hpp"
+#include <iostream>
 #include <vector>
 
 #define CARLA_PATTERN_ARGUMENTS pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx
@@ -29,9 +30,12 @@
 #include "../compiler_outputs.hpp"
 #include "../tokenizer/token_kind.hpp"
 
+Result pattern(CARLA_PATTERN_ARGUMENTS, bool expr=false);
+
 #include "./patterns/declaration.hpp"
 #include "./patterns/expression.hpp"
 #include "./patterns/macros.hpp"
+#include "./patterns/call.hpp"
 #include "./patterns/statement.hpp"
 #include "./patterns/lambda.hpp"
 
@@ -40,8 +44,19 @@
 
 std::string unknownPattern(const std::vector<pContext>* ctx, size_t *index);
 
-Result pattern(CARLA_PATTERN_ARGUMENTS) {
+Result pattern(CARLA_PATTERN_ARGUMENTS, bool expr) {
     const pContext& context = (*ctx)[*index];
+
+    if( expr && context.kind == Block ) return Err{""};
+    if( expr && context.kind == Common ) {
+        Token tk = std::get<Token>(context.content);
+        switch(tk.kind) {
+        case IDENTIFIER:
+        if( call(CARLA_PATTERN_EXPORT) ) return Some{};
+        default: return Err{""};
+        }
+    }
+
     if( context.kind == Block ) {
         if( lambda(CARLA_PATTERN_EXPORT) ) return Some{};
         else if( declaration(CARLA_PATTERN_EXPORT) ) return Some{};
@@ -57,6 +72,7 @@ Result pattern(CARLA_PATTERN_ARGUMENTS) {
     case PUTS:
     if( statement(CARLA_PATTERN_EXPORT, "puts") ) return Some{};
     case IDENTIFIER:
+    // if( call(CARLA_PATTERN_EXPORT) ) return Some{};
     if( declaration(CARLA_PATTERN_EXPORT) ) return Some{};
     case INTEGER:
     case _FLOAT:

@@ -25,8 +25,7 @@ size_t precedence(TokenKind kind) {
     }
 }
 
-bool is_operator(TokenKind kind)
-{
+bool is_operator(TokenKind kind) {
     return kind == PLUS || kind == MINUS || kind == STAR || kind == SLASH || kind == SLASH_SLASH
         || kind == SHIFT_LEFT || kind == SHIFT_RIGHT
         || kind == LOR || kind == LAND || kind == XOR;
@@ -36,7 +35,13 @@ bool is_expr_end_keyword(TokenKind kind)
 { return kind == TokenKind::ELSE; }
 
 std::tuple<bool, pNode> parse_node(CARLA_PATTERN_ARGUMENTS) {
-    return { false, std::monostate() };
+    Result d = pattern(CARLA_PATTERN_EXPORT, true);
+    if( isSuccess(d) ) {
+        pNode cp = *result;
+        result->~pNode();
+        return std::make_tuple(true, cp);
+    }
+    return std::make_tuple(false, std::monostate());
 }
 
 std::tuple<bool, carla::ExprContext> make_ast(CARLA_PATTERN_ARGUMENTS);
@@ -289,7 +294,7 @@ void print_expr_context(const carla::ExprContext& expr, int level) {
 
         case carla::ExprContext::Node: {
             auto& node = std::get<void*>(expr.content);
-            std::cout << indent << "Node: " << ((pNode*)node)->index() << "\n";
+            std::cout << indent << "Node: " << (*((pNode*)node)).index() << "\n";
         } break;
 
         case carla::ExprContext::Block: {
