@@ -49,7 +49,6 @@ std::tuple<bool, carla::InterpreterResult> interpreter(CARLA_PATTERN_ARGUMENTS, 
 
 bool expression(CARLA_PATTERN_ARGUMENTS) {
     CARLA_PATTERN_STARTS(bool, false);
-    CARLA_PEEK_NEXT(first, _default);
     auto [success_ast, ast] = make_ast(CARLA_PATTERN_EXPORT);
     if(! success_ast ) CARLA_RETURN_DEFAULT;
 
@@ -60,19 +59,21 @@ bool expression(CARLA_PATTERN_ARGUMENTS) {
         switch(val.index()) {
             case EXPR_INTEGER: {
                 int data = std::get<size_t>(val);
-                std::cout << "Integer: " << data << "\n";
                 expr.emplace(carla::Expr::make_integer(data));
             } break;
             case EXPR_STRING: {
                 std::string data = std::get<std::string>(val);
-                std::cout << "String: " << data << "\n";
                 expr.emplace(carla::Expr::make_string(data));
             } break;
         }
 
         result->~pNode();
         new(result) pNode(expr.value());
+        return true;
     }
+
+    result->~pNode();
+    new(result) pNode(carla::Expr(ast));
     return true;
 }
 
@@ -266,7 +267,7 @@ std::tuple<bool, carla::ExprContext> make_ast(CARLA_PATTERN_ARGUMENTS) {
 
     reorder(sub);
 
-    if(! sub.empty() ) { print_expr_context(sub[0]); }
+    // if(! sub.empty() ) { print_expr_context(sub[0]); }
     return { true, sub[0] };
 }
 

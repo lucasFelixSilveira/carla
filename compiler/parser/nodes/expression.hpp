@@ -2,7 +2,7 @@
 
 #include "type.hpp"
 #include <cstddef>
-#include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -46,16 +46,32 @@ namespace carla {
 
     struct Expr {
         bool is_static;
-        carla::Type result;
+        std::optional<carla::Type> result;
         ExprContext ast;
         InterpreterResult data;
 
-        Expr() : is_static(false), result(carla::Type("int8*", morgana::ptr())), ast(ExprContext::none()), data() {}
+        Expr(carla::ExprContext ast)
+            : is_static(false),
+              result(),
+              ast(ast),
+              data() {};
+
+        Expr(carla::Type t, carla::ExprContext ast)
+            : is_static(false),
+              result(t),
+              ast(ast),
+              data() {};
+
+        Expr()
+            : is_static(false),
+              ast(ExprContext::none()),
+              result(),
+              data() {}
 
         static Expr make_string(std::string str) {
             Expr e;
             e.is_static = true;
-            e.result = carla::Type("int8*", morgana::ptr());
+            e.result.emplace(carla::Type("int8*", morgana::ptr()));
             e.data = str;
             return e;
         }
@@ -63,7 +79,7 @@ namespace carla {
         static Expr make_integer(size_t data) {
             Expr e;
             e.is_static = true;
-            e.result = carla::Type("int", morgana::integer(0));
+            e.result.emplace(carla::Type("int", morgana::integer(0)));
             e.data = data;
             return e;
         }

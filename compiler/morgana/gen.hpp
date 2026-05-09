@@ -53,7 +53,7 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
                 auto stmt = std::get<carla::Stmt>(node);
                 switch(stmt.data) {
                     case carla::STMT_PUTS: {
-                        auto err = [](){ CompilerOutputs::Fatal("Expected a static expression after puts statement"); };
+                        auto err = [](){ CompilerOutputs::Fatal("Expected a string static expression after puts statement"); };
                         if( (index + 1) >= nodes.size() ) err();
 
                         auto expr = std::get<carla::Expr>(nodes[index + 1]);
