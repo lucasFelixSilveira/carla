@@ -6,11 +6,11 @@
 #include "node.hpp"
 #include "symbols.hpp"
 #include <iostream>
+#include <variant>
 #include <vector>
 
 #define CARLA_PATTERN_ARGUMENTS pNode *result, Symt *sym, size_t *index, const std::vector<pContext>* ctx
 #define CARLA_PATTERN_EXPORT result, sym, index, ctx
-#define CARLA_PATTERN_DECLINE { (*index) = backup; return false; }
 #define CARLA_PATTERN_STARTS(return_t, data) size_t backup = *index; \
                                              return_t _default = data;
 
@@ -67,6 +67,12 @@ Result pattern(CARLA_PATTERN_ARGUMENTS, bool expr) {
     Token tk = std::get<Token>(context.content);
 
     switch(tk.kind) {
+    case SEMICOLON: {
+        (*index)++;
+        result->~pNode();
+        new(result) pNode(std::monostate());
+        return Some{};
+    };
     case START:
     if( macros(CARLA_PATTERN_EXPORT, tk.kind) ) return Some{};
     case PUTS:

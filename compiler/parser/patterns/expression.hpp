@@ -266,7 +266,7 @@ std::tuple<bool, carla::ExprContext> make_ast(CARLA_PATTERN_ARGUMENTS) {
     if( sub.empty() ) CARLA_RETURN_DEFAULT;
 
     reorder(sub);
-
+    (*index)--;
     // if(! sub.empty() ) { print_expr_context(sub[0]); }
     return { true, sub[0] };
 }

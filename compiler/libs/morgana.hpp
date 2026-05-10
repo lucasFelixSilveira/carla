@@ -18,13 +18,37 @@
     }
 
 namespace morgana {
+    size_t last(
+        Storage *storage,
+        std::string what
+    ) { return storage->last.at(what); };
+
     morgana_func(alloc, (
         Storage *storage,
         morgana::type type
     ), {
         size_t i = storage->variable.top();
+        storage->last.insert({ "alloc", i });
         size_t added = 1;
         ss << "_" << i << " = alloc " << type_string(type) << '\n';
+        storage->variable.pop();
+        storage->variable.push(i + added);
+    });
+
+    morgana_func(store, (
+        size_t x, size_t y
+    ), {
+        ss << "store _" << x << " _" << y << '\n';
+    });
+
+    morgana_func(static_declaration, (
+        Storage *storage,
+        std::string buff
+    ), {
+        size_t i = storage->variable.top();
+        storage->last.insert({ "expr", i });
+        size_t added = 1;
+        ss << "_" << i << " = constant \"" << buff << "\"\n";
         storage->variable.pop();
         storage->variable.push(i + added);
     });

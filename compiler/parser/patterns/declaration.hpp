@@ -6,7 +6,7 @@
 bool declaration(CARLA_PATTERN_ARGUMENTS) {
     CARLA_PATTERN_STARTS(bool, false);
     auto [success, type, str] = typement(CARLA_PATTERN_EXPORT);
-    if(! success ) CARLA_PATTERN_DECLINE;
+    if(! success ) CARLA_RETURN_DEFAULT;
 
     CARLA_GET_NEXT(id, _default);
     if( id.kind != Common ) CARLA_RETURN_DEFAULT;
