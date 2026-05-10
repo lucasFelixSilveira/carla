@@ -12,6 +12,14 @@
 #include "../libs/morgana/builder.hpp"
 #include "../libs/morgana.hpp"
 
+enum reason_t { VAR_DECLARATION };
+using variable_id = size_t;
+using declaration_t = std::tuple<variable_id, morgana::type>;
+std::stack<std::tuple<reason_t, std::variant<
+    std::monostate,
+    declaration_t
+>>> stack_reason;
+
 std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool internal) {
     Builder builder;
     Storage storage;
@@ -22,15 +30,25 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
 
         switch(node.index()) {
             case COMPTIME_START: builder << morgana::comptime("_start"); break;
+            case EXPRESSION: {
+                auto expr = std::get<carla::Expr>(node);
+                if( expr.is_static && std::holds_alternative<std::string>(expr.data) ) {
+                    builder << morgana::static_declaration(&storage, std::get<std::string>(expr.data));
+                }
+
+                auto [ reason, data ] = stack_reason.top();
+                stack_reason.pop();
+                switch(reason) {
+                    case VAR_DECLARATION: {
+                        builder << morgana::store(morgana::last(&storage, "alloc"), morgana::last(&storage, "expr"));
+                        continue;
+                    } break;
+                }
+            } break;
             case DECLARATION: {
                 auto decl = std::get<carla::Decl>(node);
 
-                if( decl.k == carla::Decl::Hopeless ) {
-                    builder << morgana::alloc(&storage, decl.type.morgana);
-                    continue;
-                }
-
-                if( (index + 1) < nodes.size() && nodes[index + 1].index() == LAMBDA ) {
+                if( decl.k == carla::Decl::Hopefull && (index + 1) < nodes.size() && nodes[index + 1].index() == LAMBDA ) {
                     auto lambda = std::get<carla::Lambda>(nodes[index + 1]);
                     std::vector<pNode> statement;
                     Parser::checkSyntax(symbols, &statement, lambda.body, false);
@@ -48,6 +66,12 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
                     index++;
                     continue;
                 }
+
+                builder << morgana::alloc(&storage, decl.type.morgana);
+                if( decl.k == carla::Decl::Hopefull ) stack_reason.push({
+                    VAR_DECLARATION,
+                    declaration_t { morgana::last(&storage, "alloc"), decl.type.morgana }
+                });
 
                 break;
             } break;
