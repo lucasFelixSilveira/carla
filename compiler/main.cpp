@@ -133,7 +133,7 @@ main(int argc, char **argv)
     if( params.verbose ) CompilerOutputs::Warn("Runnig morgana as " + morgcCommand);
     if( std::system(morgcCommand.c_str()) != 0 ) {
         std::cout << "\033[B";
-        CompilerOutputs::ClearCurrentLine();
+        // CompilerOutputs::ClearCurrentLine();
         std::cout << "\033[A";
         return -1;
     }

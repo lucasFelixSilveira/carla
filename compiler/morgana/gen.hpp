@@ -32,15 +32,25 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
             case COMPTIME_START: builder << morgana::comptime("_start"); break;
             case EXPRESSION: {
                 auto expr = std::get<carla::Expr>(node);
+
+                bool already_d_make = false;
                 if( expr.is_static && std::holds_alternative<std::string>(expr.data) ) {
                     builder << morgana::static_declaration(&storage, std::get<std::string>(expr.data));
+                    already_d_make = true;
                 }
 
                 auto [ reason, data ] = stack_reason.top();
                 stack_reason.pop();
                 switch(reason) {
                     case VAR_DECLARATION: {
-                        builder << morgana::store(morgana::last(&storage, "alloc"), morgana::last(&storage, "expr"));
+                        if( already_d_make ) {
+                            builder << morgana::store(morgana::last(&storage, "alloc"), morgana::last(&storage, "expr"));
+                            continue;
+                        }
+
+                        if( expr.is_static && std::holds_alternative<size_t>(expr.data) )
+                        /* -> */ builder << morgana::store_literal(morgana::last(&storage, "alloc"), std::get<size_t>(expr.data));
+
                         continue;
                     } break;
                 }

@@ -41,6 +41,12 @@ namespace morgana {
         ss << "store _" << x << " _" << y << '\n';
     });
 
+    morgana_func(store_literal, (
+        size_t x, size_t y
+    ), {
+        ss << "store _" << x << ' ' << y << '\n';
+    });
+
     morgana_func(static_declaration, (
         Storage *storage,
         std::string buff
