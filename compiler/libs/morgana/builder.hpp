@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+
 struct Builder {
     std::stringstream ss;
     std::string string() const { return ss.str(); }
