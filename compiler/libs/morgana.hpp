@@ -47,6 +47,18 @@ namespace morgana {
         ss << "store _" << x << ' ' << y << '\n';
     });
 
+    morgana_func(load, (
+        Storage *storage,
+        size_t variable
+    ), {
+        size_t i = storage->variable.top();
+        storage->last.insert({ "expr", i });
+        size_t added = 1;
+        ss << "_" << i << " = load _" << variable << "\n";
+        storage->variable.pop();
+        storage->variable.push(i + added);
+    });
+
     morgana_func(static_declaration, (
         Storage *storage,
         std::string buff

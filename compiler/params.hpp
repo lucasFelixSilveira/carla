@@ -2,8 +2,10 @@
 #pragma once
 
 #include "compiler_outputs.hpp"
-#include "toml/reader.hpp"
+#include "libs/eva.hpp"
 #include <cstring>
+#include <iostream>
+#include <stdexcept>
 #include <string>
 #include <variant>
 
@@ -35,14 +37,10 @@ public:
         bool optimized = false;
         bool verbose = false;
 
-        TOMLReader reader("carla", "target.toml");
-        auto m = reader.get(TOMLReader::Expr("target", "main"));
-        if( std::holds_alternative<TOMLReader::Error>(m) ) {
-            auto err = std::get<TOMLReader::Error>(m);
-            CompilerOutputs::Warn("Error in target.toml: " + std::get<0>(err) + "\n");
-        } else {
-            main = reader.check<std::string>("main", m).data();
-        }
+        eva reader("target.eva");
+        try { auto m = reader.get<std::string>("target", "main");
+            main = (char*) m.c_str();
+        } catch(std::runtime_error e) {}
 
         int i = 2;
         for(; i < argc; i++ ) {

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <functional>
 #include <iostream>
 #include <stack>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -20,10 +22,13 @@ std::stack<std::tuple<reason_t, std::variant<
     declaration_t
 >>> stack_reason;
 
+using var_map = std::unordered_map<std::string, std::tuple<size_t, carla::Type>>;
+
 std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool internal) {
     Builder builder;
     Storage storage;
     storage.variable.push(0);
+    var_map vmap;
 
     for( int index = 0; index < nodes.size(); index++ ) {
         pNode node = nodes[index];
@@ -39,12 +44,53 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
                     already_d_make = true;
                 }
 
+                std::function<size_t(const carla::ExprContext& expr)> make_expr = [&](const carla::ExprContext& expr) {
+                    switch(expr.kind) {
+                        case carla::ExprContext::Value: {
+                            auto& ctx = std::get<pContext>(expr.content);
+                            if( ctx.kind == Common ) {
+                                auto tk = std::get<Token>(ctx.content);
+                                if( tk.kind == IDENTIFIER ) {
+                                    auto [index, _] = vmap.at(tk.lexeme);
+                                    builder << morgana::load(&storage, index);
+                                    return storage.variable.top() - 1;
+                                }
+                            }
+                            return (size_t) 0;
+                        } break;
+
+                        case carla::ExprContext::Node: {
+                            auto node = std::get<void*>(expr.content);
+                            Context ctx;
+                            builder << generateMorganaCode({ *((pNode*)node) }, symbols, true);
+                            return (size_t) 0;
+                        } break;
+
+                        // case carla::ExprContext::Block: {
+                            // auto& block = std::get<std::vector<carla::ExprContext>>(expr.content);
+                            // std::cout << indent << "Block with " << block.size() << " elements:\n";
+                            // for(auto& item : block) {
+                                // print_expr_context(item, level + 1);
+                            // }
+                        // } break;
+
+                        default: return (size_t) 0;
+                    }
+                };
+
+                size_t value_index;
+                if( already_d_make ) value_index = morgana::last(&storage, "expr");
+                else if(! expr.is_static ) {
+                    value_index = make_expr(expr.ast);
+                    already_d_make = true;
+                }
+
                 auto [ reason, data ] = stack_reason.top();
                 stack_reason.pop();
                 switch(reason) {
                     case VAR_DECLARATION: {
                         if( already_d_make ) {
-                            builder << morgana::store(morgana::last(&storage, "alloc"), morgana::last(&storage, "expr"));
+                            builder << morgana::store(morgana::last(&storage, "alloc"), value_index);
                             continue;
                         }
 
@@ -78,6 +124,8 @@ std::string generateMorganaCode(std::vector<pNode> nodes, Symt& symbols, bool in
                 }
 
                 builder << morgana::alloc(&storage, decl.type.morgana);
+                size_t alloc = (storage.variable.top() - 1);
+                vmap.insert({ decl.identiifer, { alloc, decl.type } });
                 if( decl.k == carla::Decl::Hopefull ) stack_reason.push({
                     VAR_DECLARATION,
                     declaration_t { morgana::last(&storage, "alloc"), decl.type.morgana }

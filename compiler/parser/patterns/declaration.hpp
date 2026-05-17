@@ -19,7 +19,9 @@ bool declaration(CARLA_PATTERN_ARGUMENTS) {
     if( equal.kind != Common ) CARLA_RETURN_DEFAULT;
     tk = std::get<Token>(equal.content);
 
-    carla::Decl d(identifier, carla::Type(str, type));
+    carla::Type t(str, type);
+    sym->addSymbol(identifier, t);
+    carla::Decl d(identifier, t);
     switch (tk.kind) {
         case EQUAL: {
             d.k = carla::Decl::Hopefull;

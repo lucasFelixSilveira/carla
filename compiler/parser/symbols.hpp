@@ -7,13 +7,16 @@
 #include <vector>
 
 #include "../compiler_outputs.hpp"
-#include "../libs/morgana/types.hpp"
+#include "nodes/type.hpp"
 
-struct special;
+namespace carla::symbols {
+    using variable = carla::Type;
+};
 
 using Symbol = std::variant<
     std::monostate,
-    morgana::type
+    morgana::type,
+    carla::symbols::variable
 >;
 
 struct special {

@@ -40,21 +40,21 @@ main(int argc, char **argv)
 
     CompilerParams params = CompilerParams::format(argc, argv);
     if( params.command == "init" ) {
-        std::string targetDir = std::filesystem::current_path().string() + "/target.toml";
+        std::string targetDir = std::filesystem::current_path().string() + "/eva.toml";
         std::ofstream target(targetDir, std::ios::out);
-        if(! target.is_open() ) CompilerOutputs::Fatal("Failed to create target.toml");
+        if(! target.is_open() ) CompilerOutputs::Fatal("Failed to create target.eva");
 
-        target << "[target]\n";
-        target << "main = \"src/main.crl\"\n\n";
-        target << "# To enable FFI, set enabled to true and provide a path to the C file.\n";
-        target << "# Remember to export any functions you want to use\n";
-        target << "[ffi]\n";
-        target << "enabled = false\n";
-        target << "path = \"\"\n";
-        target << "export = []\n\n";
-        target << "[extensors]\n";
-        target << "# You can add extensors from an external git repository!\n";
-        target << "repositories = [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";
+        target << "@target\n";
+        target << "main: \"src/main.crl\"\n\n";
+        target << "' To enable FFI, set enabled to true and provide a path to the C file.\n";
+        target << "' Remember to export any functions you want to use\n";
+
+        target << "@ffi\n";
+        target << "enabled: false\n";
+
+        target << "@extensors\n";
+        target << "' You can add extensors from an external git repository!\n";
+        target << "repositories: [ \"git@github.com:Carla-Corp/extensors.git\" ]\n";
         target.close();
 
         std::string srcDir = std::filesystem::current_path().string() + "/src";
@@ -130,10 +130,10 @@ main(int argc, char **argv)
     if( params.ffi ) flgs += " -ffi -cpath " + std::filesystem::absolute(params.c_path).string();
     if( params.verbose ) flgs += " -v";
     std::string morgcCommand = "morgana build -m " + absPath.string() + flgs;
-    if( params.verbose ) CompilerOutputs::Warn("Runnig morgana as " + morgcCommand);
+    if( params.verbose ) CompilerOutputs::Warn("Runnig morgana as " + morgcCommand + "\n");
     if( std::system(morgcCommand.c_str()) != 0 ) {
-        std::cout << "\033[B";
-        // CompilerOutputs::ClearCurrentLine();
+        std::cout << "\n\033[B";
+        CompilerOutputs::ClearCurrentLine();
         std::cout << "\033[A";
         return -1;
     }
