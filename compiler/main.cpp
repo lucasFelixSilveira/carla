@@ -2,6 +2,7 @@
 #include "compiler_outputs.hpp"
 #include "ffi.hpp"
 #include "params.hpp"
+#include "precompiler.hpp"
 #include "tokenizer/scanner.hpp"
 #include "tokenizer/token.hpp"
 #include <chrono>
@@ -82,14 +83,13 @@ main(int argc, char **argv)
     file.seekg(0, std::ios::beg);
 
     std::vector<char> src(size);
-
     if(! file.read(src.data(), size) ) CompilerOutputs::Fatal("Your main file is not valid. Try use -m to define the newest file");
 
-    /* Lexical phase */
-    std::vector<Token> tokens = Scanner::read(src, size);
+    Symt symbols;
+    /* Lexical & Precompiler phase */
+    std::vector<Token> tokens = precompiler(src, size, params);
 
     /* Parser phase */
-    Symt symbols;
     charset(symbols);
     load_ffi(symbols, params);
     auto irNodes = Parser::parse(symbols, tokens);

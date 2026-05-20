@@ -44,7 +44,6 @@ private:
     Symbols symbols = {};
 };
 
-
 inline void Symt::entry() {
     std::get<0>(symbols)++;
     std::get<1>(symbols).emplace_back();

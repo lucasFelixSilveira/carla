@@ -1,4 +1,1 @@
-@_start
-void main = () {
-    int32 x = 13 + 7 * 3;
-}
+@import("second.crl");
