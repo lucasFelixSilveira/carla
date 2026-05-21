@@ -18,7 +18,7 @@ public:
     std::string target;
     bool verbose;
 
-    bool ffi;
+    bool ffi = false;
     std::string c_path;
 
     CompilerParams(std::string cwd, std::string command, std::string main, bool optimized, std::string target, bool verbose)
