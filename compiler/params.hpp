@@ -37,10 +37,12 @@ public:
         bool optimized = false;
         bool verbose = false;
 
-        eva reader("target.eva");
-        try { auto m = reader.get<std::string>("target", "main");
-            main = (char*) m.c_str();
-        } catch(std::runtime_error e) {}
+        if( std::string(command) == "build" || std::string(command) == "run" ) {
+            eva reader("target.eva");
+            try { auto m = reader.get<std::string>("target", "main");
+                  main = (char*) m.c_str();
+            } catch(std::runtime_error e) {}
+        }
 
         int i = 2;
         for(; i < argc; i++ ) {

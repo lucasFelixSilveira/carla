@@ -41,7 +41,7 @@ main(int argc, char **argv)
 
     CompilerParams params = CompilerParams::format(argc, argv);
     if( params.command == "init" ) {
-        std::string targetDir = std::filesystem::current_path().string() + "/eva.toml";
+        std::string targetDir = std::filesystem::current_path().string() + "/target.eva";
         std::ofstream target(targetDir, std::ios::out);
         if(! target.is_open() ) CompilerOutputs::Fatal("Failed to create target.eva");
 
